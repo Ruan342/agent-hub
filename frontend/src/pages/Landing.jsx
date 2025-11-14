@@ -37,7 +37,7 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <div className="container mx-auto px-6 py-24">
+      <div className="container mx-auto px-6 py-20">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-block mb-6">
             <span className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
@@ -45,13 +45,13 @@ export default function Landing() {
             </span>
           </div>
           <h1 className="text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            Agentes de IA por Voz
+            Transforme seu atendimento
             <br />
-            <span className="text-gray-500">para seu Negócio</span>
+            <span className="text-gray-500">com Agentes de IA por Voz</span>
           </h1>
           <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Integre assistentes de voz inteligentes no seu CRM, WhatsApp e email.
-            Escolha entre agentes especializados ou solicite um personalizado.
+            Automatize vendas, suporte e marketing com assistentes de voz que nunca dormem.
+            Integração simples via API com CRM, WhatsApp e Email.
           </p>
           <div className="flex justify-center gap-4">
             <Button 
@@ -60,18 +60,48 @@ export default function Landing() {
               size="lg"
               className="bg-black hover:bg-gray-800 text-white px-8 py-6 text-base"
             >
-              Ver Agentes
+              Ver Agentes Disponíveis
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button 
-              data-testid="request-custom-button"
-              onClick={() => navigate("/request-agent")} 
+              data-testid="watch-demo-button"
               variant="outline" 
               size="lg"
-              className="px-8 py-6 text-base border-gray-300 hover:border-black"
+              className="px-8 py-6 text-base border-gray-300 hover:border-black group"
+              onClick={() => document.getElementById('demo-section')?.scrollIntoView({ behavior: 'smooth' })}
             >
-              Solicitar Customizado
+              <Play className="mr-2 w-5 h-5 group-hover:scale-110 transition-transform" />
+              Ver Demonstração
             </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Social Proof */}
+      <div className="bg-gray-50 border-y border-gray-200">
+        <div className="container mx-auto px-6 py-12">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-12">
+            <div className="flex items-center gap-3">
+              <Users className="w-6 h-6 text-gray-600" />
+              <div>
+                <div className="text-2xl font-bold text-gray-900">1000+</div>
+                <div className="text-sm text-gray-600">Empresas usando</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Building2 className="w-6 h-6 text-gray-600" />
+              <div>
+                <div className="text-2xl font-bold text-gray-900">50K+</div>
+                <div className="text-sm text-gray-600">Chamadas processadas</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Rocket className="w-6 h-6 text-gray-600" />
+              <div>
+                <div className="text-2xl font-bold text-gray-900">24/7</div>
+                <div className="text-sm text-gray-600">Disponibilidade</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
