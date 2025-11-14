@@ -106,21 +106,55 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* Stats Section */}
-      <div className="bg-gray-50 border-y border-gray-200">
-        <div className="container mx-auto px-6 py-16">
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+      {/* Video Demo Section */}
+      <div id="demo-section" className="container mx-auto px-6 py-24">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">Veja como funciona</h2>
+          <p className="text-xl text-gray-600">Implemente agentes de IA por voz em minutos</p>
+        </div>
+        
+        <div className="max-w-5xl mx-auto">
+          <div className="aspect-video bg-gray-100 rounded-2xl border-2 border-gray-200 overflow-hidden relative group cursor-pointer hover:border-black transition-colors">
+            {/* Placeholder para vídeo - você pode substituir pelo embed real */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Play className="w-10 h-10 text-white ml-1" />
+              </div>
+              <p className="text-gray-600 font-medium">Clique para assistir a demonstração</p>
+              <p className="text-sm text-gray-500 mt-2">Duração: 2 minutos</p>
+            </div>
+            {/* Para adicionar vídeo real, substitua por: */}
+            {/* <iframe 
+              className="w-full h-full"
+              src="https://www.youtube.com/embed/SEU_VIDEO_ID"
+              title="Demo VoiceAI Hub"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            /> */}
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-6 mt-12">
             <div className="text-center">
-              <div className="text-4xl font-bold text-gray-900 mb-2">5+</div>
-              <div className="text-gray-600">Agentes Disponíveis</div>
+              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <span className="text-2xl font-bold text-gray-900">1</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Escolha seu Agente</h3>
+              <p className="text-sm text-gray-600">Selecione entre agentes especializados por segmento</p>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-gray-900 mb-2">24/7</div>
-              <div className="text-gray-600">Disponibilidade</div>
+              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <span className="text-2xl font-bold text-gray-900">2</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Integre via API</h3>
+              <p className="text-sm text-gray-600">Use sua API key para conectar com seus sistemas</p>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-gray-900 mb-2">API</div>
-              <div className="text-gray-600">Integração Simples</div>
+              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <span className="text-2xl font-bold text-gray-900">3</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Comece a Usar</h3>
+              <p className="text-sm text-gray-600">Seu agente está pronto para atender 24/7</p>
             </div>
           </div>
         </div>
