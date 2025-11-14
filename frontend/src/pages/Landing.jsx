@@ -4,6 +4,13 @@ import { ArrowRight, Play, Sparkles, Zap, Globe, Code2, CheckCircle2 } from "luc
 
 export default function Landing() {
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/");
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -11,27 +18,48 @@ export default function Landing() {
       <nav className="border-b border-gray-100 bg-white sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <div className="w-7 h-7 bg-black rounded flex items-center justify-center">
+            <div className="w-7 h-7 bg-black rounded flex items-center justify-center cursor-pointer" onClick={() => navigate("/marketplace")}>
               <Sparkles className="w-4 h-4 text-white" />
             </div>
-            <span className="text-lg font-semibold tracking-tight">VoiceAI Hub</span>
+            <span className="text-lg font-semibold tracking-tight cursor-pointer" onClick={() => navigate("/marketplace")}>VoiceAI Hub</span>
           </div>
           <div className="flex items-center gap-2">
-            <Button 
-              data-testid="login-button"
-              variant="ghost" 
-              onClick={() => navigate("/login")}
-              className="text-sm"
-            >
-              Entrar
-            </Button>
-            <Button 
-              data-testid="register-button"
-              onClick={() => navigate("/register")}
-              className="bg-black hover:bg-gray-900 text-sm"
-            >
-              Começar Grátis
-            </Button>
+            {user && user.name ? (
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate("/dashboard")}
+                  className="text-sm"
+                >
+                  Dashboard
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleLogout}
+                  className="text-sm border-gray-300"
+                >
+                  Sair
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  data-testid="login-button"
+                  variant="ghost" 
+                  onClick={() => navigate("/login")}
+                  className="text-sm"
+                >
+                  Entrar
+                </Button>
+                <Button 
+                  data-testid="register-button"
+                  onClick={() => navigate("/register")}
+                  className="bg-black hover:bg-gray-900 text-sm"
+                >
+                  Começar Grátis
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </nav>
