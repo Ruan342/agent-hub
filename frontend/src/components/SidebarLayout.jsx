@@ -40,7 +40,7 @@ export default function SidebarLayout({ children }) {
       >
         {/* Header */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100">
-          {sidebarOpen ? (
+          {sidebarOpen && (
             <button
               type="button"
               onClick={() => navigate("/")}
@@ -50,14 +50,6 @@ export default function SidebarLayout({ children }) {
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <span className="text-lg font-semibold tracking-tight">VoiceAI Hub</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              className="w-7 h-7 bg-black rounded flex items-center justify-center mx-auto"
-            >
-              <Sparkles className="w-4 h-4 text-white" />
             </button>
           )}
 
