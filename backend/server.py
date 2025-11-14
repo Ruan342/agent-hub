@@ -522,7 +522,7 @@ async def update_request_status(request_id: str, status: str, current_user: dict
 async def test_tts(request: TTSRequest, http_request: Request):
     """Public endpoint to test agent voice - limited to 3 tests per IP"""
     if not eleven_client:
-        raise HTTPException(status_code=503, detail="ElevenLabs not configured")
+        raise HTTPException(status_code=503, detail="Voice service not configured")
     
     # Limit text length for public testing
     if len(request.text) > 100:
@@ -605,7 +605,7 @@ async def get_remaining_tests(voice_id: str, http_request: Request):
 async def generate_tts(request: TTSRequest, current_user: dict = Depends(get_current_user)):
     """Generate text-to-speech audio using ElevenLabs"""
     if not eleven_client:
-        raise HTTPException(status_code=503, detail="ElevenLabs not configured")
+        raise HTTPException(status_code=503, detail="Voice service not configured")
     
     try:
         voice_settings = VoiceSettings(
@@ -670,7 +670,7 @@ async def make_voice_call(request: VoiceCallRequest, current_user: dict = Depend
     
     # Generate audio using ElevenLabs
     if not eleven_client:
-        raise HTTPException(status_code=503, detail="ElevenLabs not configured")
+        raise HTTPException(status_code=503, detail="Voice service not configured")
     
     try:
         voice_settings = VoiceSettings(
