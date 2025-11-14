@@ -568,6 +568,16 @@ async def test_tts(request: TTSRequest, http_request: Request):
             voice_id=request.voice_id
         )
         
+        # Record test usage
+        await db.voice_test_limits.insert_one({
+            "test_key": test_key,
+            "ip": client_ip,
+            "voice_id": request.voice_id,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        
+        # Return response with remaining tests
+        remaining = 3 - test_count - 1
         return tts_response
         
     except Exception as e:
