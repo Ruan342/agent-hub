@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sparkles, ArrowLeft, Copy, Check, ExternalLink, RefreshCw, AlertCircle, TrendingUp, Activity, Phone } from "lucide-react";
 import { toast } from "sonner";
+import VoiceTest from "@/components/VoiceTest";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
