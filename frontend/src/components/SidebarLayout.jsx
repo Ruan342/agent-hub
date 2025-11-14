@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Menu, X, LayoutDashboard, FileText, Code2, Home, ShoppingBag } from "lucide-react";
+import { Sparkles, Menu, X, LayoutDashboard, FileText, Code2, Home, ShoppingBag, LogOut } from "lucide-react";
 
 const menuItems = [
   { icon: Home, label: "Início", path: "/" },
