@@ -26,6 +26,23 @@ export default function AgentDetails() {
     fetchAgent();
   }, [id]);
 
+  useEffect(() => {
+    if (agent?.elevenlabs_voice_id) {
+      checkRemainingTests();
+    }
+  }, [agent]);
+
+  const checkRemainingTests = async () => {
+    try {
+      const response = await axios.get(
+        `${API}/tts/test/remaining/${agent.elevenlabs_voice_id}`
+      );
+      setRemainingTests(response.data.remaining);
+    } catch (error) {
+      console.error("Error checking remaining tests:", error);
+    }
+  };
+
   const fetchAgent = async () => {
     try {
       const response = await axios.get(`${API}/agents/${id}`);
