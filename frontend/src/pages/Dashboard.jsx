@@ -310,6 +310,12 @@ export default function Dashboard() {
                           </code>
                         </div>
                         
+                        {/* Voice Test */}
+                        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4">
+                          <h4 className="font-semibold text-sm mb-3">Testar Voz do Agente</h4>
+                          <VoiceTest agentId={agent.id} subscriptionId={subscription.id} voiceId={agent.elevenlabs_voice_id} />
+                        </div>
+
                         {/* Quick Links */}
                         <div className="flex gap-2 pt-4 border-t border-gray-200">
                           <Button
