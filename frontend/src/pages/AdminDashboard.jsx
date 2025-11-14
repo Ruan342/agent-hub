@@ -465,6 +465,6 @@ export default function AdminDashboard() {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </SidebarLayout>
   );
 }
