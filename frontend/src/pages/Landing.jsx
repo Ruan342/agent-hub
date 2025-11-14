@@ -191,30 +191,172 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* Use Cases */}
+      {/* How It Works - Detailed */}
       <div className="bg-gray-50 border-y border-gray-200">
         <div className="container mx-auto px-6 py-24">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Casos de Uso</h2>
-            <p className="text-xl text-gray-600">Agentes especializados para cada área do seu negócio</p>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Como funciona a plataforma</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Uma solução completa para automatizar seu atendimento com inteligência artificial
+            </p>
           </div>
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {[
-              { title: "Vendas", desc: "Qualificação de leads e agendamento automático" },
-              { title: "Suporte", desc: "Atendimento 24/7 e resolução de tickets" },
-              { title: "Marketing", desc: "Campanhas outbound e coleta de feedback" },
-              { title: "Financeiro", desc: "Cobranças e lembretes de pagamento" },
-              { title: "RH", desc: "Triagem de candidatos e agendamento" },
-              { title: "Personalizado", desc: "Crie seu próprio agente customizado" }
-            ].map((useCase, i) => (
-              <div key={i} className="flex items-start p-6 bg-white border border-gray-200 rounded-lg">
-                <Check className="w-5 h-5 text-gray-900 mr-3 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-1">{useCase.title}</h4>
-                  <p className="text-sm text-gray-600">{useCase.desc}</p>
+
+          <div className="max-w-6xl mx-auto space-y-16">
+            {/* Step 1 */}
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <div className="inline-block px-3 py-1 bg-black text-white rounded-full text-sm font-medium mb-4">
+                  Passo 1
+                </div>
+                <h3 className="text-3xl font-bold text-gray-900 mb-4">
+                  Escolha o agente perfeito para sua necessidade
+                </h3>
+                <p className="text-lg text-gray-600 mb-6">
+                  Navegue pelo nosso marketplace com agentes especializados em vendas, suporte, 
+                  marketing, financeiro e RH. Cada agente vem com vozes naturais da ElevenLabs 
+                  e recursos específicos para sua área.
+                </p>
+                <ul className="space-y-3">
+                  <li className="flex items-start">
+                    <Check className="w-5 h-5 text-black mr-3 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">Agentes pré-treinados para seu segmento</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="w-5 h-5 text-black mr-3 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">Vozes naturais e profissionais</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="w-5 h-5 text-black mr-3 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">Solicite agentes personalizados</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-2xl p-8 h-80 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-12 h-12 text-gray-900" />
+                  </div>
+                  <p className="text-gray-600 font-medium">Preview do Marketplace</p>
                 </div>
               </div>
-            ))}
+            </div>
+
+            {/* Step 2 */}
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div className="order-2 md:order-1 bg-white border border-gray-200 rounded-2xl p-8 h-80 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Code className="w-12 h-12 text-gray-900" />
+                  </div>
+                  <p className="text-gray-600 font-medium">Integração API</p>
+                  <code className="text-xs bg-gray-100 px-3 py-1 rounded mt-2 inline-block">
+                    Authorization: Bearer vapi_xxx
+                  </code>
+                </div>
+              </div>
+              <div className="order-1 md:order-2">
+                <div className="inline-block px-3 py-1 bg-black text-white rounded-full text-sm font-medium mb-4">
+                  Passo 2
+                </div>
+                <h3 className="text-3xl font-bold text-gray-900 mb-4">
+                  Integre em minutos com sua API Key
+                </h3>
+                <p className="text-lg text-gray-600 mb-6">
+                  Após a compra, você recebe instantaneamente uma API key exclusiva e um webhook URL. 
+                  Configure em seu CRM, WhatsApp Business ou sistema de email em poucos cliques.
+                </p>
+                <ul className="space-y-3">
+                  <li className="flex items-start">
+                    <Check className="w-5 h-5 text-black mr-3 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">API RESTful simples e documentada</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="w-5 h-5 text-black mr-3 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">Webhooks para eventos em tempo real</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="w-5 h-5 text-black mr-3 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">SDKs para principais linguagens</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <div className="inline-block px-3 py-1 bg-black text-white rounded-full text-sm font-medium mb-4">
+                  Passo 3
+                </div>
+                <h3 className="text-3xl font-bold text-gray-900 mb-4">
+                  Monitore e otimize o desempenho
+                </h3>
+                <p className="text-lg text-gray-600 mb-6">
+                  Acompanhe todas as interações em tempo real através do seu dashboard. 
+                  Veja métricas, ajuste configurações e escale conforme necessário.
+                </p>
+                <ul className="space-y-3">
+                  <li className="flex items-start">
+                    <Check className="w-5 h-5 text-black mr-3 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">Dashboard com analytics em tempo real</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="w-5 h-5 text-black mr-3 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">Histórico completo de conversas</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="w-5 h-5 text-black mr-3 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">Relatórios de performance detalhados</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-2xl p-8 h-80 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Zap className="w-12 h-12 text-gray-900" />
+                  </div>
+                  <p className="text-gray-600 font-medium">Dashboard Analytics</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Compelling Benefits */}
+      <div className="container mx-auto px-6 py-24">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Rocket className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Implantação Rápida</h3>
+              <p className="text-gray-600">
+                Do cadastro à primeira chamada em menos de 10 minutos. 
+                Sem complexidade técnica.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Shield className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Segurança Enterprise</h3>
+              <p className="text-gray-600">
+                Criptografia de ponta a ponta, compliance com LGPD e 
+                infraestrutura redundante.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Zap className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Performance Real</h3>
+              <p className="text-gray-600">
+                Latência ultra-baixa, 99.9% de uptime e escalabilidade 
+                automática ilimitada.
+              </p>
+            </div>
           </div>
         </div>
       </div>
