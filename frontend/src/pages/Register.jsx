@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Mic } from "lucide-react";
+import { Code, ArrowLeft } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -41,20 +41,26 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-2xl p-8" data-testid="register-form">
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
-              <Mic className="w-8 h-8 text-indigo-600" />
+        <div className="text-center mb-8">
+          <div className="inline-block">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
+                <Code className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-2xl font-semibold text-gray-900">VoiceAI Hub</span>
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-center mb-2">Criar conta</h1>
-          <p className="text-gray-600 text-center mb-8">Comece a usar agentes de IA hoje</p>
+        </div>
 
-          <form onSubmit={handleRegister} className="space-y-6">
+        <div className="bg-white border border-gray-200 rounded-xl p-8" data-testid="register-form">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Criar conta</h1>
+          <p className="text-gray-600 mb-8">Comece a usar agentes de IA hoje</p>
+
+          <form onSubmit={handleRegister} className="space-y-5">
             <div>
-              <Label htmlFor="name">Nome</Label>
+              <Label htmlFor="name" className="text-sm font-medium text-gray-700">Nome</Label>
               <Input
                 data-testid="name-input"
                 id="name"
@@ -62,11 +68,12 @@ export default function Register() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="mt-1"
+                className="mt-1 border-gray-300 focus:border-black"
+                placeholder="Seu nome completo"
               />
             </div>
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email</Label>
               <Input
                 data-testid="email-input"
                 id="email"
@@ -74,11 +81,12 @@ export default function Register() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1"
+                className="mt-1 border-gray-300 focus:border-black"
+                placeholder="seu@email.com"
               />
             </div>
             <div>
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700">Senha</Label>
               <Input
                 data-testid="password-input"
                 id="password"
@@ -86,42 +94,44 @@ export default function Register() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="mt-1"
+                className="mt-1 border-gray-300 focus:border-black"
                 minLength={6}
+                placeholder="Mínimo 6 caracteres"
               />
             </div>
             <Button 
               data-testid="register-submit-button"
               type="submit" 
-              className="w-full bg-indigo-600 hover:bg-indigo-700" 
+              className="w-full bg-black hover:bg-gray-800" 
               disabled={loading}
             >
-              {loading ? "Cadastrando..." : "Cadastrar"}
+              {loading ? "Cadastrando..." : "Criar Conta"}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-gray-600">
+            <p className="text-sm text-gray-600">
               Já tem uma conta?{" "}
               <button
                 data-testid="login-link"
                 onClick={() => navigate("/login")}
-                className="text-indigo-600 hover:text-indigo-700 font-semibold"
+                className="text-black font-semibold hover:underline"
               >
                 Faça login
               </button>
             </p>
           </div>
+        </div>
 
-          <div className="mt-4 text-center">
-            <button
-              data-testid="back-to-home-link"
-              onClick={() => navigate("/")}
-              className="text-gray-500 hover:text-gray-700 text-sm"
-            >
-              Voltar para Home
-            </button>
-          </div>
+        <div className="mt-6 text-center">
+          <button
+            data-testid="back-to-home-link"
+            onClick={() => navigate("/")}
+            className="text-sm text-gray-500 hover:text-gray-700 inline-flex items-center"
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Voltar para Home
+          </button>
         </div>
       </div>
     </div>
