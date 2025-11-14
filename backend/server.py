@@ -517,6 +517,142 @@ async def update_request_status(request_id: str, status: str, current_user: dict
         raise HTTPException(status_code=404, detail="Request not found")
     return {"success": True}
 
+# ElevenLabs TTS endpoint
+@api_router.post("/tts/generate", response_model=TTSResponse)
+async def generate_tts(request: TTSRequest, current_user: dict = Depends(get_current_user)):
+    """Generate text-to-speech audio using ElevenLabs"""
+    if not eleven_client:
+        raise HTTPException(status_code=503, detail="ElevenLabs not configured")
+    
+    try:
+        voice_settings = VoiceSettings(
+            stability=request.stability,
+            similarity_boost=request.similarity_boost,
+            style=request.style,
+            use_speaker_boost=request.use_speaker_boost
+        )
+        
+        audio_generator = eleven_client.text_to_speech.convert(
+            text=request.text,
+            voice_id=request.voice_id,
+            model_id="eleven_multilingual_v2",
+            voice_settings=voice_settings
+        )
+        
+        # Collect audio data
+        audio_data = b""
+        for chunk in audio_generator:
+            audio_data += chunk
+        
+        # Convert to base64
+        audio_b64 = base64.b64encode(audio_data).decode()
+        
+        tts_response = TTSResponse(
+            audio_url=f"data:audio/mpeg;base64,{audio_b64}",
+            text=request.text,
+            voice_id=request.voice_id
+        )
+        
+        # Save to database
+        tts_dict = tts_response.model_dump()
+        tts_dict['created_at'] = tts_dict['created_at'].isoformat()
+        tts_dict['user_id'] = current_user['user_id']
+        await db.tts_generations.insert_one(tts_dict)
+        
+        return tts_response
+        
+    except Exception as e:
+        logging.error(f"Error generating TTS: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating TTS: {str(e)}")
+
+# Voice call endpoint
+@api_router.post("/voice/call", response_model=VoiceCallResponse)
+async def make_voice_call(request: VoiceCallRequest, current_user: dict = Depends(get_current_user)):
+    """Initiate a voice call using agent's voice"""
+    
+    # Verify subscription
+    subscription = await db.subscriptions.find_one({
+        "user_id": current_user['user_id'],
+        "agent_id": request.agent_id,
+        "status": "active"
+    })
+    
+    if not subscription:
+        raise HTTPException(status_code=403, detail="No active subscription for this agent")
+    
+    # Get agent details
+    agent = await db.agents.find_one({"id": request.agent_id})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    # Generate audio using ElevenLabs
+    if not eleven_client:
+        raise HTTPException(status_code=503, detail="ElevenLabs not configured")
+    
+    try:
+        voice_settings = VoiceSettings(
+            stability=0.5,
+            similarity_boost=0.75,
+            style=0.0,
+            use_speaker_boost=True
+        )
+        
+        audio_generator = eleven_client.text_to_speech.convert(
+            text=request.message,
+            voice_id=agent['elevenlabs_voice_id'],
+            model_id="eleven_multilingual_v2",
+            voice_settings=voice_settings
+        )
+        
+        # Collect audio
+        audio_data = b""
+        for chunk in audio_generator:
+            audio_data += chunk
+        
+        # In production, this would integrate with a telephony service (Twilio, etc)
+        # For now, we'll just store the call record
+        
+        call_response = VoiceCallResponse(
+            phone=request.phone,
+            status="queued",
+            message=request.message
+        )
+        
+        # Save call to database
+        call_dict = call_response.model_dump()
+        call_dict['created_at'] = call_dict['created_at'].isoformat()
+        call_dict['user_id'] = current_user['user_id']
+        call_dict['agent_id'] = request.agent_id
+        call_dict['subscription_id'] = subscription['id']
+        await db.voice_calls.insert_one(call_dict)
+        
+        # Log webhook event
+        webhook_log = WebhookLog(
+            subscription_id=subscription['id'],
+            event_type="call.initiated",
+            payload={
+                "call_id": call_response.id,
+                "phone": request.phone,
+                "status": "queued"
+            }
+        )
+        log_dict = webhook_log.model_dump()
+        log_dict['created_at'] = log_dict['created_at'].isoformat()
+        await db.webhook_logs.insert_one(log_dict)
+        
+        return call_response
+        
+    except Exception as e:
+        logging.error(f"Error making voice call: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error making voice call: {str(e)}")
+
+# Get voice calls history
+@api_router.get("/voice/calls")
+async def get_voice_calls(current_user: dict = Depends(get_current_user)):
+    """Get user's voice call history"""
+    calls = await db.voice_calls.find({"user_id": current_user['user_id']}, {"_id": 0}).sort("created_at", -1).limit(50).to_list(50)
+    return calls
+
 # Webhook
 @api_router.post("/webhooks/stripe")
 async def stripe_webhook(request: Request):
