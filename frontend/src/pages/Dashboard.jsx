@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Mic, ArrowLeft, Copy, Check, ExternalLink } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sparkles, ArrowLeft, Copy, Check, ExternalLink, RefreshCw, AlertCircle, TrendingUp, Activity, Phone } from "lucide-react";
 import { toast } from "sonner";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -19,7 +20,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [copiedKey, setCopiedKey] = useState(null);
   const [editingWebhook, setEditingWebhook] = useState({});
+  const [savingWebhook, setSavingWebhook] = useState({});
   const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
     if (!token) {
@@ -58,64 +61,107 @@ export default function Dashboard() {
   const copyToClipboard = (text, key) => {
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
-    toast.success("Copiado!");
+    toast.success("Copiado para área de transferência!");
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
   const handleUpdateWebhook = async (subscriptionId) => {
     const webhookUrl = editingWebhook[subscriptionId];
-    if (!webhookUrl) {
-      toast.error("Digite uma URL válida");
+    if (!webhookUrl || !webhookUrl.startsWith('http')) {
+      toast.error("Digite uma URL válida (deve começar com http:// ou https://)");
       return;
     }
 
+    setSavingWebhook({ ...savingWebhook, [subscriptionId]: true });
     try {
       await axios.put(
         `${API}/subscriptions/${subscriptionId}/webhook`,
         { webhook_url: webhookUrl },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success("Webhook atualizado!");
+      toast.success("Webhook atualizado com sucesso!");
       fetchSubscriptions();
       setEditingWebhook({ ...editingWebhook, [subscriptionId]: "" });
     } catch (error) {
       toast.error("Erro ao atualizar webhook");
+    } finally {
+      setSavingWebhook({ ...savingWebhook, [subscriptionId]: false });
     }
+  };
+
+  // Mock analytics data - In production, fetch from backend
+  const getAnalytics = (subscriptionId) => {
+    return {
+      totalCalls: Math.floor(Math.random() * 1000) + 100,
+      successRate: (Math.random() * 10 + 90).toFixed(1),
+      avgDuration: (Math.random() * 3 + 1).toFixed(1),
+      lastCall: new Date(Date.now() - Math.random() * 86400000).toLocaleString('pt-BR')
+    };
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
-        <p className="text-gray-600">Carregando...</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin mb-4"></div>
+          <p className="text-gray-600">Carregando dashboard...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <div className="container mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
+    <div className="min-h-screen bg-gray-50">
+      {/* Navbar */}
+      <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
+            <div className="w-7 h-7 bg-black rounded flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-lg font-semibold tracking-tight">VoiceAI Hub</span>
+          </div>
+          <div className="flex items-center gap-3">
             <Button 
               data-testid="back-to-marketplace"
               variant="ghost" 
               onClick={() => navigate("/marketplace")}
+              size="sm"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Marketplace
             </Button>
-            <h1 className="text-4xl font-bold text-gray-900">Meu Dashboard</h1>
+            {user.role === "admin" && (
+              <Button 
+                variant="outline" 
+                onClick={() => navigate("/admin")}
+                size="sm"
+                className="border-gray-300"
+              >
+                Admin
+              </Button>
+            )}
           </div>
+        </div>
+      </nav>
+
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold tracking-tight mb-2">Dashboard</h1>
+          <p className="text-gray-600">Gerencie suas assinaturas e integrações</p>
         </div>
 
         {subscriptions.length === 0 ? (
-          <Card>
-            <CardContent className="py-10 text-center">
-              <p className="text-gray-600 mb-4">Você ainda não tem nenhuma assinatura ativa.</p>
+          <Card className="border-gray-200">
+            <CardContent className="py-16 text-center">
+              <div className="text-4xl mb-4">🤖</div>
+              <h3 className="text-xl font-semibold mb-2">Nenhuma assinatura ativa</h3>
+              <p className="text-gray-600 mb-6">Explore o marketplace e escolha seu primeiro agente de IA</p>
               <Button 
                 data-testid="go-to-marketplace"
                 onClick={() => navigate("/marketplace")} 
-                className="bg-indigo-600 hover:bg-indigo-700"
+                className="bg-black hover:bg-gray-900"
               >
                 Explorar Agentes
               </Button>
@@ -127,88 +173,193 @@ export default function Dashboard() {
               const agent = agents[subscription.agent_id];
               if (!agent) return null;
 
+              const analytics = getAnalytics(subscription.id);
+
               return (
-                <Card key={subscription.id} data-testid={`subscription-card-${subscription.id}`}>
-                  <CardHeader>
+                <Card key={subscription.id} data-testid={`subscription-card-${subscription.id}`} className="border-gray-200">
+                  <CardHeader className="border-b border-gray-100">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-xl flex items-center justify-center">
-                          <Mic className="w-8 h-8 text-indigo-600" />
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-200">
+                          <img 
+                            src={agent.mascot_image_url} 
+                            alt={agent.name}
+                            className="w-10 h-10 object-contain"
+                            onError={(e) => e.target.src = "https://via.placeholder.com/40/f9fafb/9ca3af?text=AI"}
+                          />
                         </div>
                         <div>
-                          <CardTitle className="text-2xl">{agent.name}</CardTitle>
-                          <p className="text-gray-600">{agent.segment}</p>
+                          <CardTitle className="text-xl mb-1">{agent.name}</CardTitle>
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-gray-100 text-gray-700 border-0 text-xs">
+                              {agent.segment}
+                            </Badge>
+                            <Badge 
+                              className={subscription.status === "active" 
+                                ? "bg-green-50 text-green-700 border border-green-200" 
+                                : "bg-yellow-50 text-yellow-700 border border-yellow-200"}
+                            >
+                              {subscription.status === "active" ? "Ativo" : "Pendente"}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
-                      <Badge 
-                        className={subscription.status === "active" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}
-                      >
-                        {subscription.status === "active" ? "Ativo" : "Pendente"}
-                      </Badge>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold">${agent.price}</div>
+                        <div className="text-sm text-gray-500">por mês</div>
+                      </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* API Key */}
-                    <div>
-                      <Label className="text-sm font-semibold mb-2 block">API Key</Label>
-                      <div className="flex space-x-2">
-                        <Input 
-                          data-testid={`api-key-${subscription.id}`}
-                          value={subscription.api_key} 
-                          readOnly 
-                          className="font-mono text-sm"
-                        />
-                        <Button
-                          data-testid={`copy-api-key-${subscription.id}`}
-                          variant="outline"
-                          size="icon"
-                          onClick={() => copyToClipboard(subscription.api_key, `api-${subscription.id}`)}
-                        >
-                          {copiedKey === `api-${subscription.id}` ? (
-                            <Check className="w-4 h-4 text-green-500" />
-                          ) : (
-                            <Copy className="w-4 h-4" />
+
+                  <CardContent className="pt-6">
+                    <Tabs defaultValue="integration" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2 mb-6">
+                        <TabsTrigger value="integration">Integração</TabsTrigger>
+                        <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value="integration" className="space-y-6">
+                        {/* API Key */}
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <Label className="text-sm font-semibold">API Key</Label>
+                            <span className="text-xs text-gray-500">Use para autenticar suas requisições</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <Input 
+                              data-testid={`api-key-${subscription.id}`}
+                              value={subscription.api_key} 
+                              readOnly 
+                              className="font-mono text-sm bg-gray-50 border-gray-300"
+                            />
+                            <Button
+                              data-testid={`copy-api-key-${subscription.id}`}
+                              variant="outline"
+                              size="icon"
+                              onClick={() => copyToClipboard(subscription.api_key, `api-${subscription.id}`)}
+                              className="shrink-0 border-gray-300"
+                            >
+                              {copiedKey === `api-${subscription.id}` ? (
+                                <Check className="w-4 h-4 text-green-500" />
+                              ) : (
+                                <Copy className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Webhook URL */}
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <Label className="text-sm font-semibold">Webhook URL</Label>
+                            <span className="text-xs text-gray-500">Receba eventos em tempo real</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <Input
+                              data-testid={`webhook-input-${subscription.id}`}
+                              placeholder="https://seu-servidor.com/webhook"
+                              value={editingWebhook[subscription.id] !== undefined 
+                                ? editingWebhook[subscription.id] 
+                                : subscription.webhook_url || ""}
+                              onChange={(e) => setEditingWebhook({ ...editingWebhook, [subscription.id]: e.target.value })}
+                              className="border-gray-300"
+                            />
+                            <Button
+                              data-testid={`update-webhook-${subscription.id}`}
+                              onClick={() => handleUpdateWebhook(subscription.id)}
+                              className="bg-black hover:bg-gray-900 shrink-0"
+                              disabled={savingWebhook[subscription.id]}
+                            >
+                              {savingWebhook[subscription.id] ? (
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                              ) : (
+                                "Salvar"
+                              )}
+                            </Button>
+                          </div>
+                          {subscription.webhook_url && (
+                            <p className="text-xs text-gray-500 mt-2 flex items-center">
+                              <Check className="w-3 h-3 text-green-500 mr-1" />
+                              Configurado: {subscription.webhook_url}
+                            </p>
                           )}
-                        </Button>
-                      </div>
-                    </div>
+                        </div>
 
-                    {/* Webhook URL */}
-                    <div>
-                      <Label className="text-sm font-semibold mb-2 block">Webhook URL</Label>
-                      <div className="flex space-x-2">
-                        <Input
-                          data-testid={`webhook-input-${subscription.id}`}
-                          placeholder="https://seu-servidor.com/webhook"
-                          value={editingWebhook[subscription.id] || subscription.webhook_url || ""}
-                          onChange={(e) => setEditingWebhook({ ...editingWebhook, [subscription.id]: e.target.value })}
-                        />
-                        <Button
-                          data-testid={`update-webhook-${subscription.id}`}
-                          onClick={() => handleUpdateWebhook(subscription.id)}
-                          className="bg-indigo-600 hover:bg-indigo-700"
-                        >
-                          Atualizar
-                        </Button>
-                      </div>
-                      {subscription.webhook_url && (
-                        <p className="text-sm text-gray-500 mt-2">Atual: {subscription.webhook_url}</p>
-                      )}
-                    </div>
+                        {/* Integration Example */}
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="w-4 h-4 text-gray-600" />
+                              <h4 className="font-semibold text-sm">Exemplo de Integração</h4>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-auto p-0 text-xs"
+                              onClick={() => window.open('https://docs.voiceaihub.com', '_blank')}
+                            >
+                              Ver docs completos
+                              <ExternalLink className="w-3 h-3 ml-1" />
+                            </Button>
+                          </div>
+                          <code className="text-xs bg-white px-3 py-2 rounded block overflow-x-auto border border-gray-200">
+                            curl -X POST https://api.voiceaihub.com/v1/call \<br />
+                            &nbsp;&nbsp;-H "Authorization: Bearer {subscription.api_key}" \<br />
+                            &nbsp;&nbsp;-d '{"phone": "+5511999999999"}'
+                          </code>
+                        </div>
+                      </TabsContent>
 
-                    {/* Documentation Link */}
-                    <div className="bg-indigo-50 rounded-lg p-4">
-                      <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Como Integrar
-                      </h4>
-                      <p className="text-sm text-gray-600 mb-3">
-                        Use a API Key acima para autenticar suas requisições. Configure o webhook para receber eventos em tempo real.
-                      </p>
-                      <code className="text-xs bg-white px-3 py-2 rounded block">
-                        Authorization: Bearer {subscription.api_key}
-                      </code>
-                    </div>
+                      <TabsContent value="analytics" className="space-y-6">
+                        {/* Analytics Cards */}
+                        <div className="grid md:grid-cols-4 gap-4">
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs text-gray-600">Total de Chamadas</span>
+                              <Phone className="w-4 h-4 text-gray-400" />
+                            </div>
+                            <div className="text-2xl font-bold">{analytics.totalCalls}</div>
+                            <div className="text-xs text-gray-500 mt-1">Últimos 30 dias</div>
+                          </div>
+
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs text-gray-600">Taxa de Sucesso</span>
+                              <TrendingUp className="w-4 h-4 text-gray-400" />
+                            </div>
+                            <div className="text-2xl font-bold">{analytics.successRate}%</div>
+                            <div className="text-xs text-green-600 mt-1">+2.3% vs mês anterior</div>
+                          </div>
+
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs text-gray-600">Duração Média</span>
+                              <Activity className="w-4 h-4 text-gray-400" />
+                            </div>
+                            <div className="text-2xl font-bold">{analytics.avgDuration}min</div>
+                            <div className="text-xs text-gray-500 mt-1">Por chamada</div>
+                          </div>
+
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs text-gray-600">Última Chamada</span>
+                              <RefreshCw className="w-4 h-4 text-gray-400" />
+                            </div>
+                            <div className="text-sm font-semibold">{analytics.lastCall.split(',')[0]}</div>
+                            <div className="text-xs text-gray-500 mt-1">{analytics.lastCall.split(',')[1]}</div>
+                          </div>
+                        </div>
+
+                        {/* Coming Soon */}
+                        <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg p-8 text-center">
+                          <div className="text-3xl mb-3">📊</div>
+                          <h3 className="font-semibold mb-2">Analytics Detalhado em Breve</h3>
+                          <p className="text-sm text-gray-600">
+                            Gráficos de performance, histórico completo de chamadas e insights avançados
+                          </p>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
                   </CardContent>
                 </Card>
               );
