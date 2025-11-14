@@ -317,6 +317,6 @@ export default function Marketplace() {
           </div>
         )}
       </div>
-    </SidebarLayout>
+    </div>
   );
 }
