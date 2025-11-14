@@ -10,6 +10,8 @@ import Dashboard from "@/pages/Dashboard";
 import RequestAgent from "@/pages/RequestAgent";
 import AdminDashboard from "@/pages/AdminDashboard";
 import PaymentSuccess from "@/pages/PaymentSuccess";
+import Billing from "@/pages/Billing";
+import ApiDocs from "@/pages/ApiDocs";
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
           <Route path="/request-agent" element={<RequestAgent />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/billing" element={<Billing />} />
+          <Route path="/api-docs" element={<ApiDocs />} />
         </Routes>
       </BrowserRouter>
       <Toaster />
