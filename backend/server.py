@@ -162,6 +162,35 @@ class CheckoutRequest(BaseModel):
     agent_id: str
     origin_url: str
 
+class TTSRequest(BaseModel):
+    text: str
+    voice_id: str
+    stability: float = 0.5
+    similarity_boost: float = 0.75
+    style: float = 0.0
+    use_speaker_boost: bool = True
+
+class TTSResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    audio_url: str
+    text: str
+    voice_id: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class VoiceCallRequest(BaseModel):
+    phone: str
+    message: str
+    agent_id: str
+
+class VoiceCallResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    phone: str
+    status: str
+    message: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # Helper functions
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
