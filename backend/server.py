@@ -1,15 +1,18 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
+from typing import List, Optional, Dict
 import uuid
-from datetime import datetime, timezone
-
+from datetime import datetime, timezone, timedelta
+import bcrypt
+import jwt
+from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -19,54 +22,411 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app without a prefix
-app = FastAPI()
+# JWT Secret
+JWT_SECRET = os.environ.get('JWT_SECRET', 'your-secret-key-change-in-production')
+JWT_ALGORITHM = 'HS256'
+JWT_EXPIRATION_DAYS = 30
 
-# Create a router with the /api prefix
+# Stripe
+STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY', 'sk_test_emergent')
+
+security = HTTPBearer()
+
+# Create the main app
+app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
-
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
+# Models
+class User(BaseModel):
+    model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    email: EmailStr
+    name: str
+    role: str = "customer"  # customer or admin
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+class UserCreate(BaseModel):
+    email: EmailStr
+    name: str
+    password: str
 
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
+class Agent(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str
+    segment: str
+    price: float
+    features: List[str]
+    mascot_image_url: str
+    elevenlabs_voice_id: str
+    status: str = "active"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AgentCreate(BaseModel):
+    name: str
+    description: str
+    segment: str
+    price: float
+    features: List[str]
+    mascot_image_url: str
+    elevenlabs_voice_id: str
+
+class Subscription(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    agent_id: str
+    stripe_subscription_id: Optional[str] = None
+    status: str = "pending"  # pending, active, cancelled
+    api_key: str = Field(default_factory=lambda: f"vapi_{uuid.uuid4().hex}")
+    webhook_url: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SubscriptionUpdate(BaseModel):
+    webhook_url: str
+
+class AgentRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    segment: str
+    description: str
+    status: str = "pending"  # pending, in_progress, completed
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AgentRequestCreate(BaseModel):
+    segment: str
+    description: str
+
+class PaymentTransaction(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    session_id: str
+    user_id: Optional[str] = None
+    agent_id: str
+    amount: float
+    currency: str
+    payment_status: str = "pending"
+    metadata: Dict
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class CheckoutRequest(BaseModel):
+    agent_id: str
+    origin_url: str
+
+# Helper functions
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+
+def create_token(user_id: str, role: str) -> str:
+    expiration = datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRATION_DAYS)
+    payload = {
+        'user_id': user_id,
+        'role': role,
+        'exp': expiration
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    try:
+        token = credentials.credentials
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        user_id = payload.get('user_id')
+        role = payload.get('role')
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return {'user_id': user_id, 'role': role}
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+async def require_admin(current_user: dict = Depends(get_current_user)):
+    if current_user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
+
+# Auth endpoints
+@api_router.post("/auth/register")
+async def register(user_data: UserCreate):
+    # Check if user exists
+    existing = await db.users.find_one({"email": user_data.email})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
     
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
+    # Create user
+    user = User(
+        email=user_data.email,
+        name=user_data.name
+    )
     
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
+    user_dict = user.model_dump()
+    user_dict['password_hash'] = hash_password(user_data.password)
+    user_dict['created_at'] = user_dict['created_at'].isoformat()
+    
+    await db.users.insert_one(user_dict)
+    
+    token = create_token(user.id, user.role)
+    return {"token": token, "user": user}
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
+@api_router.post("/auth/login")
+async def login(credentials: UserLogin):
+    user_doc = await db.users.find_one({"email": credentials.email})
+    if not user_doc:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
+    if not verify_password(credentials.password, user_doc['password_hash']):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    return status_checks
+    token = create_token(user_doc['id'], user_doc['role'])
+    user = User(**{k: v for k, v in user_doc.items() if k != 'password_hash'})
+    return {"token": token, "user": user}
 
-# Include the router in the main app
+# Public agent endpoints
+@api_router.get("/agents", response_model=List[Agent])
+async def get_agents(segment: Optional[str] = None):
+    query = {"status": "active"}
+    if segment:
+        query["segment"] = segment
+    
+    agents = await db.agents.find(query, {"_id": 0}).to_list(1000)
+    for agent in agents:
+        if isinstance(agent.get('created_at'), str):
+            agent['created_at'] = datetime.fromisoformat(agent['created_at'])
+    return agents
+
+@api_router.get("/agents/{agent_id}", response_model=Agent)
+async def get_agent(agent_id: str):
+    agent = await db.agents.find_one({"id": agent_id}, {"_id": 0})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    if isinstance(agent.get('created_at'), str):
+        agent['created_at'] = datetime.fromisoformat(agent['created_at'])
+    return Agent(**agent)
+
+# Customer endpoints
+@api_router.get("/subscriptions/my", response_model=List[Subscription])
+async def get_my_subscriptions(current_user: dict = Depends(get_current_user)):
+    subs = await db.subscriptions.find({"user_id": current_user['user_id']}, {"_id": 0}).to_list(1000)
+    for sub in subs:
+        for field in ['created_at', 'start_date', 'end_date']:
+            if isinstance(sub.get(field), str):
+                sub[field] = datetime.fromisoformat(sub[field])
+    return subs
+
+@api_router.post("/subscriptions/checkout")
+async def create_checkout(checkout_req: CheckoutRequest, current_user: dict = Depends(get_current_user)):
+    # Get agent
+    agent = await db.agents.find_one({"id": checkout_req.agent_id})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    # Initialize Stripe
+    webhook_url = f"{checkout_req.origin_url}/api/webhooks/stripe"
+    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+    
+    # Create checkout session
+    success_url = f"{checkout_req.origin_url}/payment-success?session_id={{{{CHECKOUT_SESSION_ID}}}}"
+    cancel_url = f"{checkout_req.origin_url}/marketplace"
+    
+    session_request = CheckoutSessionRequest(
+        amount=agent['price'],
+        currency="usd",
+        success_url=success_url,
+        cancel_url=cancel_url,
+        metadata={
+            "user_id": current_user['user_id'],
+            "agent_id": checkout_req.agent_id,
+            "type": "subscription"
+        }
+    )
+    
+    session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(session_request)
+    
+    # Create payment transaction
+    transaction = PaymentTransaction(
+        session_id=session.session_id,
+        user_id=current_user['user_id'],
+        agent_id=checkout_req.agent_id,
+        amount=agent['price'],
+        currency="usd",
+        payment_status="pending",
+        metadata=session_request.metadata
+    )
+    
+    trans_dict = transaction.model_dump()
+    trans_dict['created_at'] = trans_dict['created_at'].isoformat()
+    await db.payment_transactions.insert_one(trans_dict)
+    
+    return {"url": session.url, "session_id": session.session_id}
+
+@api_router.get("/subscriptions/checkout/status/{session_id}")
+async def get_checkout_status(session_id: str, current_user: dict = Depends(get_current_user)):
+    # Check transaction
+    transaction = await db.payment_transactions.find_one({"session_id": session_id})
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    
+    # Initialize Stripe
+    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
+    status: CheckoutStatusResponse = await stripe_checkout.get_checkout_status(session_id)
+    
+    # Update transaction
+    if status.payment_status == "paid" and transaction['payment_status'] != "paid":
+        await db.payment_transactions.update_one(
+            {"session_id": session_id},
+            {"$set": {"payment_status": "paid"}}
+        )
+        
+        # Create subscription
+        subscription = Subscription(
+            user_id=transaction['user_id'],
+            agent_id=transaction['agent_id'],
+            status="active",
+            start_date=datetime.now(timezone.utc),
+            end_date=datetime.now(timezone.utc) + timedelta(days=30)
+        )
+        
+        sub_dict = subscription.model_dump()
+        for field in ['created_at', 'start_date', 'end_date']:
+            sub_dict[field] = sub_dict[field].isoformat()
+        
+        await db.subscriptions.insert_one(sub_dict)
+    
+    return status
+
+@api_router.get("/subscriptions/{subscription_id}")
+async def get_subscription(subscription_id: str, current_user: dict = Depends(get_current_user)):
+    sub = await db.subscriptions.find_one({"id": subscription_id, "user_id": current_user['user_id']}, {"_id": 0})
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+    return sub
+
+@api_router.put("/subscriptions/{subscription_id}/webhook")
+async def update_webhook(subscription_id: str, update: SubscriptionUpdate, current_user: dict = Depends(get_current_user)):
+    result = await db.subscriptions.update_one(
+        {"id": subscription_id, "user_id": current_user['user_id']},
+        {"$set": {"webhook_url": update.webhook_url}}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+    return {"success": True}
+
+@api_router.post("/agent-requests")
+async def create_agent_request(request_data: AgentRequestCreate, current_user: dict = Depends(get_current_user)):
+    agent_req = AgentRequest(
+        user_id=current_user['user_id'],
+        segment=request_data.segment,
+        description=request_data.description
+    )
+    
+    req_dict = agent_req.model_dump()
+    req_dict['created_at'] = req_dict['created_at'].isoformat()
+    
+    await db.agent_requests.insert_one(req_dict)
+    return agent_req
+
+@api_router.get("/agent-requests/my", response_model=List[AgentRequest])
+async def get_my_requests(current_user: dict = Depends(get_current_user)):
+    reqs = await db.agent_requests.find({"user_id": current_user['user_id']}, {"_id": 0}).to_list(1000)
+    for req in reqs:
+        if isinstance(req.get('created_at'), str):
+            req['created_at'] = datetime.fromisoformat(req['created_at'])
+    return reqs
+
+# Admin endpoints
+@api_router.post("/admin/agents", response_model=Agent)
+async def create_agent(agent_data: AgentCreate, current_user: dict = Depends(require_admin)):
+    agent = Agent(**agent_data.model_dump())
+    agent_dict = agent.model_dump()
+    agent_dict['created_at'] = agent_dict['created_at'].isoformat()
+    await db.agents.insert_one(agent_dict)
+    return agent
+
+@api_router.put("/admin/agents/{agent_id}", response_model=Agent)
+async def update_agent(agent_id: str, agent_data: AgentCreate, current_user: dict = Depends(require_admin)):
+    update_dict = agent_data.model_dump()
+    result = await db.agents.update_one({"id": agent_id}, {"$set": update_dict})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    agent = await db.agents.find_one({"id": agent_id}, {"_id": 0})
+    if isinstance(agent.get('created_at'), str):
+        agent['created_at'] = datetime.fromisoformat(agent['created_at'])
+    return Agent(**agent)
+
+@api_router.delete("/admin/agents/{agent_id}")
+async def delete_agent(agent_id: str, current_user: dict = Depends(require_admin)):
+    result = await db.agents.update_one({"id": agent_id}, {"$set": {"status": "deleted"}})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    return {"success": True}
+
+@api_router.get("/admin/agent-requests", response_model=List[AgentRequest])
+async def get_all_requests(current_user: dict = Depends(require_admin)):
+    reqs = await db.agent_requests.find({}, {"_id": 0}).to_list(1000)
+    for req in reqs:
+        if isinstance(req.get('created_at'), str):
+            req['created_at'] = datetime.fromisoformat(req['created_at'])
+    return reqs
+
+@api_router.put("/admin/agent-requests/{request_id}")
+async def update_request_status(request_id: str, status: str, current_user: dict = Depends(require_admin)):
+    result = await db.agent_requests.update_one(
+        {"id": request_id},
+        {"$set": {"status": status}}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Request not found")
+    return {"success": True}
+
+# Webhook
+@api_router.post("/webhooks/stripe")
+async def stripe_webhook(request: Request):
+    body = await request.body()
+    signature = request.headers.get("Stripe-Signature")
+    
+    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
+    webhook_response = await stripe_checkout.handle_webhook(body, signature)
+    
+    if webhook_response.payment_status == "paid":
+        # Handle successful payment
+        session_id = webhook_response.session_id
+        transaction = await db.payment_transactions.find_one({"session_id": session_id})
+        
+        if transaction and transaction['payment_status'] != "paid":
+            await db.payment_transactions.update_one(
+                {"session_id": session_id},
+                {"$set": {"payment_status": "paid"}}
+            )
+            
+            # Create subscription
+            subscription = Subscription(
+                user_id=transaction['user_id'],
+                agent_id=transaction['agent_id'],
+                status="active",
+                start_date=datetime.now(timezone.utc),
+                end_date=datetime.now(timezone.utc) + timedelta(days=30)
+            )
+            
+            sub_dict = subscription.model_dump()
+            for field in ['created_at', 'start_date', 'end_date']:
+                sub_dict[field] = sub_dict[field].isoformat()
+            
+            await db.subscriptions.insert_one(sub_dict)
+    
+    return {"success": True}
+
 app.include_router(api_router)
 
 app.add_middleware(
@@ -77,7 +437,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
