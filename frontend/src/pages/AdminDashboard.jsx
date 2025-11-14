@@ -31,6 +31,8 @@ export default function AdminDashboard() {
     mascot_image_url: "",
     elevenlabs_voice_id: ""
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
