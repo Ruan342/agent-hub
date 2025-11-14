@@ -668,7 +668,7 @@ async def make_voice_call(request: VoiceCallRequest, current_user: dict = Depend
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
     
-    # Generate audio using ElevenLabs
+    # Generate audio with voice AI
     if not eleven_client:
         raise HTTPException(status_code=503, detail="Voice service not configured")
     
