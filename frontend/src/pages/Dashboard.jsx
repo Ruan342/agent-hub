@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sparkles, ArrowLeft, Copy, Check, ExternalLink, RefreshCw, AlertCircle, TrendingUp, Activity, Phone } from "lucide-react";
+import { Sparkles, Copy, Check, ExternalLink, RefreshCw, AlertCircle, TrendingUp, Activity, Phone, Menu, X, LayoutDashboard, FileText, Code2, Home, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import VoiceTest from "@/components/VoiceTest";
 
@@ -22,6 +22,7 @@ export default function Dashboard() {
   const [copiedKey, setCopiedKey] = useState(null);
   const [editingWebhook, setEditingWebhook] = useState({});
   const [savingWebhook, setSavingWebhook] = useState({});
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -40,7 +41,6 @@ export default function Dashboard() {
       });
       setSubscriptions(response.data);
 
-      // Fetch agent details
       const agentIds = [...new Set(response.data.map(sub => sub.agent_id))];
       const agentData = {};
       for (const agentId of agentIds) {
@@ -90,7 +90,6 @@ export default function Dashboard() {
     }
   };
 
-  // Mock analytics data - In production, fetch from backend
   const getAnalytics = (subscriptionId) => {
     return {
       totalCalls: Math.floor(Math.random() * 1000) + 100,
@@ -99,6 +98,14 @@ export default function Dashboard() {
       lastCall: new Date(Date.now() - Math.random() * 86400000).toLocaleString('pt-BR')
     };
   };
+
+  const menuItems = [
+    { icon: Home, label: "Início", path: "/" },
+    { icon: ShoppingBag, label: "Marketplace", path: "/marketplace" },
+    { icon: LayoutDashboard, label: "Minhas Assinaturas", path: "/dashboard", active: true },
+    { icon: FileText, label: "Faturas", path: "/billing" },
+    { icon: Code2, label: "Documentação API", path: "/api-docs" },
+  ];
 
   if (loading) {
     return (
@@ -112,302 +119,312 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-5">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <div className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-200 transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-16'}`}>
+        {/* Header */}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100">
+          {sidebarOpen ? (
+            <div className="flex items-center space-x-2">
               <div className="w-7 h-7 bg-black rounded flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <span className="text-lg font-semibold tracking-tight">VoiceAI Hub</span>
             </div>
+          ) : (
+            <div className="w-7 h-7 bg-black rounded flex items-center justify-center mx-auto">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className={`${sidebarOpen ? '' : 'mx-auto mt-2'}`}
+          >
+            {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </Button>
+        </div>
+
+        {/* Menu Items */}
+        <nav className="p-2 space-y-1">
+          {menuItems.map((item) => (
+            <button
+              key={item.path}
+              onClick={() => navigate(item.path)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                item.active
+                  ? 'bg-black text-white'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <item.icon className="w-5 h-5 flex-shrink-0" />
+              {sidebarOpen && <span className="text-sm font-medium">{item.label}</span>}
+            </button>
+          ))}
+        </nav>
+
+        {/* User Info */}
+        {sidebarOpen && (
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
             <div className="flex items-center gap-3">
-              <Button 
-                data-testid="back-to-marketplace"
-                variant="ghost" 
-                onClick={() => navigate("/marketplace")}
-                size="sm"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Marketplace
-              </Button>
-              {user.role === "admin" && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate("/admin")}
-                  size="sm"
-                  className="border-gray-300"
-                >
-                  Admin
-                </Button>
-              )}
+              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                <span className="text-sm font-semibold text-gray-600">{user.name?.[0]?.toUpperCase()}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
+                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+              </div>
             </div>
           </div>
-          
-          {/* Menu de navegação */}
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            <Button
-              variant={window.location.pathname === "/dashboard" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => navigate("/dashboard")}
-              className={window.location.pathname === "/dashboard" ? "bg-black" : ""}
-            >
-              <LayoutDashboard className="w-4 h-4 mr-2" />
-              Minhas Assinaturas
-            </Button>
-            <Button
-              variant={window.location.pathname === "/billing" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => navigate("/billing")}
-              className={window.location.pathname === "/billing" ? "bg-black" : ""}
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Faturas
-            </Button>
-            <Button
-              variant={window.location.pathname === "/api-docs" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => navigate("/api-docs")}
-              className={window.location.pathname === "/api-docs" ? "bg-black" : ""}
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Documentação API
-            </Button>
-          </div>
-        </div>
-      </nav>
-
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Dashboard</h1>
-          <p className="text-gray-600">Gerencie suas assinaturas e integrações</p>
-        </div>
-
-        {subscriptions.length === 0 ? (
-          <Card className="border-gray-200">
-            <CardContent className="py-16 text-center">
-              <div className="text-4xl mb-4">🤖</div>
-              <h3 className="text-xl font-semibold mb-2">Nenhuma assinatura ativa</h3>
-              <p className="text-gray-600 mb-6">Explore o marketplace e escolha seu primeiro agente de IA</p>
-              <Button 
-                data-testid="go-to-marketplace"
-                onClick={() => navigate("/marketplace")} 
-                className="bg-black hover:bg-gray-900"
-              >
-                Explorar Agentes
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-6">
-            {subscriptions.map((subscription) => {
-              const agent = agents[subscription.agent_id];
-              if (!agent) return null;
-
-              const analytics = getAnalytics(subscription.id);
-
-              return (
-                <Card key={subscription.id} data-testid={`subscription-card-${subscription.id}`} className="border-gray-200">
-                  <CardHeader className="border-b border-gray-100">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-200">
-                          <img 
-                            src={agent.mascot_image_url} 
-                            alt={agent.name}
-                            className="w-10 h-10 object-contain"
-                            onError={(e) => e.target.src = "https://via.placeholder.com/40/f9fafb/9ca3af?text=AI"}
-                          />
-                        </div>
-                        <div>
-                          <CardTitle className="text-xl mb-1">{agent.name}</CardTitle>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-gray-100 text-gray-700 border-0 text-xs">
-                              {agent.segment}
-                            </Badge>
-                            <Badge 
-                              className={subscription.status === "active" 
-                                ? "bg-green-50 text-green-700 border border-green-200" 
-                                : "bg-yellow-50 text-yellow-700 border border-yellow-200"}
-                            >
-                              {subscription.status === "active" ? "Ativo" : "Pendente"}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold">${agent.price}</div>
-                        <div className="text-sm text-gray-500">por mês</div>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="pt-6">
-                    <Tabs defaultValue="integration" className="w-full">
-                      <TabsList className="grid w-full grid-cols-2 mb-6">
-                        <TabsTrigger value="integration">Integração</TabsTrigger>
-                        <TabsTrigger value="analytics">Analytics</TabsTrigger>
-                      </TabsList>
-
-                      <TabsContent value="integration" className="space-y-6">
-                        {/* API Key */}
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <Label className="text-sm font-semibold">API Key</Label>
-                            <span className="text-xs text-gray-500">Use para autenticar suas requisições</span>
-                          </div>
-                          <div className="flex gap-2">
-                            <Input 
-                              data-testid={`api-key-${subscription.id}`}
-                              value={subscription.api_key} 
-                              readOnly 
-                              className="font-mono text-sm bg-gray-50 border-gray-300"
-                            />
-                            <Button
-                              data-testid={`copy-api-key-${subscription.id}`}
-                              variant="outline"
-                              size="icon"
-                              onClick={() => copyToClipboard(subscription.api_key, `api-${subscription.id}`)}
-                              className="shrink-0 border-gray-300"
-                            >
-                              {copiedKey === `api-${subscription.id}` ? (
-                                <Check className="w-4 h-4 text-green-500" />
-                              ) : (
-                                <Copy className="w-4 h-4" />
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-
-                        {/* Webhook URL */}
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <Label className="text-sm font-semibold">Webhook URL</Label>
-                            <span className="text-xs text-gray-500">Receba eventos em tempo real</span>
-                          </div>
-                          <div className="flex gap-2">
-                            <Input
-                              data-testid={`webhook-input-${subscription.id}`}
-                              placeholder="https://seu-servidor.com/webhook"
-                              value={editingWebhook[subscription.id] !== undefined 
-                                ? editingWebhook[subscription.id] 
-                                : subscription.webhook_url || ""}
-                              onChange={(e) => setEditingWebhook({ ...editingWebhook, [subscription.id]: e.target.value })}
-                              className="border-gray-300"
-                            />
-                            <Button
-                              data-testid={`update-webhook-${subscription.id}`}
-                              onClick={() => handleUpdateWebhook(subscription.id)}
-                              className="bg-black hover:bg-gray-900 shrink-0"
-                              disabled={savingWebhook[subscription.id]}
-                            >
-                              {savingWebhook[subscription.id] ? (
-                                <RefreshCw className="w-4 h-4 animate-spin" />
-                              ) : (
-                                "Salvar"
-                              )}
-                            </Button>
-                          </div>
-                          {subscription.webhook_url && (
-                            <p className="text-xs text-gray-500 mt-2 flex items-center">
-                              <Check className="w-3 h-3 text-green-500 mr-1" />
-                              Configurado: {subscription.webhook_url}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Integration Example */}
-                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <AlertCircle className="w-4 h-4 text-gray-600" />
-                              <h4 className="font-semibold text-sm">Exemplo de Integração</h4>
-                            </div>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-auto p-0 text-xs"
-                              onClick={() => navigate('/api-docs')}
-                            >
-                              Ver docs completos
-                              <ExternalLink className="w-3 h-3 ml-1" />
-                            </Button>
-                          </div>
-                          <code className="text-xs bg-white px-3 py-2 rounded block overflow-x-auto border border-gray-200">
-                            {`curl -X POST https://api.voiceaihub.com/v1/call \\`}<br />
-                            {`  -H "Authorization: Bearer ${subscription.api_key}" \\`}<br />
-                            {`  -d '{"phone": "+5511999999999"}'`}
-                          </code>
-                        </div>
-                        
-                        {/* Voice Test */}
-                        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4">
-                          <h4 className="font-semibold text-sm mb-3">Testar Voz do Agente</h4>
-                          <VoiceTest agentId={agent.id} subscriptionId={subscription.id} voiceId={agent.elevenlabs_voice_id} />
-                        </div>
-
-                        {/* Links moved to navigation menu */}
-                      </TabsContent>
-
-                      <TabsContent value="analytics" className="space-y-6">
-                        {/* Analytics Cards */}
-                        <div className="grid md:grid-cols-4 gap-4">
-                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-xs text-gray-600">Total de Chamadas</span>
-                              <Phone className="w-4 h-4 text-gray-400" />
-                            </div>
-                            <div className="text-2xl font-bold">{analytics.totalCalls}</div>
-                            <div className="text-xs text-gray-500 mt-1">Últimos 30 dias</div>
-                          </div>
-
-                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-xs text-gray-600">Taxa de Sucesso</span>
-                              <TrendingUp className="w-4 h-4 text-gray-400" />
-                            </div>
-                            <div className="text-2xl font-bold">{analytics.successRate}%</div>
-                            <div className="text-xs text-green-600 mt-1">+2.3% vs mês anterior</div>
-                          </div>
-
-                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-xs text-gray-600">Duração Média</span>
-                              <Activity className="w-4 h-4 text-gray-400" />
-                            </div>
-                            <div className="text-2xl font-bold">{analytics.avgDuration}min</div>
-                            <div className="text-xs text-gray-500 mt-1">Por chamada</div>
-                          </div>
-
-                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-xs text-gray-600">Última Chamada</span>
-                              <RefreshCw className="w-4 h-4 text-gray-400" />
-                            </div>
-                            <div className="text-sm font-semibold">{analytics.lastCall.split(',')[0]}</div>
-                            <div className="text-xs text-gray-500 mt-1">{analytics.lastCall.split(',')[1]}</div>
-                          </div>
-                        </div>
-
-                        {/* Coming Soon */}
-                        <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg p-8 text-center">
-                          <div className="text-3xl mb-3">📊</div>
-                          <h3 className="font-semibold mb-2">Analytics Detalhado em Breve</h3>
-                          <p className="text-sm text-gray-600">
-                            Gráficos de performance, histórico completo de chamadas e insights avançados
-                          </p>
-                        </div>
-                      </TabsContent>
-                    </Tabs>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
         )}
+      </div>
+
+      {/* Main Content */}
+      <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-16'}`}>
+        {/* Top Bar */}
+        <div className="bg-white border-b border-gray-100 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Minhas Assinaturas</h1>
+              <p className="text-sm text-gray-600 mt-1">Gerencie suas assinaturas e integrações</p>
+            </div>
+            {user.role === "admin" && (
+              <Button
+                variant="outline"
+                onClick={() => navigate("/admin")}
+                size="sm"
+                className="border-gray-300"
+              >
+                Painel Admin
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          {subscriptions.length === 0 ? (
+            <Card className="border-gray-200">
+              <CardContent className="py-16 text-center">
+                <div className="text-4xl mb-4">🤖</div>
+                <h3 className="text-xl font-semibold mb-2">Nenhuma assinatura ativa</h3>
+                <p className="text-gray-600 mb-6">Explore o marketplace e escolha seu primeiro agente de IA</p>
+                <Button
+                  data-testid="go-to-marketplace"
+                  onClick={() => navigate("/marketplace")}
+                  className="bg-black hover:bg-gray-900"
+                >
+                  Explorar Agentes
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              {subscriptions.map((subscription) => {
+                const agent = agents[subscription.agent_id];
+                if (!agent) return null;
+
+                const analytics = getAnalytics(subscription.id);
+
+                return (
+                  <Card key={subscription.id} data-testid={`subscription-card-${subscription.id}`} className="border-gray-200">
+                    <CardHeader className="border-b border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-200">
+                            <img
+                              src={agent.mascot_image_url}
+                              alt={agent.name}
+                              className="w-10 h-10 object-contain"
+                              onError={(e) => e.target.src = "https://via.placeholder.com/40/f9fafb/9ca3af?text=AI"}
+                            />
+                          </div>
+                          <div>
+                            <CardTitle className="text-xl mb-1">{agent.name}</CardTitle>
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-gray-100 text-gray-700 border-0 text-xs">
+                                {agent.segment}
+                              </Badge>
+                              <Badge
+                                className={subscription.status === "active"
+                                  ? "bg-green-50 text-green-700 border border-green-200"
+                                  : "bg-yellow-50 text-yellow-700 border border-yellow-200"}
+                              >
+                                {subscription.status === "active" ? "Ativo" : "Pendente"}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold">${agent.price}</div>
+                          <div className="text-sm text-gray-500">por mês</div>
+                        </div>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="pt-6">
+                      <Tabs defaultValue="integration" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2 mb-6">
+                          <TabsTrigger value="integration">Integração</TabsTrigger>
+                          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="integration" className="space-y-6">
+                          {/* API Key */}
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <Label className="text-sm font-semibold">API Key</Label>
+                              <span className="text-xs text-gray-500">Use para autenticar suas requisições</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <Input
+                                data-testid={`api-key-${subscription.id}`}
+                                value={subscription.api_key}
+                                readOnly
+                                className="font-mono text-sm bg-gray-50 border-gray-300"
+                              />
+                              <Button
+                                data-testid={`copy-api-key-${subscription.id}`}
+                                variant="outline"
+                                size="icon"
+                                onClick={() => copyToClipboard(subscription.api_key, `api-${subscription.id}`)}
+                                className="shrink-0 border-gray-300"
+                              >
+                                {copiedKey === `api-${subscription.id}` ? (
+                                  <Check className="w-4 h-4 text-green-500" />
+                                ) : (
+                                  <Copy className="w-4 h-4" />
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Webhook URL */}
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <Label className="text-sm font-semibold">Webhook URL</Label>
+                              <span className="text-xs text-gray-500">Receba eventos em tempo real</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <Input
+                                data-testid={`webhook-input-${subscription.id}`}
+                                placeholder="https://seu-servidor.com/webhook"
+                                value={editingWebhook[subscription.id] !== undefined
+                                  ? editingWebhook[subscription.id]
+                                  : subscription.webhook_url || ""}
+                                onChange={(e) => setEditingWebhook({ ...editingWebhook, [subscription.id]: e.target.value })}
+                                className="border-gray-300"
+                              />
+                              <Button
+                                data-testid={`update-webhook-${subscription.id}`}
+                                onClick={() => handleUpdateWebhook(subscription.id)}
+                                className="bg-black hover:bg-gray-900 shrink-0"
+                                disabled={savingWebhook[subscription.id]}
+                              >
+                                {savingWebhook[subscription.id] ? (
+                                  <RefreshCw className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  "Salvar"
+                                )}
+                              </Button>
+                            </div>
+                            {subscription.webhook_url && (
+                              <p className="text-xs text-gray-500 mt-2 flex items-center">
+                                <Check className="w-3 h-3 text-green-500 mr-1" />
+                                Configurado: {subscription.webhook_url}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Integration Example */}
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <AlertCircle className="w-4 h-4 text-gray-600" />
+                                <h4 className="font-semibold text-sm">Exemplo de Integração</h4>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-auto p-0 text-xs"
+                                onClick={() => navigate('/api-docs')}
+                              >
+                                Ver docs completos
+                                <ExternalLink className="w-3 h-3 ml-1" />
+                              </Button>
+                            </div>
+                            <code className="text-xs bg-white px-3 py-2 rounded block overflow-x-auto border border-gray-200">
+                              {`curl -X POST https://api.voiceaihub.com/v1/call \`}<br />
+                              {`  -H "Authorization: Bearer ${subscription.api_key}" \`}<br />
+                              {`  -d '{"phone": "+5511999999999"}'`}
+                            </code>
+                          </div>
+
+                          {/* Voice Test */}
+                          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4">
+                            <h4 className="font-semibold text-sm mb-3">Testar Voz do Agente</h4>
+                            <VoiceTest agentId={agent.id} subscriptionId={subscription.id} voiceId={agent.elevenlabs_voice_id} />
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="analytics" className="space-y-6">
+                          {/* Analytics Cards */}
+                          <div className="grid md:grid-cols-4 gap-4">
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs text-gray-600">Total de Chamadas</span>
+                                <Phone className="w-4 h-4 text-gray-400" />
+                              </div>
+                              <div className="text-2xl font-bold">{analytics.totalCalls}</div>
+                              <div className="text-xs text-gray-500 mt-1">Últimos 30 dias</div>
+                            </div>
+
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs text-gray-600">Taxa de Sucesso</span>
+                                <TrendingUp className="w-4 h-4 text-gray-400" />
+                              </div>
+                              <div className="text-2xl font-bold">{analytics.successRate}%</div>
+                              <div className="text-xs text-green-600 mt-1">+2.3% vs mês anterior</div>
+                            </div>
+
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs text-gray-600">Duração Média</span>
+                                <Activity className="w-4 h-4 text-gray-400" />
+                              </div>
+                              <div className="text-2xl font-bold">{analytics.avgDuration}min</div>
+                              <div className="text-xs text-gray-500 mt-1">Por chamada</div>
+                            </div>
+
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs text-gray-600">Última Chamada</span>
+                                <RefreshCw className="w-4 h-4 text-gray-400" />
+                              </div>
+                              <div className="text-sm font-semibold">{analytics.lastCall.split(',')[0]}</div>
+                              <div className="text-xs text-gray-500 mt-1">{analytics.lastCall.split(',')[1]}</div>
+                            </div>
+                          </div>
+
+                          {/* Coming Soon */}
+                          <div className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg p-8 text-center">
+                            <div className="text-3xl mb-3">📊</div>
+                            <h3 className="font-semibold mb-2">Analytics Detalhado em Breve</h3>
+                            <p className="text-sm text-gray-600">
+                              Gráficos de performance, histórico completo de chamadas e insights avançados
+                            </p>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
