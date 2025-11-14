@@ -517,7 +517,51 @@ async def update_request_status(request_id: str, status: str, current_user: dict
         raise HTTPException(status_code=404, detail="Request not found")
     return {"success": True}
 
-# ElevenLabs TTS endpoint
+# Public TTS test endpoint (no auth required)
+@api_router.post("/tts/test", response_model=TTSResponse)
+async def test_tts(request: TTSRequest):
+    """Public endpoint to test agent voice - limited to 100 chars"""
+    if not eleven_client:
+        raise HTTPException(status_code=503, detail="ElevenLabs not configured")
+    
+    # Limit text length for public testing
+    if len(request.text) > 100:
+        raise HTTPException(status_code=400, detail="Text too long for test. Max 100 characters.")
+    
+    try:
+        voice_settings = VoiceSettings(
+            stability=request.stability,
+            similarity_boost=request.similarity_boost,
+            style=request.style,
+            use_speaker_boost=request.use_speaker_boost
+        )
+        
+        audio_generator = eleven_client.text_to_speech.convert(
+            text=request.text,
+            voice_id=request.voice_id,
+            model_id="eleven_multilingual_v2",
+            voice_settings=voice_settings
+        )
+        
+        audio_data = b""
+        for chunk in audio_generator:
+            audio_data += chunk
+        
+        audio_b64 = base64.b64encode(audio_data).decode()
+        
+        tts_response = TTSResponse(
+            audio_url=f"data:audio/mpeg;base64,{audio_b64}",
+            text=request.text,
+            voice_id=request.voice_id
+        )
+        
+        return tts_response
+        
+    except Exception as e:
+        logging.error(f"Error generating TTS: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating TTS: {str(e)}")
+
+# ElevenLabs TTS endpoint (authenticated)
 @api_router.post("/tts/generate", response_model=TTSResponse)
 async def generate_tts(request: TTSRequest, current_user: dict = Depends(get_current_user)):
     """Generate text-to-speech audio using ElevenLabs"""
