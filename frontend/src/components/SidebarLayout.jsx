@@ -17,6 +17,12 @@ export default function SidebarLayout({ children }) {
   const location = useLocation();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/");
+  };
+
   const isActive = (path) => {
     if (path === "/") {
       return location.pathname === "/";
