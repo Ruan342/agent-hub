@@ -114,9 +114,16 @@ export default function AgentDetails() {
         setAudio(null);
       };
 
+      // Update remaining tests
+      await checkRemainingTests();
+      
       toast.success("Reproduzindo amostra de voz!");
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Erro ao gerar áudio");
+      if (error.response?.status === 429) {
+        toast.error("Limite de testes atingido! Faça login e compre para uso ilimitado.");
+      } else {
+        toast.error(error.response?.data?.detail || "Erro ao gerar áudio");
+      }
     } finally {
       setTestingVoice(false);
     }
