@@ -41,12 +41,16 @@ export default function SidebarLayout({ children }) {
         {/* Header */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100">
           {sidebarOpen ? (
-            <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="flex items-center space-x-2"
+            >
               <div className="w-7 h-7 bg-black rounded flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <span className="text-lg font-semibold tracking-tight">VoiceAI Hub</span>
-            </div>
+            </button>
           ) : (
             <button
               type="button"
