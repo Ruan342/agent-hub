@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Code, LogOut, User, LayoutDashboard, Filter } from "lucide-react";
+import { Sparkles, LogOut, User, LayoutDashboard, Search, SlidersHorizontal, X } from "lucide-react";
 import { toast } from "sonner";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -12,18 +13,40 @@ const API = `${BACKEND_URL}/api`;
 export default function Marketplace() {
   const navigate = useNavigate();
   const [agents, setAgents] = useState([]);
+  const [filteredAgents, setFilteredAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedSegment, setSelectedSegment] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [priceRange, setPriceRange] = useState("all");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  const segments = [
+    { id: "all", label: "Todos", icon: "🎯" },
+    { id: "vendas", label: "Vendas", icon: "💼" },
+    { id: "suporte", label: "Suporte", icon: "💬" },
+    { id: "marketing", label: "Marketing", icon: "📊" },
+    { id: "financeiro", label: "Financeiro", icon: "💰" },
+    { id: "rh", label: "RH", icon: "👥" }
+  ];
+
+  const priceRanges = [
+    { id: "all", label: "Todos os preços" },
+    { id: "0-40", label: "Até $40" },
+    { id: "40-60", label: "$40 - $60" },
+    { id: "60+", label: "Acima de $60" }
+  ];
 
   useEffect(() => {
     fetchAgents();
-  }, [selectedSegment]);
+  }, []);
+
+  useEffect(() => {
+    filterAgents();
+  }, [agents, selectedSegment, searchQuery, priceRange]);
 
   const fetchAgents = async () => {
     try {
-      const url = selectedSegment === "all" ? `${API}/agents` : `${API}/agents?segment=${selectedSegment}`;
-      const response = await axios.get(url);
+      const response = await axios.get(`${API}/agents`);
       setAgents(response.data);
     } catch (error) {
       toast.error("Erro ao carregar agentes");
@@ -32,40 +55,69 @@ export default function Marketplace() {
     }
   };
 
+  const filterAgents = () => {
+    let filtered = [...agents];
+
+    // Filter by segment
+    if (selectedSegment !== "all") {
+      filtered = filtered.filter(agent => agent.segment === selectedSegment);
+    }
+
+    // Filter by search query
+    if (searchQuery) {
+      filtered = filtered.filter(agent => 
+        agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        agent.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Filter by price range
+    if (priceRange !== "all") {
+      if (priceRange === "0-40") {
+        filtered = filtered.filter(agent => agent.price <= 40);
+      } else if (priceRange === "40-60") {
+        filtered = filtered.filter(agent => agent.price > 40 && agent.price <= 60);
+      } else if (priceRange === "60+") {
+        filtered = filtered.filter(agent => agent.price > 60);
+      }
+    }
+
+    setFilteredAgents(filtered);
+  };
+
+  const clearFilters = () => {
+    setSelectedSegment("all");
+    setSearchQuery("");
+    setPriceRange("all");
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/");
   };
 
-  const segments = [
-    { id: "all", label: "Todos" },
-    { id: "vendas", label: "Vendas" },
-    { id: "suporte", label: "Suporte" },
-    { id: "marketing", label: "Marketing" },
-    { id: "financeiro", label: "Financeiro" },
-    { id: "rh", label: "RH" }
-  ];
+  const hasActiveFilters = selectedSegment !== "all" || searchQuery || priceRange !== "all";
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navbar */}
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate("/")}>
-            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-              <Code className="w-5 h-5 text-white" />
+      <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
+            <div className="w-7 h-7 bg-black rounded flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
-            <span className="text-xl font-semibold text-gray-900">VoiceAI Hub</span>
+            <span className="text-lg font-semibold tracking-tight">VoiceAI Hub</span>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-3">
             {user.name ? (
               <>
                 <Button 
                   data-testid="dashboard-button"
                   variant="ghost" 
                   onClick={() => navigate("/dashboard")}
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-sm"
                 >
                   <LayoutDashboard className="w-4 h-4 mr-2" />
                   Dashboard
@@ -75,12 +127,12 @@ export default function Marketplace() {
                     data-testid="admin-button"
                     variant="outline" 
                     onClick={() => navigate("/admin")}
-                    className="border-gray-300"
+                    className="text-sm border-gray-300"
                   >
                     Admin
                   </Button>
                 )}
-                <div className="flex items-center space-x-2 px-3 py-2 bg-gray-100 rounded-lg">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg">
                   <User className="w-4 h-4 text-gray-600" />
                   <span className="text-sm text-gray-700">{user.name}</span>
                 </div>
@@ -88,13 +140,13 @@ export default function Marketplace() {
                   data-testid="logout-button"
                   variant="ghost" 
                   onClick={handleLogout}
-                  className="text-gray-600 hover:text-gray-900"
+                  size="sm"
                 >
                   <LogOut className="w-4 h-4" />
                 </Button>
               </>
             ) : (
-              <Button onClick={() => navigate("/login")} className="bg-black hover:bg-gray-800">
+              <Button onClick={() => navigate("/login")} className="bg-black hover:bg-gray-900 text-sm">
                 Entrar
               </Button>
             )}
@@ -103,49 +155,96 @@ export default function Marketplace() {
       </nav>
 
       {/* Content */}
-      <div className="container mx-auto px-6 py-12">
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">Marketplace</h1>
-          <p className="text-lg text-gray-600">Escolha o agente ideal para seu negócio</p>
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold tracking-tight mb-2">Marketplace</h1>
+          <p className="text-gray-600">Encontre o agente perfeito para seu negócio</p>
         </div>
 
-        {/* Segment Filter */}
-        <div className="mb-8 bg-white border border-gray-200 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Filter className="w-4 h-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">Filtrar por segmento</span>
+        {/* Search and Filters */}
+        <div className="mb-8 space-y-4">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Input
+              data-testid="search-input"
+              placeholder="Buscar agentes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-12 h-12 border-gray-300"
+            />
           </div>
-          <div className="flex flex-wrap gap-2">
-            {segments.map((segment) => (
+
+          {/* Filters */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 flex-1">
+              <SlidersHorizontal className="w-4 h-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">Filtros:</span>
+              
+              {/* Segment Filter */}
+              <div className="flex flex-wrap gap-2">
+                {segments.map((segment) => (
+                  <Button
+                    key={segment.id}
+                    data-testid={`segment-${segment.id}`}
+                    onClick={() => setSelectedSegment(segment.id)}
+                    variant={selectedSegment === segment.id ? "default" : "outline"}
+                    size="sm"
+                    className={selectedSegment === segment.id ? "bg-black hover:bg-gray-900" : "border-gray-300 hover:border-black"}
+                  >
+                    <span className="mr-1">{segment.icon}</span>
+                    {segment.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {hasActiveFilters && (
               <Button
-                key={segment.id}
-                data-testid={`segment-${segment.id}`}
-                onClick={() => setSelectedSegment(segment.id)}
-                variant={selectedSegment === segment.id ? "default" : "outline"}
+                data-testid="clear-filters"
+                variant="ghost"
                 size="sm"
-                className={selectedSegment === segment.id ? "bg-black hover:bg-gray-800" : "border-gray-300 hover:border-black"}
+                onClick={clearFilters}
+                className="text-gray-600"
               >
-                {segment.label}
+                <X className="w-4 h-4 mr-1" />
+                Limpar
+              </Button>
+            )}
+          </div>
+
+          {/* Price Filter */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Preço:</span>
+            {priceRanges.map((range) => (
+              <Button
+                key={range.id}
+                onClick={() => setPriceRange(range.id)}
+                variant={priceRange === range.id ? "default" : "outline"}
+                size="sm"
+                className={priceRange === range.id ? "bg-black hover:bg-gray-900" : "border-gray-300 text-gray-600"}
+              >
+                {range.label}
               </Button>
             ))}
           </div>
         </div>
 
-        {/* Request Custom Agent */}
-        <div className="mb-8 bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold mb-1">Não encontrou o que procura?</h3>
-              <p className="text-sm text-gray-300">Solicite um agente personalizado para suas necessidades específicas</p>
-            </div>
-            <Button 
-              data-testid="request-agent-button"
-              onClick={() => navigate("/request-agent")} 
-              className="bg-white text-black hover:bg-gray-100"
-            >
-              Solicitar Agente
-            </Button>
-          </div>
+        {/* Results Count */}
+        <div className="mb-6 flex items-center justify-between">
+          <p className="text-sm text-gray-600">
+            {filteredAgents.length} {filteredAgents.length === 1 ? 'agente encontrado' : 'agentes encontrados'}
+          </p>
+          <Button 
+            data-testid="request-agent-button"
+            onClick={() => navigate("/request-agent")} 
+            variant="outline"
+            size="sm"
+            className="border-gray-300"
+          >
+            Solicitar Agente Personalizado
+          </Button>
         </div>
 
         {/* Agents Grid */}
@@ -154,44 +253,65 @@ export default function Marketplace() {
             <div className="inline-block w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin"></div>
             <p className="text-gray-600 mt-4">Carregando agentes...</p>
           </div>
-        ) : agents.length === 0 ? (
+        ) : filteredAgents.length === 0 ? (
           <div className="text-center py-20 bg-white border border-gray-200 rounded-xl" data-testid="no-agents-message">
-            <p className="text-gray-600">Nenhum agente disponível neste segmento.</p>
+            <div className="text-4xl mb-4">🔍</div>
+            <h3 className="text-lg font-semibold mb-2">Nenhum agente encontrado</h3>
+            <p className="text-gray-600 mb-4">Tente ajustar seus filtros ou solicite um agente personalizado</p>
+            <Button onClick={clearFilters} variant="outline" size="sm">
+              Limpar Filtros
+            </Button>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {agents.map((agent) => (
+            {filteredAgents.map((agent) => (
               <div 
                 key={agent.id} 
                 data-testid={`agent-card-${agent.id}`}
                 className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-black transition-all cursor-pointer group"
                 onClick={() => navigate(`/agent/${agent.id}`)}
               >
-                <div className="h-40 bg-gray-100 flex items-center justify-center border-b border-gray-200">
+                <div className="h-48 bg-gray-50 flex items-center justify-center border-b border-gray-100">
                   <img 
                     src={agent.mascot_image_url} 
                     alt={agent.name} 
-                    className="w-24 h-24 object-contain"
+                    className="w-28 h-28 object-contain"
                     onError={(e) => {
-                      e.target.src = "https://via.placeholder.com/96/f3f4f6/6b7280?text=AI";
+                      e.target.src = "https://via.placeholder.com/112/f9fafb/9ca3af?text=AI";
                     }}
                   />
                 </div>
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-black">{agent.name}</h3>
-                    <Badge className="bg-gray-100 text-gray-700 border-0 text-xs">{agent.segment}</Badge>
+                    <h3 className="text-lg font-semibold group-hover:text-black transition-colors">{agent.name}</h3>
+                    <Badge className="bg-gray-100 text-gray-700 border-0 text-xs shrink-0">
+                      {agent.segment}
+                    </Badge>
                   </div>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{agent.description}</p>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">{agent.description}</p>
+                  
+                  {/* Features Preview */}
+                  <div className="mb-4 space-y-1">
+                    {agent.features.slice(0, 2).map((feature, idx) => (
+                      <div key={idx} className="flex items-start text-xs text-gray-500">
+                        <span className="mr-1">✓</span>
+                        <span className="line-clamp-1">{feature}</span>
+                      </div>
+                    ))}
+                    {agent.features.length > 2 && (
+                      <div className="text-xs text-gray-400">+{agent.features.length - 2} recursos</div>
+                    )}
+                  </div>
+
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                     <div>
-                      <span className="text-2xl font-bold text-gray-900">${agent.price}</span>
+                      <span className="text-2xl font-bold">${agent.price}</span>
                       <span className="text-gray-500 text-sm">/mês</span>
                     </div>
                     <Button 
                       data-testid={`view-agent-${agent.id}`}
                       size="sm" 
-                      className="bg-black hover:bg-gray-800"
+                      className="bg-black hover:bg-gray-900"
                     >
                       Ver Detalhes
                     </Button>
