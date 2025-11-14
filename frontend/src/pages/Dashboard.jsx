@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sparkles, Copy, Check, ExternalLink, RefreshCw, AlertCircle, TrendingUp, Activity, Phone, Menu, X, LayoutDashboard, FileText, Code2, Home, ShoppingBag } from "lucide-react";
+import { Copy, Check, ExternalLink, RefreshCw, AlertCircle, TrendingUp, Activity, Phone } from "lucide-react";
 import { toast } from "sonner";
 import VoiceTest from "@/components/VoiceTest";
+import SidebarLayout from "@/components/SidebarLayout";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
