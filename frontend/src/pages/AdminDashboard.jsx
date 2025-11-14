@@ -153,6 +153,7 @@ export default function AdminDashboard() {
       mascot_image_url: "",
       elevenlabs_voice_id: ""
     });
+    setSelectedFile(null);
   };
 
   const segments = ["vendas", "suporte", "marketing", "financeiro", "rh"];
