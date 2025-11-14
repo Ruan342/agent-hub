@@ -4,8 +4,9 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, ArrowLeft, Download, FileText, LayoutDashboard } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 import { toast } from "sonner";
+import SidebarLayout from "@/components/SidebarLayout";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
