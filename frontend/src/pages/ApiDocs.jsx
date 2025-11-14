@@ -35,7 +35,7 @@ export default function ApiDocs() {
               size="sm"
               onClick={() => navigate("/dashboard")}
             >
-              <Sparkles className="w-4 h-4 mr-2" />
+              <LayoutDashboard className="w-4 h-4 mr-2" />
               Minhas Assinaturas
             </Button>
             <Button
@@ -43,7 +43,7 @@ export default function ApiDocs() {
               size="sm"
               onClick={() => navigate("/billing")}
             >
-              <Sparkles className="w-4 h-4 mr-2" />
+              <FileText className="w-4 h-4 mr-2" />
               Faturas
             </Button>
             <Button
