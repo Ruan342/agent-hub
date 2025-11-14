@@ -584,6 +584,22 @@ async def test_tts(request: TTSRequest, http_request: Request):
         logging.error(f"Error generating TTS: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error generating TTS: {str(e)}")
 
+# Check remaining tests
+@api_router.get("/tts/test/remaining/{voice_id}")
+async def get_remaining_tests(voice_id: str, http_request: Request):
+    """Check how many tests remaining for this IP"""
+    client_ip = http_request.client.host
+    test_key = f"{client_ip}_{voice_id}"
+    
+    test_count = await db.voice_test_limits.count_documents({"test_key": test_key})
+    remaining = max(0, 3 - test_count)
+    
+    return {
+        "remaining": remaining,
+        "total": 3,
+        "used": test_count
+    }
+
 # ElevenLabs TTS endpoint (authenticated)
 @api_router.post("/tts/generate", response_model=TTSResponse)
 async def generate_tts(request: TTSRequest, current_user: dict = Depends(get_current_user)):
