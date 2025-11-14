@@ -71,18 +71,21 @@ export default function AgentDetails() {
       return;
     }
 
+    if (testText.length > 100) {
+      toast.error("Texto muito longo para teste. Máximo 100 caracteres.");
+      return;
+    }
+
     setTestingVoice(true);
     try {
-      // For public test, we'll use a mock endpoint or allow unauthenticated TTS
       const response = await axios.post(
-        `${API}/tts/generate`,
+        `${API}/tts/test`,
         {
           text: testText,
           voice_id: agent.elevenlabs_voice_id,
           stability: 0.5,
           similarity_boost: 0.75
-        },
-        token ? { headers: { Authorization: `Bearer ${token}` } } : {}
+        }
       );
 
       const audioElement = new Audio(response.data.audio_url);
@@ -95,7 +98,7 @@ export default function AgentDetails() {
 
       toast.success("Reproduzindo amostra de voz!");
     } catch (error) {
-      toast.error("Erro ao gerar áudio. Faça login para testar.");
+      toast.error(error.response?.data?.detail || "Erro ao gerar áudio");
     } finally {
       setTestingVoice(false);
     }
