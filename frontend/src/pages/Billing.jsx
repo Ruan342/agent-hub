@@ -55,21 +55,51 @@ export default function Billing() {
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
-          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
-            <div className="w-7 h-7 bg-black rounded flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
+        <div className="max-w-7xl mx-auto px-6 py-5">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
+              <div className="w-7 h-7 bg-black rounded flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-lg font-semibold tracking-tight">VoiceAI Hub</span>
             </div>
-            <span className="text-lg font-semibold tracking-tight">VoiceAI Hub</span>
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate("/marketplace")}
+              size="sm"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Marketplace
+            </Button>
           </div>
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate("/dashboard")}
-            size="sm"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Dashboard
-          </Button>
+          
+          {/* Menu de navegação */}
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/dashboard")}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Minhas Assinaturas
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              className="bg-black"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Faturas
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/api-docs")}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Documentação API
+            </Button>
+          </div>
         </div>
       </nav>
 
