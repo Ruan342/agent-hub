@@ -305,15 +305,37 @@ export default function AdminDashboard() {
                         </div>
                         
                         <div>
-                          <Label className="text-sm font-medium">URL da Imagem do Mascote *</Label>
-                          <Input
-                            data-testid="agent-image-input"
-                            value={newAgent.mascot_image_url}
-                            onChange={(e) => setNewAgent({ ...newAgent, mascot_image_url: e.target.value })}
-                            placeholder="https://exemplo.com/mascote.png"
-                            required
-                            className="mt-1 border-gray-300"
-                          />
+                          <Label className="text-sm font-medium">Imagem do Mascote *</Label>
+                          <div className="mt-1 space-y-3">
+                            <div className="flex gap-2">
+                              <Input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                className="flex-1 border-gray-300"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                disabled={uploadingImage}
+                                className="border-gray-300"
+                              >
+                                {uploadingImage ? "Enviando..." : "Upload"}
+                              </Button>
+                            </div>
+                            {newAgent.mascot_image_url && (
+                              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <img 
+                                  src={`${BACKEND_URL}${newAgent.mascot_image_url}`}
+                                  alt="Preview"
+                                  className="w-12 h-12 object-contain rounded"
+                                />
+                                <div className="flex-1 text-xs text-gray-600">
+                                  Imagem carregada com sucesso
+                                </div>
+                              </div>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-500 mt-1">Recomendado: 512x512px, PNG com fundo transparente</p>
                         </div>
                         
