@@ -349,25 +349,7 @@ export default function Dashboard() {
                           <VoiceTest agentId={agent.id} subscriptionId={subscription.id} voiceId={agent.elevenlabs_voice_id} />
                         </div>
 
-                        {/* Quick Links */}
-                        <div className="flex gap-2 pt-4 border-t border-gray-200">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate('/billing')}
-                            className="flex-1 border-gray-300"
-                          >
-                            Ver Faturas
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate('/api-docs')}
-                            className="flex-1 border-gray-300"
-                          >
-                            Documentação
-                          </Button>
-                        </div>
+                        {/* Links moved to navigation menu */}
                       </TabsContent>
 
                       <TabsContent value="analytics" className="space-y-6">
