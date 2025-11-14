@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Code2, Zap, FileText } from "lucide-react";
+import { Code2, Zap, FileText, Sparkles, ArrowLeft, LayoutDashboard } from "lucide-react";
 import SidebarLayout from "@/components/SidebarLayout";
 
 export default function ApiDocs() {
