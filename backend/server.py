@@ -600,10 +600,10 @@ async def get_remaining_tests(voice_id: str, http_request: Request):
         "used": test_count
     }
 
-# ElevenLabs TTS endpoint (authenticated)
+# Text-to-Speech endpoint (authenticated)
 @api_router.post("/tts/generate", response_model=TTSResponse)
 async def generate_tts(request: TTSRequest, current_user: dict = Depends(get_current_user)):
-    """Generate text-to-speech audio using ElevenLabs"""
+    """Generate text-to-speech audio"""
     if not eleven_client:
         raise HTTPException(status_code=503, detail="Voice service not configured")
     
