@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap, Shield, Code, Check, Play, Users, Building2, Rocket, ChevronRight } from "lucide-react";
+import { ArrowRight, Play, Sparkles, Zap, Globe } from "lucide-react";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -8,29 +8,29 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-white">
       {/* Navbar */}
-      <nav className="border-b border-gray-200 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-              <Code className="w-5 h-5 text-white" />
+      <nav className="border-b border-gray-100 bg-white sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <div className="w-7 h-7 bg-black rounded flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
-            <span className="text-xl font-semibold text-gray-900">VoiceAI Hub</span>
+            <span className="text-lg font-semibold tracking-tight">VoiceAI Hub</span>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-2">
             <Button 
               data-testid="login-button"
               variant="ghost" 
               onClick={() => navigate("/login")}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-sm"
             >
               Entrar
             </Button>
             <Button 
               data-testid="register-button"
               onClick={() => navigate("/register")}
-              className="bg-black hover:bg-gray-800 text-white"
+              className="bg-black hover:bg-gray-900 text-sm"
             >
-              Começar
+              Começar Grátis
             </Button>
           </div>
         </div>
