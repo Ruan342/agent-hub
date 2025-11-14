@@ -19,6 +19,7 @@ export default function AgentDetails() {
   const [testingVoice, setTestingVoice] = useState(false);
   const [testText, setTestText] = useState("Olá! Sou seu assistente virtual. Como posso ajudá-lo hoje?");
   const [audio, setAudio] = useState(null);
+  const [remainingTests, setRemainingTests] = useState(3);
   const token = localStorage.getItem("token");
 
   useEffect(() => {
