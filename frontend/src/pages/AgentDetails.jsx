@@ -178,6 +178,36 @@ export default function AgentDetails() {
               {purchasing ? "Processando..." : "Comprar Agora"}
             </Button>
 
+            {/* Voice Test Section */}
+            <div className="mt-8 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-200">
+              <h3 className="font-semibold text-gray-900 mb-4">🎙️ Testar Voz do Agente</h3>
+              <p className="text-sm text-gray-600 mb-4">Ouça como o agente fala antes de comprar</p>
+              <Textarea
+                value={testText}
+                onChange={(e) => setTestText(e.target.value)}
+                placeholder="Digite uma frase para o agente falar..."
+                rows={3}
+                className="mb-3 border-indigo-200"
+              />
+              <Button
+                onClick={handleTestVoice}
+                disabled={testingVoice || !testText.trim()}
+                className="w-full bg-indigo-600 hover:bg-indigo-700"
+              >
+                {testingVoice ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Gerando áudio...
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    Testar Voz Gratuitamente
+                  </>
+                )}
+              </Button>
+            </div>
+
             <div className="mt-8 space-y-4">
               <h3 className="font-semibold text-gray-900">O que está incluído:</h3>
               <ul className="space-y-3 text-gray-600">
