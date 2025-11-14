@@ -208,32 +208,62 @@ export default function AgentDetails() {
 
             {/* Voice Test Section */}
             <div className="mt-8 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-200">
-              <h3 className="font-semibold text-gray-900 mb-4">🎙️ Testar Voz do Agente</h3>
-              <p className="text-sm text-gray-600 mb-4">Ouça como o agente fala antes de comprar</p>
-              <Textarea
-                value={testText}
-                onChange={(e) => setTestText(e.target.value)}
-                placeholder="Digite uma frase para o agente falar..."
-                rows={3}
-                className="mb-3 border-indigo-200"
-              />
-              <Button
-                onClick={handleTestVoice}
-                disabled={testingVoice || !testText.trim()}
-                className="w-full bg-indigo-600 hover:bg-indigo-700"
-              >
-                {testingVoice ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Gerando áudio...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 mr-2" />
-                    Testar Voz Gratuitamente
-                  </>
-                )}
-              </Button>
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="font-semibold text-gray-900">🎙️ Testar Voz do Agente</h3>
+                  <p className="text-sm text-gray-600 mt-1">Ouça como o agente fala antes de comprar</p>
+                </div>
+                <div className="text-right">
+                  <div className={`text-lg font-bold ${remainingTests > 0 ? 'text-indigo-600' : 'text-red-600'}`}>
+                    {remainingTests}/3
+                  </div>
+                  <div className="text-xs text-gray-500">testes restantes</div>
+                </div>
+              </div>
+              
+              {remainingTests > 0 ? (
+                <>
+                  <Textarea
+                    value={testText}
+                    onChange={(e) => setTestText(e.target.value)}
+                    placeholder="Digite uma frase para o agente falar..."
+                    rows={3}
+                    className="mb-3 border-indigo-200"
+                    maxLength={100}
+                  />
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs text-gray-500">{testText.length}/100 caracteres</span>
+                  </div>
+                  <Button
+                    onClick={handleTestVoice}
+                    disabled={testingVoice || !testText.trim()}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    {testingVoice ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Gerando áudio...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4 mr-2" />
+                        Testar Voz Gratuitamente ({remainingTests} restantes)
+                      </>
+                    )}
+                  </Button>
+                </>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-gray-700 font-semibold mb-2">Limite de testes atingido!</p>
+                  <p className="text-sm text-gray-600 mb-4">Faça login e compre o agente para uso ilimitado</p>
+                  <Button
+                    onClick={() => navigate('/login')}
+                    className="bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    Fazer Login e Comprar
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="mt-8 space-y-4">
