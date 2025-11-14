@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap, Shield, Code, Check } from "lucide-react";
+import { ArrowRight, Zap, Shield, Code, Check, Play, Users, Building2, Rocket, ChevronRight } from "lucide-react";
 
 export default function Landing() {
   const navigate = useNavigate();
