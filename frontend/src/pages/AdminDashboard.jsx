@@ -340,7 +340,7 @@ export default function AdminDashboard() {
                         </div>
                         
                         <div>
-                          <Label className="text-sm font-medium">ElevenLabs Voice ID *</Label>
+                          <Label className="text-sm font-medium">Voice ID *</Label>
                           <Input
                             data-testid="agent-voice-input"
                             value={newAgent.elevenlabs_voice_id}
@@ -349,7 +349,7 @@ export default function AdminDashboard() {
                             required
                             className="mt-1 border-gray-300"
                           />
-                          <p className="text-xs text-gray-500 mt-1">Obtenha no painel do ElevenLabs</p>
+                          <p className="text-xs text-gray-500 mt-1">ID da voz do agente</p>
                         </div>
                         
                         <div className="flex justify-end gap-2 pt-4">
