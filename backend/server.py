@@ -517,16 +517,29 @@ async def update_request_status(request_id: str, status: str, current_user: dict
         raise HTTPException(status_code=404, detail="Request not found")
     return {"success": True}
 
-# Public TTS test endpoint (no auth required)
+# Public TTS test endpoint (no auth required, limited to 3 tests per IP)
 @api_router.post("/tts/test", response_model=TTSResponse)
-async def test_tts(request: TTSRequest):
-    """Public endpoint to test agent voice - limited to 100 chars"""
+async def test_tts(request: TTSRequest, http_request: Request):
+    """Public endpoint to test agent voice - limited to 3 tests per IP"""
     if not eleven_client:
         raise HTTPException(status_code=503, detail="ElevenLabs not configured")
     
     # Limit text length for public testing
     if len(request.text) > 100:
         raise HTTPException(status_code=400, detail="Text too long for test. Max 100 characters.")
+    
+    # Get client IP
+    client_ip = http_request.client.host
+    
+    # Check test limit (3 tests per IP + voice_id)
+    test_key = f"{client_ip}_{request.voice_id}"
+    test_count = await db.voice_test_limits.count_documents({"test_key": test_key})
+    
+    if test_count >= 3:
+        raise HTTPException(
+            status_code=429, 
+            detail="Limite de testes atingido. Faça login e compre o agente para uso ilimitado."
+        )
     
     try:
         voice_settings = VoiceSettings(
