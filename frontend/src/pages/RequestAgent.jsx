@@ -127,6 +127,6 @@ export default function RequestAgent() {
           </Card>
         </div>
       </div>
-    </div>
+    </SidebarLayout>
   );
 }
