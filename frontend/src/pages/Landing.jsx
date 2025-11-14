@@ -361,20 +361,87 @@ export default function Landing() {
         </div>
       </div>
 
+      {/* Testimonial / Use Case Highlight */}
+      <div className="bg-gray-50 border-y border-gray-200">
+        <div className="container mx-auto px-6 py-24">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                Casos de uso reais
+              </h2>
+              <p className="text-xl text-gray-600">
+                Veja como empresas estão transformando seu atendimento
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="bg-white border border-gray-200 rounded-xl p-6 hover:border-black transition-colors">
+                <div className="text-4xl mb-4">🎯</div>
+                <h3 className="font-bold text-gray-900 mb-2">Vendas</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  "Aumentamos em 40% a qualificação de leads com agentes que trabalham 24/7"
+                </p>
+                <div className="text-xs text-gray-500">— Tech Startup</div>
+              </div>
+              
+              <div className="bg-white border border-gray-200 rounded-xl p-6 hover:border-black transition-colors">
+                <div className="text-4xl mb-4">💬</div>
+                <h3 className="font-bold text-gray-900 mb-2">Suporte</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  "Reduzimos 60% dos tickets de suporte com atendimento automático inteligente"
+                </p>
+                <div className="text-xs text-gray-500">— E-commerce</div>
+              </div>
+              
+              <div className="bg-white border border-gray-200 rounded-xl p-6 hover:border-black transition-colors">
+                <div className="text-4xl mb-4">📊</div>
+                <h3 className="font-bold text-gray-900 mb-2">Marketing</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  "Alcançamos 3x mais prospects com campanhas de voz personalizadas"
+                </p>
+                <div className="text-xs text-gray-500">— Agência Digital</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* CTA Section */}
       <div className="container mx-auto px-6 py-24">
-        <div className="max-w-3xl mx-auto text-center bg-black rounded-2xl p-12">
-          <h2 className="text-4xl font-bold text-white mb-4">Pronto para começar?</h2>
-          <p className="text-xl text-gray-300 mb-8">Escolha seu agente e comece a usar em minutos</p>
-          <Button 
-            data-testid="cta-marketplace-button"
-            onClick={() => navigate("/marketplace")} 
-            size="lg"
-            className="bg-white text-black hover:bg-gray-100 px-8 py-6 text-base"
-          >
-            Ver Marketplace
-            <ArrowRight className="ml-2 w-5 h-5" />
-          </Button>
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-black rounded-2xl p-12 text-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-black opacity-50"></div>
+            <div className="relative z-10">
+              <h2 className="text-4xl font-bold text-white mb-4">
+                Comece gratuitamente hoje
+              </h2>
+              <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+                Sem cartão de crédito. Configure em minutos. 
+                Cancele quando quiser.
+              </p>
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
+                <Button 
+                  data-testid="cta-marketplace-button"
+                  onClick={() => navigate("/marketplace")} 
+                  size="lg"
+                  className="bg-white text-black hover:bg-gray-100 px-8 py-6 text-base"
+                >
+                  Explorar Marketplace
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+                <Button 
+                  data-testid="cta-demo-button"
+                  variant="outline"
+                  size="lg"
+                  className="border-white text-white hover:bg-white hover:text-black px-8 py-6 text-base"
+                  onClick={() => navigate("/request-agent")}
+                >
+                  Solicitar Demo
+                  <ChevronRight className="ml-2 w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
