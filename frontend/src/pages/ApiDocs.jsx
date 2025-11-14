@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sparkles, ArrowLeft, Code2, Zap } from "lucide-react";
+import { Sparkles, ArrowLeft, Code2, Zap, FileText, LayoutDashboard } from "lucide-react";
 
 export default function ApiDocs() {
   const navigate = useNavigate();
