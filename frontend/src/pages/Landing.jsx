@@ -266,6 +266,12 @@ export default function Landing() {
           </div>
         </div>
       </footer>
-    </div>
+    </>
+  );
+
+  return (
+    <SidebarLayout>
+      {mainContent}
+    </SidebarLayout>
   );
 }
