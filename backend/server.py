@@ -303,7 +303,7 @@ async def upload_image(file: UploadFile = File(...), current_user: dict = Depend
         if img.width > 512 or img.height > 512:
             img.thumbnail((512, 512), Image.Resampling.LANCZOS)
             img.save(file_path)
-    except Exception as e:
+    except Exception:
         os.remove(file_path)
         raise HTTPException(status_code=400, detail="Invalid image file")
     
