@@ -115,33 +115,66 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       {/* Navbar */}
       <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
-          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
-            <div className="w-7 h-7 bg-black rounded flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
+        <div className="max-w-7xl mx-auto px-6 py-5">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
+              <div className="w-7 h-7 bg-black rounded flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-lg font-semibold tracking-tight">VoiceAI Hub</span>
             </div>
-            <span className="text-lg font-semibold tracking-tight">VoiceAI Hub</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button 
-              data-testid="back-to-marketplace"
-              variant="ghost" 
-              onClick={() => navigate("/marketplace")}
-              size="sm"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Marketplace
-            </Button>
-            {user.role === "admin" && (
+            <div className="flex items-center gap-3">
               <Button 
-                variant="outline" 
-                onClick={() => navigate("/admin")}
+                data-testid="back-to-marketplace"
+                variant="ghost" 
+                onClick={() => navigate("/marketplace")}
                 size="sm"
-                className="border-gray-300"
               >
-                Admin
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Marketplace
               </Button>
-            )}
+              {user.role === "admin" && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/admin")}
+                  size="sm"
+                  className="border-gray-300"
+                >
+                  Admin
+                </Button>
+              )}
+            </div>
+          </div>
+          
+          {/* Menu de navegação */}
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            <Button
+              variant={window.location.pathname === "/dashboard" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => navigate("/dashboard")}
+              className={window.location.pathname === "/dashboard" ? "bg-black" : ""}
+            >
+              <LayoutDashboard className="w-4 h-4 mr-2" />
+              Minhas Assinaturas
+            </Button>
+            <Button
+              variant={window.location.pathname === "/billing" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => navigate("/billing")}
+              className={window.location.pathname === "/billing" ? "bg-black" : ""}
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Faturas
+            </Button>
+            <Button
+              variant={window.location.pathname === "/api-docs" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => navigate("/api-docs")}
+              className={window.location.pathname === "/api-docs" ? "bg-black" : ""}
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Documentação API
+            </Button>
           </div>
         </div>
       </nav>
