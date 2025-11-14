@@ -41,7 +41,7 @@ export default function Landing() {
         <div className="max-w-3xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-50 border border-gray-200 rounded-full text-sm mb-8">
             <Sparkles className="w-3.5 h-3.5" />
-            <span className="font-medium">Powered by ElevenLabs</span>
+            <span className="font-medium">Tecnologia de IA Avançada</span>
           </div>
           
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
