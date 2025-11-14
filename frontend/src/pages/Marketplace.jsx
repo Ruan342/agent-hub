@@ -26,7 +26,8 @@ export default function Marketplace() {
     { id: "suporte", label: "Suporte", icon: "💬" },
     { id: "marketing", label: "Marketing", icon: "📊" },
     { id: "financeiro", label: "Financeiro", icon: "💰" },
-    { id: "rh", label: "RH", icon: "👥" }
+    { id: "rh", label: "RH", icon: "👥" },
+    { id: "saude", label: "Saúde", icon: "🏥" }
   ];
 
   const priceRanges = [
