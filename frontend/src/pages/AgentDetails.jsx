@@ -16,6 +16,9 @@ export default function AgentDetails() {
   const [agent, setAgent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
+  const [testingVoice, setTestingVoice] = useState(false);
+  const [testText, setTestText] = useState("Olá! Sou seu assistente virtual. Como posso ajudá-lo hoje?");
+  const [audio, setAudio] = useState(null);
   const token = localStorage.getItem("token");
 
   useEffect(() => {
