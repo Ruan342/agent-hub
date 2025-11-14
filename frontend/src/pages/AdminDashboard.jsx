@@ -60,6 +60,33 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setSelectedFile(file);
+    setUploadingImage(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await axios.post(`${API}/admin/upload-image`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      setNewAgent({ ...newAgent, mascot_image_url: response.data.url });
+      toast.success("Imagem enviada com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao enviar imagem");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleCreateAgent = async (e) => {
     e.preventDefault();
     
