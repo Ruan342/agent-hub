@@ -9,8 +9,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Sparkles, ArrowLeft, Plus, Trash2, Edit, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, Trash2, Edit, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import SidebarLayout from "@/components/SidebarLayout";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
