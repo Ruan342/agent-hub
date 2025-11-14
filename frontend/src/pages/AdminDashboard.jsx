@@ -161,48 +161,19 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-600">Carregando painel admin...</p>
+      <SidebarLayout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin mb-4"></div>
+            <p className="text-gray-600">Carregando painel admin...</p>
+          </div>
         </div>
-      </div>
+      </SidebarLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
-          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
-            <div className="w-7 h-7 bg-black rounded flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-lg font-semibold tracking-tight">VoiceAI Hub</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button 
-              data-testid="back-to-marketplace"
-              variant="ghost" 
-              onClick={() => navigate("/marketplace")}
-              size="sm"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Marketplace
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate("/dashboard")}
-              size="sm"
-              className="border-gray-300"
-            >
-              Meu Dashboard
-            </Button>
-          </div>
-        </div>
-      </nav>
-
+    <SidebarLayout>
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-8">
