@@ -168,7 +168,7 @@ export default function Landing() {
               Tecnologia de ponta para seu negócio
             </h2>
             <p className="text-lg text-gray-600 mb-8">
-              Vozes naturais da ElevenLabs, infraestrutura enterprise e API simples.
+              Vozes ultra-realistas, infraestrutura enterprise e API simples.
             </p>
             
             <div className="space-y-4">
