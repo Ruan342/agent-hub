@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { Sparkles, ArrowLeft, Plus, Trash2, Edit, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -20,6 +20,8 @@ export default function AdminDashboard() {
   const [agents, setAgents] = useState([]);
   const [requests, setRequests] = useState([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingAgent, setEditingAgent] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [newAgent, setNewAgent] = useState({
     name: "",
     description: "",
@@ -51,11 +53,19 @@ export default function AdminDashboard() {
       setRequests(requestsRes.data);
     } catch (error) {
       toast.error("Erro ao carregar dados");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCreateAgent = async (e) => {
     e.preventDefault();
+    
+    if (!newAgent.name || !newAgent.segment || !newAgent.price) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
     try {
       const features = newAgent.features.split("\n").filter(f => f.trim());
       await axios.post(
@@ -69,15 +79,7 @@ export default function AdminDashboard() {
       );
       toast.success("Agente criado com sucesso!");
       setShowCreateDialog(false);
-      setNewAgent({
-        name: "",
-        description: "",
-        segment: "",
-        price: "",
-        features: "",
-        mascot_image_url: "",
-        elevenlabs_voice_id: ""
-      });
+      resetForm();
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Erro ao criar agente");
@@ -91,7 +93,7 @@ export default function AdminDashboard() {
       await axios.delete(`${API}/admin/agents/${agentId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success("Agente deletado");
+      toast.success("Agente deletado com sucesso");
       fetchData();
     } catch (error) {
       toast.error("Erro ao deletar agente");
@@ -105,44 +107,93 @@ export default function AdminDashboard() {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success("Status atualizado");
+      toast.success(`Status atualizado para: ${status}`);
       fetchData();
     } catch (error) {
       toast.error("Erro ao atualizar status");
     }
   };
 
+  const resetForm = () => {
+    setNewAgent({
+      name: "",
+      description: "",
+      segment: "",
+      price: "",
+      features: "",
+      mascot_image_url: "",
+      elevenlabs_voice_id: ""
+    });
+  };
+
+  const segments = ["vendas", "suporte", "marketing", "financeiro", "rh"];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin mb-4"></div>
+          <p className="text-gray-600">Carregando painel admin...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <div className="container mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
+    <div className="min-h-screen bg-gray-50">
+      {/* Navbar */}
+      <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
+            <div className="w-7 h-7 bg-black rounded flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-lg font-semibold tracking-tight">VoiceAI Hub</span>
+          </div>
+          <div className="flex items-center gap-3">
             <Button 
               data-testid="back-to-marketplace"
               variant="ghost" 
               onClick={() => navigate("/marketplace")}
+              size="sm"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Marketplace
             </Button>
-            <h1 className="text-4xl font-bold text-gray-900">Painel Admin</h1>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate("/dashboard")}
+              size="sm"
+              className="border-gray-300"
+            >
+              Meu Dashboard
+            </Button>
           </div>
+        </div>
+      </nav>
+
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold tracking-tight mb-2">Painel Admin</h1>
+          <p className="text-gray-600">Gerencie agentes e solicitações da plataforma</p>
         </div>
 
         <Tabs defaultValue="agents" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="agents" data-testid="agents-tab">Agentes</TabsTrigger>
-            <TabsTrigger value="requests" data-testid="requests-tab">Solicitações</TabsTrigger>
+          <TabsList className="bg-white border border-gray-200">
+            <TabsTrigger value="agents" data-testid="agents-tab">Agentes ({agents.filter(a => a.status === "active").length})</TabsTrigger>
+            <TabsTrigger value="requests" data-testid="requests-tab">Solicitações ({requests.filter(r => r.status === "pending").length})</TabsTrigger>
           </TabsList>
 
+          {/* Agents Tab */}
           <TabsContent value="agents">
-            <Card>
-              <CardHeader>
+            <Card className="border-gray-200">
+              <CardHeader className="border-b border-gray-100">
                 <div className="flex justify-between items-center">
                   <CardTitle>Gerenciar Agentes</CardTitle>
                   <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                     <DialogTrigger asChild>
-                      <Button data-testid="create-agent-button" className="bg-indigo-600 hover:bg-indigo-700">
+                      <Button data-testid="create-agent-button" className="bg-black hover:bg-gray-900">
                         <Plus className="w-4 h-4 mr-2" />
                         Criar Agente
                       </Button>
@@ -151,137 +202,218 @@ export default function AdminDashboard() {
                       <DialogHeader>
                         <DialogTitle>Criar Novo Agente</DialogTitle>
                       </DialogHeader>
-                      <form onSubmit={handleCreateAgent} className="space-y-4">
+                      <form onSubmit={handleCreateAgent} className="space-y-4 mt-4">
                         <div>
-                          <Label>Nome</Label>
+                          <Label className="text-sm font-medium">Nome do Agente *</Label>
                           <Input
                             data-testid="agent-name-input"
                             value={newAgent.name}
                             onChange={(e) => setNewAgent({ ...newAgent, name: e.target.value })}
+                            placeholder="Ex: Assistente de Vendas Pro"
                             required
+                            className="mt-1 border-gray-300"
                           />
                         </div>
+                        
                         <div>
-                          <Label>Descrição</Label>
+                          <Label className="text-sm font-medium">Descrição *</Label>
                           <Textarea
                             data-testid="agent-description-input"
                             value={newAgent.description}
                             onChange={(e) => setNewAgent({ ...newAgent, description: e.target.value })}
+                            placeholder="Descreva as funcionalidades do agente..."
                             required
+                            rows={3}
+                            className="mt-1 border-gray-300"
                           />
                         </div>
-                        <div>
-                          <Label>Segmento</Label>
-                          <Input
-                            data-testid="agent-segment-input"
-                            value={newAgent.segment}
-                            onChange={(e) => setNewAgent({ ...newAgent, segment: e.target.value })}
-                            required
-                          />
+                        
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-sm font-medium">Segmento *</Label>
+                            <select
+                              data-testid="agent-segment-input"
+                              value={newAgent.segment}
+                              onChange={(e) => setNewAgent({ ...newAgent, segment: e.target.value })}
+                              required
+                              className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                            >
+                              <option value="">Selecione...</option>
+                              {segments.map(seg => (
+                                <option key={seg} value={seg}>{seg.charAt(0).toUpperCase() + seg.slice(1)}</option>
+                              ))}
+                            </select>
+                          </div>
+                          
+                          <div>
+                            <Label className="text-sm font-medium">Preço Mensal (USD) *</Label>
+                            <Input
+                              data-testid="agent-price-input"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={newAgent.price}
+                              onChange={(e) => setNewAgent({ ...newAgent, price: e.target.value })}
+                              placeholder="49.99"
+                              required
+                              className="mt-1 border-gray-300"
+                            />
+                          </div>
                         </div>
+                        
                         <div>
-                          <Label>Preço Mensal (USD)</Label>
-                          <Input
-                            data-testid="agent-price-input"
-                            type="number"
-                            step="0.01"
-                            value={newAgent.price}
-                            onChange={(e) => setNewAgent({ ...newAgent, price: e.target.value })}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label>Recursos (um por linha)</Label>
+                          <Label className="text-sm font-medium">Recursos (um por linha) *</Label>
                           <Textarea
                             data-testid="agent-features-input"
                             value={newAgent.features}
                             onChange={(e) => setNewAgent({ ...newAgent, features: e.target.value })}
-                            placeholder="Recurso 1&#10;Recurso 2&#10;Recurso 3"
+                            placeholder="Qualificação automática de leads&#10;Agendamento inteligente&#10;Follow-up automático"
                             required
+                            rows={4}
+                            className="mt-1 border-gray-300"
                           />
                         </div>
+                        
                         <div>
-                          <Label>URL da Imagem do Mascote</Label>
+                          <Label className="text-sm font-medium">URL da Imagem do Mascote *</Label>
                           <Input
                             data-testid="agent-image-input"
                             value={newAgent.mascot_image_url}
                             onChange={(e) => setNewAgent({ ...newAgent, mascot_image_url: e.target.value })}
                             placeholder="https://exemplo.com/mascote.png"
                             required
+                            className="mt-1 border-gray-300"
                           />
+                          <p className="text-xs text-gray-500 mt-1">Recomendado: 512x512px, PNG com fundo transparente</p>
                         </div>
+                        
                         <div>
-                          <Label>ElevenLabs Voice ID</Label>
+                          <Label className="text-sm font-medium">ElevenLabs Voice ID *</Label>
                           <Input
                             data-testid="agent-voice-input"
                             value={newAgent.elevenlabs_voice_id}
                             onChange={(e) => setNewAgent({ ...newAgent, elevenlabs_voice_id: e.target.value })}
+                            placeholder="voice_abc123xyz"
                             required
+                            className="mt-1 border-gray-300"
                           />
+                          <p className="text-xs text-gray-500 mt-1">Obtenha no painel do ElevenLabs</p>
                         </div>
-                        <Button data-testid="submit-agent-button" type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700">
-                          Criar Agente
-                        </Button>
+                        
+                        <div className="flex justify-end gap-2 pt-4">
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => setShowCreateDialog(false)}
+                            className="border-gray-300"
+                          >
+                            Cancelar
+                          </Button>
+                          <Button data-testid="submit-agent-button" type="submit" className="bg-black hover:bg-gray-900">
+                            Criar Agente
+                          </Button>
+                        </div>
                       </form>
                     </DialogContent>
                   </Dialog>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {agents.filter(a => a.status === "active").map((agent) => (
-                    <div key={agent.id} data-testid={`agent-item-${agent.id}`} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <img src={agent.mascot_image_url} alt={agent.name} className="w-12 h-12 rounded" onError={(e) => e.target.src = "https://via.placeholder.com/48"} />
-                        <div>
-                          <h3 className="font-semibold">{agent.name}</h3>
-                          <p className="text-sm text-gray-600">{agent.segment} - ${agent.price}/mês</p>
+              <CardContent className="pt-6">
+                {agents.filter(a => a.status === "active").length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-3xl mb-3">📦</div>
+                    <p className="text-gray-600">Nenhum agente criado ainda</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {agents.filter(a => a.status === "active").map((agent) => (
+                      <div key={agent.id} data-testid={`agent-item-${agent.id}`} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg hover:border-gray-400 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <img 
+                            src={agent.mascot_image_url} 
+                            alt={agent.name} 
+                            className="w-12 h-12 rounded-lg object-contain bg-white border border-gray-200" 
+                            onError={(e) => e.target.src = "https://via.placeholder.com/48/f9fafb/9ca3af?text=AI"}
+                          />
+                          <div>
+                            <h3 className="font-semibold">{agent.name}</h3>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Badge className="bg-gray-200 text-gray-700 border-0 text-xs">{agent.segment}</Badge>
+                              <span>•</span>
+                              <span>${agent.price}/mês</span>
+                              <span>•</span>
+                              <span>{agent.features.length} recursos</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            data-testid={`delete-agent-${agent.id}`}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteAgent(agent.id)}
+                            className="border-red-200 text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
-                      <Button
-                        data-testid={`delete-agent-${agent.id}`}
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteAgent(agent.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
+          {/* Requests Tab */}
           <TabsContent value="requests">
-            <Card>
-              <CardHeader>
+            <Card className="border-gray-200">
+              <CardHeader className="border-b border-gray-100">
                 <CardTitle>Solicitações de Agentes</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {requests.length === 0 ? (
-                    <p className="text-gray-600 text-center py-8">Nenhuma solicitação ainda.</p>
-                  ) : (
-                    requests.map((request) => (
-                      <div key={request.id} data-testid={`request-item-${request.id}`} className="p-4 bg-gray-50 rounded-lg">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h3 className="font-semibold">{request.segment}</h3>
-                            <p className="text-sm text-gray-600 mt-1">{request.description}</p>
+              <CardContent className="pt-6">
+                {requests.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-3xl mb-3">📋</div>
+                    <p className="text-gray-600">Nenhuma solicitação recebida ainda</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {requests.map((request) => (
+                      <div key={request.id} data-testid={`request-item-${request.id}`} className="p-5 bg-gray-50 border border-gray-200 rounded-lg">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold text-lg">{request.segment}</h3>
+                              <Badge 
+                                className={
+                                  request.status === "pending" 
+                                    ? "bg-yellow-50 text-yellow-700 border border-yellow-200" 
+                                    : request.status === "in_progress" 
+                                    ? "bg-blue-50 text-blue-700 border border-blue-200" 
+                                    : "bg-green-50 text-green-700 border border-green-200"
+                                }
+                              >
+                                {request.status === "pending" && <Clock className="w-3 h-3 mr-1" />}
+                                {request.status === "in_progress" && <AlertCircle className="w-3 h-3 mr-1" />}
+                                {request.status === "completed" && <CheckCircle2 className="w-3 h-3 mr-1" />}
+                                {request.status === "pending" ? "Pendente" : request.status === "in_progress" ? "Em Progresso" : "Concluído"}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-2">{request.description}</p>
+                            <p className="text-xs text-gray-500">Solicitado em: {new Date(request.created_at).toLocaleDateString('pt-BR')}</p>
                           </div>
-                          <Badge className={request.status === "pending" ? "bg-yellow-100 text-yellow-700" : request.status === "in_progress" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"}>
-                            {request.status === "pending" ? "Pendente" : request.status === "in_progress" ? "Em Progresso" : "Concluído"}
-                          </Badge>
                         </div>
-                        <div className="flex space-x-2 mt-4">
+                        
+                        <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200">
                           {request.status === "pending" && (
                             <Button
                               data-testid={`start-progress-${request.id}`}
                               size="sm"
                               onClick={() => handleUpdateRequestStatus(request.id, "in_progress")}
+                              className="bg-blue-600 hover:bg-blue-700"
                             >
-                              Iniciar
+                              Iniciar Desenvolvimento
                             </Button>
                           )}
                           {request.status === "in_progress" && (
@@ -291,14 +423,19 @@ export default function AdminDashboard() {
                               className="bg-green-600 hover:bg-green-700"
                               onClick={() => handleUpdateRequestStatus(request.id, "completed")}
                             >
-                              Concluir
+                              Marcar como Concluído
                             </Button>
+                          )}
+                          {request.status === "completed" && (
+                            <Badge className="bg-green-100 text-green-700 border-0">
+                              ✓ Concluído
+                            </Badge>
                           )}
                         </div>
                       </div>
-                    ))
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
