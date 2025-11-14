@@ -9,7 +9,7 @@ export default function Landing() {
   const isLoggedIn = !!user && !!user.name;
 
   const mainContent = (
-    <>
+    <div className="min-h-screen bg-white">
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-6 pt-20 pb-24">
         <div className="max-w-3xl mx-auto text-center">
