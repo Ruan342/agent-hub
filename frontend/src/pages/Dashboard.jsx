@@ -303,9 +303,9 @@ export default function Dashboard() {
                             </Button>
                           </div>
                           <code className="text-xs bg-white px-3 py-2 rounded block overflow-x-auto border border-gray-200">
-                            curl -X POST https://api.voiceaihub.com/v1/call \<br />
-                            &nbsp;&nbsp;-H "Authorization: Bearer {subscription.api_key}" \<br />
-                            &nbsp;&nbsp;-d '{"phone": "+5511999999999"}'
+                            {`curl -X POST https://api.voiceaihub.com/v1/call \\`}<br />
+                            {`  -H "Authorization: Bearer ${subscription.api_key}" \\`}<br />
+                            {`  -d '{"phone": "+5511999999999"}'`}
                           </code>
                         </div>
                       </TabsContent>
