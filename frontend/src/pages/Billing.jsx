@@ -80,7 +80,7 @@ export default function Billing() {
               size="sm"
               onClick={() => navigate("/dashboard")}
             >
-              <Download className="w-4 h-4 mr-2" />
+              <LayoutDashboard className="w-4 h-4 mr-2" />
               Minhas Assinaturas
             </Button>
             <Button
@@ -96,7 +96,7 @@ export default function Billing() {
               size="sm"
               onClick={() => navigate("/api-docs")}
             >
-              <Download className="w-4 h-4 mr-2" />
+              <Code2 className="w-4 h-4 mr-2" />
               Documentação API
             </Button>
           </div>
