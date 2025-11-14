@@ -65,6 +65,42 @@ export default function AgentDetails() {
     }
   };
 
+  const handleTestVoice = async () => {
+    if (!testText.trim()) {
+      toast.error("Digite um texto para testar");
+      return;
+    }
+
+    setTestingVoice(true);
+    try {
+      // For public test, we'll use a mock endpoint or allow unauthenticated TTS
+      const response = await axios.post(
+        `${API}/tts/generate`,
+        {
+          text: testText,
+          voice_id: agent.elevenlabs_voice_id,
+          stability: 0.5,
+          similarity_boost: 0.75
+        },
+        token ? { headers: { Authorization: `Bearer ${token}` } } : {}
+      );
+
+      const audioElement = new Audio(response.data.audio_url);
+      setAudio(audioElement);
+      audioElement.play();
+      
+      audioElement.onended = () => {
+        setAudio(null);
+      };
+
+      toast.success("Reproduzindo amostra de voz!");
+    } catch (error) {
+      toast.error("Erro ao gerar áudio. Faça login para testar.");
+    } finally {
+      setTestingVoice(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
