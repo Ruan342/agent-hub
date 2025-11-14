@@ -89,16 +89,30 @@ export default function SidebarLayout({ children }) {
         {/* User Info */}
         {sidebarOpen && (
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-semibold text-gray-600">
-                  {user.name?.[0]?.toUpperCase()}
-                </span>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-semibold text-gray-600">
+                    {user.name?.[0]?.toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{user.name || "Convidado"}</p>
+                  {user.email && (
+                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  )}
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
-                <p className="text-xs text-gray-500 truncate">{user.email}</p>
-              </div>
+              {user.name && (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="text-xs text-gray-500 hover:text-gray-800 inline-flex items-center gap-1"
+                >
+                  <LogOut className="w-3 h-3" />
+                  Sair
+                </button>
+              )}
             </div>
           </div>
         )}
