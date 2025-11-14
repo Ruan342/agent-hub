@@ -16,6 +16,9 @@ import jwt
 import shutil
 from PIL import Image
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
+from elevenlabs import ElevenLabs, VoiceSettings
+import base64
+import io
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -32,6 +35,10 @@ JWT_EXPIRATION_DAYS = 30
 
 # Stripe
 STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY', 'sk_test_emergent')
+
+# ElevenLabs
+ELEVENLABS_API_KEY = os.environ.get('ELEVENLABS_API_KEY')
+eleven_client = ElevenLabs(api_key=ELEVENLABS_API_KEY) if ELEVENLABS_API_KEY else None
 
 # Upload directory
 UPLOAD_DIR = Path("/app/uploads")
