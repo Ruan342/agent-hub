@@ -296,7 +296,7 @@ export default function Dashboard() {
                               variant="ghost" 
                               size="sm" 
                               className="h-auto p-0 text-xs"
-                              onClick={() => window.open('https://docs.voiceaihub.com', '_blank')}
+                              onClick={() => navigate('/api-docs')}
                             >
                               Ver docs completos
                               <ExternalLink className="w-3 h-3 ml-1" />
@@ -307,6 +307,26 @@ export default function Dashboard() {
                             {`  -H "Authorization: Bearer ${subscription.api_key}" \\`}<br />
                             {`  -d '{"phone": "+5511999999999"}'`}
                           </code>
+                        </div>
+                        
+                        {/* Quick Links */}
+                        <div className="flex gap-2 pt-4 border-t border-gray-200">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate('/billing')}
+                            className="flex-1 border-gray-300"
+                          >
+                            Ver Faturas
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate('/api-docs')}
+                            className="flex-1 border-gray-300"
+                          >
+                            Documentação
+                          </Button>
                         </div>
                       </TabsContent>
 
