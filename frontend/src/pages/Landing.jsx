@@ -210,7 +210,7 @@ export default function Landing() {
               </div>
               
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-black flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <div className="font-semibold mb-1">Integração instantânea</div>
                   <div className="text-sm text-gray-600">API RESTful com documentação completa</div>
@@ -218,7 +218,7 @@ export default function Landing() {
               </div>
               
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-black flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <div className="font-semibold mb-1">Segurança enterprise</div>
                   <div className="text-sm text-gray-600">Criptografia E2E e compliance LGPD</div>
@@ -226,7 +226,7 @@ export default function Landing() {
               </div>
               
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-black flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <div className="font-semibold mb-1">Escala automatizada</div>
                   <div className="text-sm text-gray-600">Suporta milhares de chamadas simultâneas</div>
