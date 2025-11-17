@@ -61,36 +61,36 @@ export default function Marketplace() {
 
     // Filter by segment
     if (selectedSegment !== "all") {
-      filtered = filtered.filter(agent => agent.segment === selectedSegment);
+      filtered = filtered.filter((agent) => agent.segment === selectedSegment);
     }
 
     // Filter by search query
     if (searchQuery) {
-      filtered = filtered.filter(agent => 
-        agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        agent.description.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(
+        (agent) =>
+          agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          agent.description.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
     // Filter by price range
     if (priceRange !== "all") {
       if (priceRange === "0-40") {
-        filtered = filtered.filter(agent => agent.price <= 40);
+        filtered = filtered.filter((agent) => agent.price <= 40);
       } else if (priceRange === "40-60") {
-        filtered = filtered.filter(agent => agent.price > 40 && agent.price <= 60);
+        filtered = filtered.filter((agent) => agent.price > 40 && agent.price <= 60);
       } else if (priceRange === "60+") {
-        filtered = filtered.filter(agent => agent.price > 60);
+        filtered = filtered.filter((agent) => agent.price > 60);
       }
     }
 
     setFilteredAgents(filtered);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/");
-  };
-
-
   };
 
   const clearFilters = () => {
