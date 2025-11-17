@@ -283,7 +283,7 @@ export default function Marketplace() {
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-3">
                     <h3 className="text-lg font-semibold group-hover:text-black transition-colors">{agent.name}</h3>
-                    <Badge className="bg-gray-100 text-gray-700 border-0 text-xs shrink-0">
+                    <Badge className="bg-purple-50 text-purple-700 border-0 text-xs shrink-0">
                       {agent.segment}
                     </Badge>
                   </div>
