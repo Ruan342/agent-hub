@@ -105,12 +105,16 @@ class Subscription(BaseModel):
     status: str = "pending"
     api_key: str = Field(default_factory=lambda: f"vapi_{uuid.uuid4().hex}")
     webhook_url: Optional[str] = None
+    custom_prompt: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class SubscriptionUpdate(BaseModel):
     webhook_url: str
+
+class SubscriptionConfigUpdate(BaseModel):
+    custom_prompt: Optional[str] = None
 
 class AgentRequest(BaseModel):
     model_config = ConfigDict(extra="ignore")
