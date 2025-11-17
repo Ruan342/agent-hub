@@ -81,8 +81,8 @@ export default function Billing() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <FileText className="w-6 h-6 text-gray-600" />
+                      <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-purple-700" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-lg">Fatura #{invoice.id.substring(0, 8)}</h3>
