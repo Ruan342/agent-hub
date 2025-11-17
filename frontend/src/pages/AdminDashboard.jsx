@@ -333,7 +333,7 @@ export default function AdminDashboard() {
                           >
                             Cancelar
                           </Button>
-                          <Button data-testid="submit-agent-button" type="submit" className="bg-black hover:bg-gray-900">
+                          <Button data-testid="submit-agent-button" type="submit" className="bg-purple-600 hover:bg-purple-700">
                             Criar Agente
                           </Button>
                         </div>
