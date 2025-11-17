@@ -233,7 +233,7 @@ export default function AgentDetails() {
                   <div className="text-right">
                     <div
                       className={`text-lg font-bold ${
-                        remainingTests > 0 ? "text-indigo-600" : "text-red-600"
+                        remainingTests > 0 ? "text-purple-600" : "text-red-600"
                       }`}
                     >
                       {remainingTests}/3
