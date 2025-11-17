@@ -249,7 +249,7 @@ export default function AgentDetails() {
                       onChange={(e) => setTestText(e.target.value)}
                       placeholder="Digite uma frase para o agente falar..."
                       rows={3}
-                      className="mb-3 border-indigo-200"
+                      className="mb-3 border-purple-200"
                       maxLength={100}
                     />
                     <div className="flex items-center justify-between mb-3">
