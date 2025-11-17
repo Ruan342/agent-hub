@@ -148,7 +148,7 @@ export default function Marketplace() {
                 </Button>
               </>
             ) : (
-              <Button onClick={() => navigate("/login")} className="bg-black hover:bg-gray-900 text-sm">
+              <Button onClick={() => navigate("/login")} className="bg-purple-600 hover:bg-purple-700 text-sm">
                 Entrar
               </Button>
             )}
