@@ -303,6 +303,91 @@ class VoiceAIPlatformTester:
         )
         return success
 
+    def test_tts_test_endpoint(self):
+        """Test public TTS test endpoint"""
+        success, response = self.run_test(
+            "TTS Test Endpoint",
+            "POST",
+            "tts/test",
+            200,
+            data={
+                "text": "Hello, this is a test message",
+                "voice_id": "test_voice_id",
+                "stability": 0.5,
+                "similarity_boost": 0.75,
+                "style": 0.0,
+                "use_speaker_boost": True
+            }
+        )
+        return success
+
+    def test_tts_remaining_tests(self):
+        """Test TTS remaining tests endpoint"""
+        success, response = self.run_test(
+            "TTS Remaining Tests",
+            "GET",
+            "tts/test/remaining/test_voice_id",
+            200
+        )
+        return success
+
+    def test_billing_invoices(self):
+        """Test getting billing invoices"""
+        if not self.user_token:
+            self.log_test("Get Billing Invoices", False, "No user token")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.user_token}'}
+        success, response = self.run_test(
+            "Get Billing Invoices",
+            "GET",
+            "billing/invoices",
+            200,
+            headers=headers
+        )
+        return success
+
+    def test_admin_upload_image(self):
+        """Test admin image upload endpoint"""
+        if not self.admin_token:
+            self.log_test("Admin Upload Image", False, "No admin token")
+            return False
+            
+        # Create a simple test image file in memory
+        import io
+        from PIL import Image
+        
+        # Create a small test image
+        img = Image.new('RGB', (100, 100), color='red')
+        img_bytes = io.BytesIO()
+        img.save(img_bytes, format='PNG')
+        img_bytes.seek(0)
+        
+        headers = {'Authorization': f'Bearer {self.admin_token}'}
+        
+        try:
+            url = f"{self.api_url}/admin/upload-image"
+            files = {'file': ('test.png', img_bytes, 'image/png')}
+            response = requests.post(url, files=files, headers=headers)
+            
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            
+            if not success:
+                details += f", Expected: 200"
+                try:
+                    error_data = response.json()
+                    details += f", Error: {error_data.get('detail', 'Unknown error')}"
+                except:
+                    details += f", Response: {response.text[:100]}"
+            
+            self.log_test("Admin Upload Image", success, details)
+            return success
+            
+        except Exception as e:
+            self.log_test("Admin Upload Image", False, f"Exception: {str(e)}")
+            return False
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting VoiceAI Platform Backend Tests")
