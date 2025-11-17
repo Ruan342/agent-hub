@@ -331,6 +331,20 @@ export default function AdminDashboard() {
                             onChange={(e) => setNewAgent({ ...newAgent, base_prompt: e.target.value })}
                             placeholder="Explique o papel, tom de voz e regras deste agente. Ex: Agente de cobrança amigável..."
                             rows={4}
+                        <div>
+                          <Label className="text-sm font-medium">URL do áudio de exemplo</Label>
+                          <Input
+                            value={newAgent.voice_sample_url}
+                            onChange={(e) => setNewAgent({ ...newAgent, voice_sample_url: e.target.value })}
+                            placeholder="Ex: https://.../samples/professor.mp3"
+                            className="mt-1 border-gray-300"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Áudio curto pré-gravado mostrando como a IA falará para este agente.
+                          </p>
+                        </div>
+
+
                             className="mt-1 border-gray-300"
                           />
                           <p className="text-xs text-gray-500 mt-1">Esse texto orienta o comportamento geral do agente. O cliente ainda poderá adicionar detalhes da empresa dele.</p>
