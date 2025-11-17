@@ -132,28 +132,31 @@ export default function AgentDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
-        <p className="text-gray-600">Carregando...</p>
-      </div>
+      <SidebarLayout>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+          <p className="text-gray-600">Carregando...</p>
+        </div>
+      </SidebarLayout>
     );
   }
 
   if (!agent) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <div className="container mx-auto px-6 py-10">
-        <Button 
-          data-testid="back-button"
-          variant="ghost" 
-          onClick={() => navigate("/marketplace")} 
-          className="mb-6"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Voltar ao Marketplace
-        </Button>
+    <SidebarLayout>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <div className="container mx-auto px-6 py-10">
+          <Button 
+            data-testid="back-button"
+            variant="ghost" 
+            onClick={() => navigate("/marketplace")} 
+            className="mb-6"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar ao Marketplace
+          </Button>
 
-        <div className="grid md:grid-cols-2 gap-10 bg-white rounded-2xl shadow-2xl p-8">
+          <div className="grid md:grid-cols-2 gap-10 bg-white rounded-2xl shadow-2xl p-8">
           {/* Left: Image & Info */}
           <div>
             <div className="bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl p-10 flex items-center justify-center mb-6">
