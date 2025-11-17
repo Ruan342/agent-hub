@@ -320,6 +320,12 @@ async def upload_image(file: UploadFile = File(...), current_user: dict = Depend
 # Customer endpoints
 @api_router.get("/subscriptions/my", response_model=List[Subscription])
 async def get_my_subscriptions(current_user: dict = Depends(get_current_user)):
+    subs = await db.subscriptions.find({"user_id": current_user['user_id']}, {"_id": 0}).to_list(1000)
+    for sub in subs:
+        for field in ['created_at', 'start_date', 'end_date']:
+            if isinstance(sub.get(field), str):
+                sub[field] = datetime.fromisoformat(sub[field])
+    return subs
 
 @api_router.put("/subscriptions/{subscription_id}/config")
 async def update_subscription_config(subscription_id: str, config: SubscriptionConfigUpdate, current_user: dict = Depends(get_current_user)):
