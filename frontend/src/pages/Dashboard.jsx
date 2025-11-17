@@ -42,6 +42,20 @@ export default function Dashboard() {
       });
       setSubscriptions(response.data);
 
+      // Initialize custom config state with existing values
+      const configState = {};
+      response.data.forEach((sub) => {
+        configState[sub.id] = {
+          company_name: sub.config?.company_name || "",
+          brand_name: sub.config?.brand_name || "",
+          product: sub.config?.product || "",
+          audience: sub.config?.audience || "",
+          tone: sub.config?.tone || "",
+          extra: sub.config?.extra || "",
+        };
+      });
+      setCustomConfig(configState);
+
       const agentIds = [...new Set(response.data.map(sub => sub.agent_id))];
       const agentData = {};
       for (const agentId of agentIds) {
