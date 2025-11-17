@@ -4,7 +4,7 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Sparkles, Search, SlidersHorizontal, X } from "lucide-react";
 import { toast } from "sonner";
 import SidebarLayout from "@/components/SidebarLayout";
 
