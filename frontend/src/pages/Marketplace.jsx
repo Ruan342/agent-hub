@@ -270,7 +270,7 @@ export default function Marketplace() {
                 className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:border-purple-300 hover:shadow-sm transition-all cursor-pointer group"
                 onClick={() => navigate(`/agent/${agent.id}`)}
               >
-                <div className="h-48 bg-gray-50 flex items-center justify-center border-b border-gray-100">
+                <div className="h-48 bg-gradient-to-br from-purple-50 via-white to-purple-50 flex items-center justify-center border-b border-gray-100">
                   <img 
                     src={agent.mascot_image_url} 
                     alt={agent.name} 
