@@ -59,6 +59,9 @@ export default function Billing() {
     <SidebarLayout>
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="mb-8">
+          <span className="inline-flex items-center gap-2 px-3 py-1 bg-purple-50 border border-purple-100 rounded-full text-xs font-medium text-purple-700 mb-3">
+            Faturas e cobranças
+          </span>
           <h1 className="text-4xl font-bold tracking-tight mb-2">Faturamento</h1>
           <p className="text-gray-600">Histórico de pagamentos e faturas</p>
         </div>
