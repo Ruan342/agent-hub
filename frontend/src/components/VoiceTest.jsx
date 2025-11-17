@@ -102,7 +102,7 @@ export default function VoiceTest({ agentId, subscriptionId, voiceId }) {
           <Button
             variant="outline"
             onClick={handlePlayPause}
-            className="border-indigo-300"
+            className="border-purple-200"
           >
             {playing ? (
               <>
