@@ -200,7 +200,7 @@ export default function AgentDetails() {
               </h1>
               <p className="text-gray-600 text-lg mb-8">{agent.description}</p>
 
-              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-6 mb-8">
+              <div className="bg-gradient-to-br from-purple-50 via-white to-purple-100 rounded-xl p-6 mb-8">
                 <div className="flex items-baseline mb-2">
                   <span className="text-5xl font-bold text-purple-700">
                     ${agent.price}
