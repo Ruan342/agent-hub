@@ -294,6 +294,6 @@ export default function AgentDetails() {
           </div>
         </div>
       </div>
-    </div>
+    </SidebarLayout>
   );
 }
