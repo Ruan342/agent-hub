@@ -99,7 +99,7 @@ export default function RequestAgent() {
                   </p>
                 </div>
 
-                <div className="bg-indigo-50 rounded-lg p-4">
+                <div className="bg-purple-50 rounded-lg p-4">
                   <h4 className="font-semibold text-gray-900 mb-2">O que acontece após enviar?</h4>
                   <ul className="space-y-2 text-sm text-gray-600">
                     <li>• Nossa equipe analisa sua solicitação em até 48 horas</li>
