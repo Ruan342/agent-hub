@@ -104,7 +104,7 @@ export default function Login() {
               <button
                 data-testid="register-link"
                 onClick={() => navigate("/register")}
-                className="text-black font-semibold hover:underline"
+                className="text-purple-600 font-semibold hover:underline"
               >
                 Cadastre-se
               </button>
