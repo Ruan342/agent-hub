@@ -27,7 +27,6 @@ export default function AgentDetails() {
 
   useEffect(() => {
     fetchAgent();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
