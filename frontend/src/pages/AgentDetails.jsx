@@ -205,7 +205,7 @@ export default function AgentDetails() {
               data-testid="purchase-button"
               onClick={handlePurchase} 
               disabled={purchasing}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-lg py-6"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-lg py-6"
             >
               {purchasing ? "Processando..." : "Comprar Agora"}
             </Button>
