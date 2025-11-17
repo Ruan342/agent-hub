@@ -287,7 +287,7 @@ export default function Dashboard() {
                             <Button
                               data-testid={`update-webhook-${subscription.id}`}
                               onClick={() => handleUpdateWebhook(subscription.id)}
-                              className="bg-black hover:bg-gray-900 shrink-0"
+                              className="bg-purple-600 hover:bg-purple-700 shrink-0"
                               disabled={savingWebhook[subscription.id]}
                             >
                               {savingWebhook[subscription.id] ? (
@@ -303,6 +303,26 @@ export default function Dashboard() {
                               Configurado: {subscription.webhook_url}
                             </p>
                           )}
+                        </div>
+
+                        {/* Custom Prompt */}
+                        <div>
+                          <div className="flex items-center justify-between mb-2 mt-6">
+                            <Label className="text-sm font-semibold">Configuração do agente</Label>
+                            <span className="text-xs text-gray-500">
+                              Personalize com informações da sua empresa
+                            </span>
+                          </div>
+                          <Textarea
+                            placeholder="Ex: Minha empresa se chama ACME, somos um SaaS de CRM para pequenas empresas..."
+                            defaultValue={subscription.custom_prompt || ""}
+                            rows={3}
+                            className="border-gray-300 mb-2"
+                            onBlur={(e) => handleUpdateCustomPrompt(subscription.id, e.target.value)}
+                          />
+                          <p className="text-xs text-gray-500">
+                            Esse texto será usado como contexto extra para o agente falar em nome da sua empresa.
+                          </p>
                         </div>
 
                         {/* Integration Example */}
