@@ -34,7 +34,7 @@ export default function SidebarLayout({ children }) {
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-200 transition-all duration-300 ${
+        className={`fixed inset-y-0 left-0 z-50 bg-white/80 backdrop-blur border-r border-gray-200 transition-all duration-300 ${
           sidebarOpen ? "w-64" : "w-16"
         }`}
       >
