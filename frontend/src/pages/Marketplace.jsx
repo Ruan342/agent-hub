@@ -153,7 +153,11 @@ export default function Marketplace() {
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Marketplace</h1>
+          <span className="inline-flex items-center gap-2 px-3 py-1 bg-purple-50 border border-purple-100 rounded-full text-xs font-medium text-purple-700 mb-3">
+            <Sparkles className="w-3 h-3" />
+            Catálogo de agentes de voz
+          </span>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Marketplace</h1>
           <p className="text-gray-600">Encontre o agente perfeito para seu negócio</p>
         </div>
 
