@@ -88,6 +88,21 @@ export default function Dashboard() {
     } finally {
       setSavingWebhook({ ...savingWebhook, [subscriptionId]: false });
     }
+  const handleUpdateCustomPrompt = async (subscriptionId, value) => {
+    try {
+      await axios.put(
+        `${API}/subscriptions/${subscriptionId}/config`,
+        { custom_prompt: value },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Configuração do agente atualizada!");
+      fetchSubscriptions();
+    } catch (error) {
+      toast.error("Erro ao salvar configuração do agente");
+    }
+  };
+
+
   };
 
   const getAnalytics = (subscriptionId) => {
