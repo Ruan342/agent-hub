@@ -103,6 +103,8 @@ export default function Dashboard() {
     } finally {
       setSavingWebhook({ ...savingWebhook, [subscriptionId]: false });
     }
+  };
+
   const buildCustomPromptFromConfig = (config) => {
     const parts = [];
     if (config.company_name || config.brand_name) {
