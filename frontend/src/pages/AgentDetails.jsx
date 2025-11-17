@@ -179,73 +179,38 @@ export default function AgentDetails() {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h3 className="font-semibold text-gray-900">
-                      🎙️ Testar Voz do Agente
+                      🎙️ Como o agente fala
                     </h3>
                     <p className="text-sm text-gray-600 mt-1">
-                      Ouça como o agente fala antes de comprar
+                      Ouça um áudio de exemplo da voz usada por este agente
                     </p>
-                  </div>
-                  <div className="text-right">
-                    <div
-                      className={`text-lg font-bold ${
-                        remainingTests > 0 ? "text-purple-600" : "text-red-600"
-                      }`}
-                    >
-                      {remainingTests}/3
-                    </div>
-                    <div className="text-xs text-gray-500">testes restantes</div>
                   </div>
                 </div>
 
-                {remainingTests > 0 ? (
-                  <>
-                    <Textarea
-                      value={testText}
-                      onChange={(e) => setTestText(e.target.value)}
-                      placeholder="Digite uma frase para o agente falar..."
-                      rows={3}
-                      className="mb-3 border-purple-200"
-                      maxLength={100}
-                    />
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs text-gray-500">
-                        {testText.length}/100 caracteres
-                      </span>
-                    </div>
-                    <Button
-                      onClick={handleTestVoice}
-                      disabled={testingVoice || !testText.trim()}
-                      className="w-full bg-purple-600 hover:bg-purple-700"
-                    >
-                      {testingVoice ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Gerando áudio...
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-4 h-4 mr-2" />
-                          Testar Voz Gratuitamente ({remainingTests} restantes)
-                        </>
-                      )}
-                    </Button>
-                  </>
-                ) : (
-                  <div className="text-center py-6">
-                    <p className="text-gray-700 font-semibold mb-2">
-                      Limite de testes atingido!
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={handlePlaySample}
+                    disabled={testingVoice}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    {testingVoice ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Reproduzindo...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4 mr-2" />
+                        Ouvir áudio de exemplo
+                      </>
+                    )}
+                  </Button>
+                  {!agent.voice_sample_url && (
+                    <p className="text-xs text-gray-500">
+                      Este agente ainda não possui um áudio de exemplo configurado.
                     </p>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Faça login e compre o agente para uso ilimitado
-                    </p>
-                    <Button
-                      onClick={() => navigate("/login")}
-                      className="bg-purple-600 hover:bg-purple-700"
-                    >
-                      Fazer Login e Comprar
-                    </Button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               <div className="mt-8 space-y-4">
