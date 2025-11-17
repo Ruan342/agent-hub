@@ -68,7 +68,7 @@ export default function Register() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="mt-1 border-gray-300 focus:border-black"
+                className="mt-1 border-gray-300 focus:border-purple-500"
                 placeholder="Seu nome completo"
               />
             </div>
@@ -81,7 +81,7 @@ export default function Register() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1 border-gray-300 focus:border-black"
+                className="mt-1 border-gray-300 focus:border-purple-500"
                 placeholder="seu@email.com"
               />
             </div>
@@ -94,7 +94,7 @@ export default function Register() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="mt-1 border-gray-300 focus:border-black"
+                className="mt-1 border-gray-300 focus:border-purple-500"
                 minLength={6}
                 placeholder="Mínimo 6 caracteres"
               />
