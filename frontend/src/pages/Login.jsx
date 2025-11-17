@@ -91,7 +91,7 @@ export default function Login() {
             <Button 
               data-testid="login-submit-button"
               type="submit" 
-              className="w-full bg-black hover:bg-gray-800" 
+              className="w-full bg-purple-600 hover:bg-purple-700" 
               disabled={loading}
             >
               {loading ? "Entrando..." : "Entrar"}
