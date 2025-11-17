@@ -190,7 +190,7 @@ export default function Dashboard() {
                         <div>
                           <CardTitle className="text-xl mb-1">{agent.name}</CardTitle>
                           <div className="flex items-center gap-2">
-                            <Badge className="bg-gray-100 text-gray-700 border-0 text-xs">
+                            <Badge className="bg-purple-50 text-purple-700 border-0 text-xs">
                               {agent.segment}
                             </Badge>
                             <Badge
