@@ -88,7 +88,7 @@ export default function PaymentSuccess() {
             <Button 
               data-testid="back-to-marketplace"
               onClick={() => navigate("/marketplace")} 
-              className="w-full bg-indigo-600 hover:bg-indigo-700"
+              className="w-full bg-purple-600 hover:bg-purple-700"
             >
               Voltar ao Marketplace
             </Button>
