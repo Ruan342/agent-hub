@@ -153,7 +153,8 @@ export default function AdminDashboard() {
       price: "",
       features: "",
       mascot_image_url: "",
-      elevenlabs_voice_id: ""
+      elevenlabs_voice_id: "",
+      base_prompt: ""
     });
     setSelectedFile(null);
   };
