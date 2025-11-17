@@ -142,6 +142,14 @@ export default function Dashboard() {
       fetchSubscriptions();
     } catch (error) {
       toast.error("Erro ao salvar configuração do agente");
+  const getPreviewText = (subscriptionId) => {
+    const cfg = customConfig[subscriptionId] || {};
+    const base = buildCustomPromptFromConfig(cfg);
+    if (!base) return "Preencha os campos acima para ver como o agente vai se apresentar.";
+    return base;
+  };
+
+
     }
   };
 
