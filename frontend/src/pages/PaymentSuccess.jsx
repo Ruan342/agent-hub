@@ -57,7 +57,7 @@ export default function PaymentSuccess() {
         <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 text-center">
         {status === "checking" && (
           <>
-            <Loader2 className="w-16 h-16 text-indigo-600 animate-spin mx-auto mb-4" />
+            <Loader2 className="w-16 h-16 text-purple-600 animate-spin mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Verificando pagamento...</h2>
             <p className="text-gray-600">Aguarde enquanto confirmamos sua transação</p>
           </>
