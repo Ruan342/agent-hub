@@ -167,7 +167,7 @@ export default function Landing() {
             </div>
             
             <div className="bg-white border border-gray-200 rounded-xl p-8">
-              <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center mb-6">
+              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center mb-6">
                 <span className="text-white font-bold">2</span>
               </div>
               <h3 className="text-xl font-semibold mb-3">Integre via API</h3>
