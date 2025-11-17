@@ -102,7 +102,7 @@ export default function Register() {
             <Button 
               data-testid="register-submit-button"
               type="submit" 
-              className="w-full bg-black hover:bg-gray-800" 
+              className="w-full bg-purple-600 hover:bg-purple-700" 
               disabled={loading}
             >
               {loading ? "Cadastrando..." : "Criar Conta"}
