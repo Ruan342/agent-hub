@@ -123,9 +123,12 @@ export default function Dashboard() {
   return (
     <SidebarLayout>
       {/* Top Bar */}
-      <div className="bg-white border-b border-gray-100 px-6 py-4">
+      <div className="bg-white/80 backdrop-blur border-b border-gray-100 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
+            <span className="inline-flex items-center gap-2 px-3 py-1 bg-purple-50 border border-purple-100 rounded-full text-xs font-medium text-purple-700 mb-2">
+              Minhas assinaturas de agentes
+            </span>
             <h1 className="text-2xl font-bold tracking-tight">Minhas Assinaturas</h1>
             <p className="text-sm text-gray-600 mt-1">Gerencie suas assinaturas e integrações</p>
           </div>
@@ -134,7 +137,7 @@ export default function Dashboard() {
               variant="outline"
               onClick={() => navigate("/admin")}
               size="sm"
-              className="border-gray-300"
+              className="border-purple-200 text-purple-700 hover:bg-purple-50"
             >
               Painel Admin
             </Button>
