@@ -12,43 +12,98 @@ export default function Landing() {
     <div className="min-h-screen bg-white">
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-6 pt-20 pb-24">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-50 border border-gray-200 rounded-full text-sm mb-8">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span className="font-medium">Tecnologia de IA Avançada</span>
+        <div className="grid md:grid-cols-2 gap-10 items-center">
+          {/* Left: copy principal */}
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-50 border border-purple-200 rounded-full text-sm mb-6">
+              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+              <span className="font-medium text-purple-700">Plataforma de agentes de voz IA</span>
+            </div>
+
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+              Escale atendimento com
+              <span className="block text-purple-600">agentes de voz inteligentes</span>
+            </h1>
+
+            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+              Conecte agentes de voz prontos ao seu CRM, WhatsApp ou email. Configure em minutos,
+              monitore em tempo real e pague mensalmente por agente.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                data-testid="explore-agents-button"
+                onClick={() => navigate("/marketplace")}
+                size="lg"
+                className="h-12 px-7 bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                Ver agentes disponíveis
+                <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
+              <Button
+                data-testid="watch-demo-button"
+                variant="outline"
+                size="lg"
+                className="h-12 px-7 border-purple-200 text-purple-700 hover:bg-purple-50"
+                onClick={() => document.getElementById("demo")?.scrollIntoView({ behavior: "smooth" })}
+              >
+                <Play className="mr-2 w-4 h-4" />
+                Ver demo rápida
+              </Button>
+            </div>
           </div>
-          
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
-            Agentes de voz IA
-            <br />
-            <span className="text-gray-400">que trabalham 24/7</span>
-          </h1>
-          
-          <p className="text-xl text-gray-600 mb-10 leading-relaxed">
-            Automatize vendas, suporte e marketing com assistentes inteligentes.
-            Integração simples via API.
-          </p>
-          
-          <div className="flex items-center justify-center gap-3">
-            <Button 
-              data-testid="explore-agents-button"
-              onClick={() => navigate("/marketplace")} 
-              size="lg"
-              className="bg-black hover:bg-gray-900 h-12 px-6"
-            >
-              Ver Agentes
-              <ArrowRight className="ml-2 w-4 h-4" />
-            </Button>
-            <Button 
-              data-testid="watch-demo-button"
-              variant="outline" 
-              size="lg"
-              className="h-12 px-6 border-gray-300"
-              onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
-            >
-              <Play className="mr-2 w-4 h-4" />
-              Ver Demo
-            </Button>
+
+          {/* Right: preview do produto */}
+          <div className="hidden md:block">
+            <div className="bg-gradient-to-br from-purple-50 via-white to-purple-100 border border-purple-100 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Visão geral</p>
+                    <p className="text-sm font-semibold text-gray-900">Uso de agentes</p>
+                  </div>
+                </div>
+                <span className="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700 font-medium">
+                  Tempo real
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="rounded-lg bg-white border border-gray-100 p-3">
+                  <p className="text-xs text-gray-500">Chamadas hoje</p>
+                  <p className="text-xl font-semibold text-gray-900">1.248</p>
+                </div>
+                <div className="rounded-lg bg-white border border-gray-100 p-3">
+                  <p className="text-xs text-gray-500">Taxa de sucesso</p>
+                  <p className="text-xl font-semibold text-gray-900">98%</p>
+                </div>
+                <div className="rounded-lg bg-white border border-gray-100 p-3">
+                  <p className="text-xs text-gray-500">Agentes ativos</p>
+                  <p className="text-xl font-semibold text-gray-900">6</p>
+                </div>
+              </div>
+
+              <div className="rounded-lg bg-white border border-gray-100 p-3">
+                <p className="text-xs text-gray-500 mb-2">Principais agentes</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-700">Assistente de Vendas Pro</span>
+                    <span className="text-purple-600 font-medium">432 chamadas</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-700">Suporte Cliente 24/7</span>
+                    <span className="text-purple-600 font-medium">310 chamadas</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-700">Marketing Outbound</span>
+                    <span className="text-purple-600 font-medium">198 chamadas</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
