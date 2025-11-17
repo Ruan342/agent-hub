@@ -346,23 +346,130 @@ export default function Dashboard() {
                           )}
                         </div>
 
-                        {/* Custom Prompt */}
-                        <div>
-                          <div className="flex items-center justify-between mb-2 mt-6">
+                        {/* Custom Config */}
+                        <div className="mt-6">
+                          <div className="flex items-center justify-between mb-2">
                             <Label className="text-sm font-semibold">Configuração do agente</Label>
                             <span className="text-xs text-gray-500">
-                              Personalize com informações da sua empresa
+                              Dados da sua empresa para personalizar o agente
                             </span>
                           </div>
-                          <Textarea
-                            placeholder="Ex: Minha empresa se chama ACME, somos um SaaS de CRM para pequenas empresas..."
-                            defaultValue={subscription.custom_prompt || ""}
-                            rows={3}
-                            className="border-gray-300 mb-2"
-                            onBlur={(e) => handleUpdateCustomPrompt(subscription.id, e.target.value)}
-                          />
-                          <p className="text-xs text-gray-500">
-                            Esse texto será usado como contexto extra para o agente falar em nome da sua empresa.
+                          <div className="grid md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <Label className="text-xs font-medium text-gray-600">Nome da empresa</Label>
+                              <Input
+                                value={customConfig[subscription.id]?.company_name || ""}
+                                onChange={(e) =>
+                                  setCustomConfig({
+                                    ...customConfig,
+                                    [subscription.id]: {
+                                      ...customConfig[subscription.id],
+                                      company_name: e.target.value,
+                                    },
+                                  })
+                                }
+                                placeholder="Ex: Clínica Vida Plena"
+                                className="mt-1 border-gray-300"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs font-medium text-gray-600">Nome da marca (como o agente fala)</Label>
+                              <Input
+                                value={customConfig[subscription.id]?.brand_name || ""}
+                                onChange={(e) =>
+                                  setCustomConfig({
+                                    ...customConfig,
+                                    [subscription.id]: {
+                                      ...customConfig[subscription.id],
+                                      brand_name: e.target.value,
+                                    },
+                                  })
+                                }
+                                placeholder="Ex: Vida Plena"
+                                className="mt-1 border-gray-300"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs font-medium text-gray-600">Produto/serviço principal</Label>
+                              <Input
+                                value={customConfig[subscription.id]?.product || ""}
+                                onChange={(e) =>
+                                  setCustomConfig({
+                                    ...customConfig,
+                                    [subscription.id]: {
+                                      ...customConfig[subscription.id],
+                                      product: e.target.value,
+                                    },
+                                  })
+                                }
+                                placeholder="Ex: Plataforma de CRM para pequenas empresas"
+                                className="mt-1 border-gray-300"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs font-medium text-gray-600">Público-alvo</Label>
+                              <Input
+                                value={customConfig[subscription.id]?.audience || ""}
+                                onChange={(e) =>
+                                  setCustomConfig({
+                                    ...customConfig,
+                                    [subscription.id]: {
+                                      ...customConfig[subscription.id],
+                                      audience: e.target.value,
+                                    },
+                                  })
+                                }
+                                placeholder="Ex: Donos de pequenas clínicas em São Paulo"
+                                className="mt-1 border-gray-300"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs font-medium text-gray-600">Tom de voz</Label>
+                              <Input
+                                value={customConfig[subscription.id]?.tone || ""}
+                                onChange={(e) =>
+                                  setCustomConfig({
+                                    ...customConfig,
+                                    [subscription.id]: {
+                                      ...customConfig[subscription.id],
+                                      tone: e.target.value,
+                                    },
+                                  })
+                                }
+                                placeholder="Ex: profissional e amigável"
+                                className="mt-1 border-gray-300"
+                              />
+                            </div>
+                          </div>
+                          <div className="mb-3">
+                            <Label className="text-xs font-medium text-gray-600">Informações adicionais</Label>
+                            <Textarea
+                              value={customConfig[subscription.id]?.extra || ""}
+                              onChange={(e) =>
+                                setCustomConfig({
+                                  ...customConfig,
+                                  [subscription.id]: {
+                                    ...customConfig[subscription.id],
+                                    extra: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="Ex: Sempre mencionar nosso telefone (11) 99999-9999 e horário de atendimento."
+                              rows={3}
+                              className="mt-1 border-gray-300"
+                            />
+                          </div>
+                          <div className="flex justify-end">
+                            <Button
+                              size="sm"
+                              className="bg-purple-600 hover:bg-purple-700"
+                              onClick={() => handleUpdateCustomConfig(subscription.id)}
+                            >
+                              Salvar configuração do agente
+                            </Button>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-2">
+                            Esses dados serão usados como contexto extra para o agente falar em nome da sua empresa.
                           </p>
                         </div>
 
