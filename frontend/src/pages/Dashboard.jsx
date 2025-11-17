@@ -23,6 +23,7 @@ export default function Dashboard() {
   const [copiedKey, setCopiedKey] = useState(null);
   const [editingWebhook, setEditingWebhook] = useState({});
   const [savingWebhook, setSavingWebhook] = useState({});
+  const [customConfig, setCustomConfig] = useState({});
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
