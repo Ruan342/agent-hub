@@ -84,6 +84,13 @@ export default function Marketplace() {
     }
 
     setFilteredAgents(filtered);
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/");
+  };
+
+
   };
 
   const clearFilters = () => {
