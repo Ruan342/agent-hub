@@ -324,6 +324,9 @@ export default function AdminDashboard() {
                             required
                             className="mt-1 border-gray-300"
                           />
+                          <p className="text-xs text-gray-500 mt-1">ID da voz do agente na ElevenLabs.</p>
+                        </div>
+
                         <div>
                           <Label className="text-sm font-medium">Prompt base do agente</Label>
                           <Textarea
@@ -331,6 +334,11 @@ export default function AdminDashboard() {
                             onChange={(e) => setNewAgent({ ...newAgent, base_prompt: e.target.value })}
                             placeholder="Explique o papel, tom de voz e regras deste agente. Ex: Agente de cobrança amigável..."
                             rows={4}
+                            className="mt-1 border-gray-300"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Esse texto orienta o comportamento geral do agente. O cliente ainda poderá adicionar detalhes da empresa dele.</p>
+                        </div>
+
                         <div>
                           <Label className="text-sm font-medium">URL do áudio de exemplo</Label>
                           <Input
@@ -342,16 +350,6 @@ export default function AdminDashboard() {
                           <p className="text-xs text-gray-500 mt-1">
                             Áudio curto pré-gravado mostrando como a IA falará para este agente.
                           </p>
-                        </div>
-
-
-                            className="mt-1 border-gray-300"
-                          />
-                          <p className="text-xs text-gray-500 mt-1">Esse texto orienta o comportamento geral do agente. O cliente ainda poderá adicionar detalhes da empresa dele.</p>
-                        </div>
-                        
-
-                          <p className="text-xs text-gray-500 mt-1">ID da voz do agente</p>
                         </div>
                         
                         <div className="flex justify-end gap-2 pt-4">
