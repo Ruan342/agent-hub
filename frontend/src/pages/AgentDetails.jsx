@@ -220,7 +220,7 @@ export default function AgentDetails() {
               </Button>
 
               {/* Voice Test Section */}
-              <div className="mt-8 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6 border border-purple-200">
+              <div className="mt-8 bg-gradient-to-r from-purple-50 via-white to-purple-100 rounded-xl p-6 border border-purple-200">
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h3 className="font-semibold text-gray-900">
