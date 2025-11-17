@@ -285,7 +285,7 @@ export default function Landing() {
 
       {/* CTA */}
       <section className="max-w-7xl mx-auto px-6 py-24">
-        <div className="bg-black rounded-2xl p-12 text-center text-white">
+        <div className="bg-purple-900 rounded-2xl p-12 text-center text-white">
           <h2 className="text-4xl font-bold mb-4">Começe gratuitamente</h2>
           <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
             Sem cartão de crédito. Configure em minutos. Cancele quando quiser.
