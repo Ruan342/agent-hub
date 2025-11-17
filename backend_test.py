@@ -305,28 +305,33 @@ class VoiceAIPlatformTester:
 
     def test_tts_test_endpoint(self):
         """Test public TTS test endpoint"""
+        # Use a real voice ID from available agents
+        voice_id = "voice_sales_001"  # Using a real voice ID from agents
         success, response = self.run_test(
             "TTS Test Endpoint",
             "POST",
             "tts/test",
             200,
             data={
-                "text": "Hello, this is a test message",
-                "voice_id": "test_voice_id",
+                "text": "Olá, esta é uma mensagem de teste",
+                "voice_id": voice_id,
                 "stability": 0.5,
                 "similarity_boost": 0.75,
                 "style": 0.0,
                 "use_speaker_boost": True
             }
         )
+        if success:
+            self.test_voice_id = voice_id
         return success
 
     def test_tts_remaining_tests(self):
         """Test TTS remaining tests endpoint"""
+        voice_id = getattr(self, 'test_voice_id', 'voice_sales_001')
         success, response = self.run_test(
             "TTS Remaining Tests",
             "GET",
-            "tts/test/remaining/test_voice_id",
+            f"tts/test/remaining/{voice_id}",
             200
         )
         return success
