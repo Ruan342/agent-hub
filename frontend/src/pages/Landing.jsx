@@ -138,7 +138,7 @@ export default function Landing() {
         <div className="max-w-4xl mx-auto">
           <div className="aspect-video bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden relative group cursor-pointer hover:border-gray-400 transition-all">
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center group-hover:scale-105 transition-transform">
+              <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center group-hover:scale-105 transition-transform">
                 <Play className="w-7 h-7 text-white ml-1" />
               </div>
               <p className="text-sm text-gray-600 mt-4">Assistir demonstração (2 min)</p>
