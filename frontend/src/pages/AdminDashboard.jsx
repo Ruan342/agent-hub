@@ -195,7 +195,7 @@ export default function AdminDashboard() {
                   <CardTitle>Gerenciar Agentes</CardTitle>
                   <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                     <DialogTrigger asChild>
-                      <Button data-testid="create-agent-button" className="bg-black hover:bg-gray-900">
+                      <Button data-testid="create-agent-button" className="bg-purple-600 hover:bg-purple-700">
                         <Plus className="w-4 h-4 mr-2" />
                         Criar Agente
                       </Button>
