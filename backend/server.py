@@ -757,7 +757,17 @@ async def make_voice_call(request: VoiceCallRequest, current_user: dict = Depend
             payload={
                 "call_id": call_response.id,
                 "phone": request.phone,
-                "status": "queued"
+                "status": "queued",
+                "agent": {
+                    "id": agent.get("id"),
+                    "name": agent.get("name"),
+                    "segment": agent.get("segment"),
+                },
+                "subscription": {
+                    "id": subscription["id"],
+                    "config": subscription.get("config"),
+                    "custom_prompt": subscription.get("custom_prompt"),
+                },
             }
         )
         log_dict = webhook_log.model_dump()
