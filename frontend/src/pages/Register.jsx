@@ -115,7 +115,7 @@ export default function Register() {
               <button
                 data-testid="login-link"
                 onClick={() => navigate("/login")}
-                className="text-black font-semibold hover:underline"
+                className="text-purple-600 font-semibold hover:underline"
               >
                 Faça login
               </button>
