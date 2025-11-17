@@ -96,6 +96,7 @@ class AgentCreate(BaseModel):
     mascot_image_url: str
     elevenlabs_voice_id: str
     base_prompt: Optional[str] = None
+    voice_sample_url: Optional[str] = None
 
 class Subscription(BaseModel):
     model_config = ConfigDict(extra="ignore")
