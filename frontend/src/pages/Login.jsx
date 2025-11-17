@@ -71,7 +71,7 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1 border-gray-300 focus:border-black"
+                className="mt-1 border-gray-300 focus:border-purple-500"
                 placeholder="seu@email.com"
               />
             </div>
@@ -84,7 +84,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="mt-1 border-gray-300 focus:border-black"
+                className="mt-1 border-gray-300 focus:border-purple-500"
                 placeholder="••••••••"
               />
             </div>
