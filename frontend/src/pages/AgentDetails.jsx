@@ -18,33 +18,12 @@ export default function AgentDetails() {
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
   const [testingVoice, setTestingVoice] = useState(false);
-  const [testText, setTestText] = useState(
-    "Olá! Sou seu assistente virtual. Como posso ajudá-lo hoje?"
-  );
   const [audio, setAudio] = useState(null);
-  const [remainingTests, setRemainingTests] = useState(3);
   const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchAgent();
   }, [id]);
-
-  useEffect(() => {
-    if (agent?.elevenlabs_voice_id) {
-      checkRemainingTests();
-    }
-  }, [agent]);
-
-  const checkRemainingTests = async () => {
-    try {
-      const response = await axios.get(
-        `${API}/tts/test/remaining/${agent.elevenlabs_voice_id}`
-      );
-      setRemainingTests(response.data.remaining);
-    } catch (error) {
-      console.error("Error checking remaining tests:", error);
-    }
-  };
 
   const fetchAgent = async () => {
     try {
