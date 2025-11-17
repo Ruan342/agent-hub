@@ -262,7 +262,7 @@ export default function AgentDetails() {
                   <p className="text-sm text-gray-600 mb-4">Faça login e compre o agente para uso ilimitado</p>
                   <Button
                     onClick={() => navigate('/login')}
-                    className="bg-indigo-600 hover:bg-indigo-700"
+                    className="bg-purple-600 hover:bg-purple-700"
                   >
                     Fazer Login e Comprar
                   </Button>
