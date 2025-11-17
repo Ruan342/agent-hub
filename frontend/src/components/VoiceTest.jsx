@@ -76,7 +76,7 @@ export default function VoiceTest({ agentId, subscriptionId, voiceId }) {
         value={text}
         onChange={(e) => setText(e.target.value)}
         rows={3}
-        className="border-indigo-200"
+        className="border-purple-200"
       />
       
       <div className="flex gap-2">
