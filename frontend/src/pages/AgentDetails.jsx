@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, ArrowLeft, Play, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import SidebarLayout from "@/components/SidebarLayout";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
