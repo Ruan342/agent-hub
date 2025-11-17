@@ -159,7 +159,7 @@ export default function AgentDetails() {
           <div className="grid md:grid-cols-2 gap-10 bg-white rounded-2xl shadow-2xl p-8">
           {/* Left: Image & Info */}
           <div>
-            <div className="bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl p-10 flex items-center justify-center mb-6">
+            <div className="bg-gradient-to-br from-purple-50 to-indigo-100 rounded-2xl p-10 flex items-center justify-center mb-6">
               <img 
                 src={agent.mascot_image_url} 
                 alt={agent.name} 
