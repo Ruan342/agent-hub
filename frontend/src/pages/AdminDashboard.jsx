@@ -31,7 +31,8 @@ export default function AdminDashboard() {
     features: "",
     mascot_image_url: "",
     elevenlabs_voice_id: "",
-    base_prompt: ""
+    base_prompt: "",
+    voice_sample_url: ""
   });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
