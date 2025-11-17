@@ -341,6 +341,8 @@ async def update_subscription_config(subscription_id: str, config: SubscriptionC
     update_data = {}
     if config.custom_prompt is not None:
         update_data["custom_prompt"] = config.custom_prompt
+    if config.config is not None:
+        update_data["config"] = config.config
 
     if update_data:
         await db.subscriptions.update_one({"id": subscription_id}, {"$set": update_data})
