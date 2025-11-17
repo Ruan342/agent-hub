@@ -46,7 +46,7 @@ export default function SidebarLayout({ children }) {
               onClick={() => navigate("/")}
               className="flex items-center space-x-2"
             >
-              <div className="w-7 h-7 bg-black rounded flex items-center justify-center">
+              <div className="w-7 h-7 bg-purple-600 rounded flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <span className="text-lg font-semibold tracking-tight">VoiceAI Hub</span>
