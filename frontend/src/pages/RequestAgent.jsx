@@ -113,7 +113,7 @@ export default function RequestAgent() {
                   data-testid="submit-request-button"
                   type="submit" 
                   disabled={loading}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700"
+                  className="w-full bg-purple-600 hover:bg-purple-700"
                 >
                   {loading ? "Enviando..." : (
                     <>
