@@ -197,7 +197,7 @@ export default function Marketplace() {
                     onClick={() => setSelectedSegment(segment.id)}
                     variant={selectedSegment === segment.id ? "default" : "outline"}
                     size="sm"
-                    className={selectedSegment === segment.id ? "bg-black hover:bg-gray-900" : "border-gray-300 hover:border-black"}
+                    className={selectedSegment === segment.id ? "bg-purple-600 hover:bg-purple-700" : "border-gray-300 hover:border-purple-400"}
                   >
                     <span className="mr-1">{segment.icon}</span>
                     {segment.label}
