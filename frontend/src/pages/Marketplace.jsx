@@ -267,7 +267,7 @@ export default function Marketplace() {
               <div 
                 key={agent.id} 
                 data-testid={`agent-card-${agent.id}`}
-                className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-black transition-all cursor-pointer group"
+                className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:border-purple-300 hover:shadow-sm transition-all cursor-pointer group"
                 onClick={() => navigate(`/agent/${agent.id}`)}
               >
                 <div className="h-48 bg-gray-50 flex items-center justify-center border-b border-gray-100">
