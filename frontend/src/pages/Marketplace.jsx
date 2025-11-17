@@ -317,7 +317,7 @@ export default function Marketplace() {
                     <Button 
                       data-testid={`view-agent-${agent.id}`}
                       size="sm" 
-                      className="bg-black hover:bg-gray-900"
+                      className="bg-purple-600 hover:bg-purple-700"
                     >
                       Ver Detalhes
                     </Button>
