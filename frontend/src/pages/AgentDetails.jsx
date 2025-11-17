@@ -241,7 +241,7 @@ export default function AgentDetails() {
                   <Button
                     onClick={handleTestVoice}
                     disabled={testingVoice || !testText.trim()}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700"
+                    className="w-full bg-purple-600 hover:bg-purple-700"
                   >
                     {testingVoice ? (
                       <>
