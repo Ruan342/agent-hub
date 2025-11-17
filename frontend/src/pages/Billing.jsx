@@ -67,7 +67,7 @@ export default function Billing() {
         </div>
 
         {invoices.length === 0 ? (
-          <Card className="border-gray-200">
+          <Card className="border-gray-200 bg-gradient-to-br from-purple-50/40 via-white to-purple-50/40">
             <CardContent className="py-16 text-center">
               <div className="text-4xl mb-4">💳</div>
               <h3 className="text-xl font-semibold mb-2">Nenhuma fatura ainda</h3>
