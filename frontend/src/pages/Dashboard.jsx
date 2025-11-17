@@ -315,7 +315,7 @@ export default function Dashboard() {
                         </div>
 
                         {/* Voice Test */}
-                        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4">
+                        <div className="bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4">
                           <h4 className="font-semibold text-sm mb-3">Testar Voz do Agente</h4>
                           <VoiceTest
                             agentId={agent.id}
