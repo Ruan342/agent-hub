@@ -229,7 +229,7 @@ export default function Marketplace() {
                 onClick={() => setPriceRange(range.id)}
                 variant={priceRange === range.id ? "default" : "outline"}
                 size="sm"
-                className={priceRange === range.id ? "bg-black hover:bg-gray-900" : "border-gray-300 text-gray-600"}
+                className={priceRange === range.id ? "bg-purple-600 hover:bg-purple-700" : "border-gray-300 text-gray-600"}
               >
                 {range.label}
               </Button>
