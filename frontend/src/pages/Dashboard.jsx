@@ -148,7 +148,7 @@ export default function Dashboard() {
       {/* Content */}
       <div className="p-6">
         {subscriptions.length === 0 ? (
-          <Card className="border-gray-200">
+          <Card className="border-gray-200 bg-gradient-to-br from-purple-50/40 via-white to-purple-50/40">
             <CardContent className="py-16 text-center">
               <div className="text-4xl mb-4">🤖</div>
               <h3 className="text-xl font-semibold mb-2">Nenhuma assinatura ativa</h3>
@@ -156,7 +156,7 @@ export default function Dashboard() {
               <Button
                 data-testid="go-to-marketplace"
                 onClick={() => navigate("/marketplace")}
-                className="bg-black hover:bg-gray-900"
+                className="bg-purple-600 hover:bg-purple-700"
               >
                 Explorar Agentes
               </Button>
