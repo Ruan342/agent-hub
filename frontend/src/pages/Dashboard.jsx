@@ -103,11 +103,37 @@ export default function Dashboard() {
     } finally {
       setSavingWebhook({ ...savingWebhook, [subscriptionId]: false });
     }
-  const handleUpdateCustomPrompt = async (subscriptionId, value) => {
+  const buildCustomPromptFromConfig = (config) => {
+    const parts = [];
+    if (config.company_name || config.brand_name) {
+      parts.push(
+        `Minha empresa se chama ${config.company_name || config.brand_name}.`.
+          trim()
+      );
+    }
+    if (config.product) {
+      parts.push(`Nosso produto/serviço principal é: ${config.product}.`);
+    }
+    if (config.audience) {
+      parts.push(`Atendemos principalmente: ${config.audience}.`);
+    }
+    if (config.tone) {
+      parts.push(`O agente deve falar em um tom: ${config.tone}.`);
+    }
+    if (config.extra) {
+      parts.push(config.extra);
+    }
+    return parts.join(" ");
+  };
+
+  const handleUpdateCustomConfig = async (subscriptionId) => {
+    const config = customConfig[subscriptionId] || {};
+    const custom_prompt = buildCustomPromptFromConfig(config);
+
     try {
       await axios.put(
         `${API}/subscriptions/${subscriptionId}/config`,
-        { custom_prompt: value },
+        { config, custom_prompt },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Configuração do agente atualizada!");
