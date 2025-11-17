@@ -179,7 +179,7 @@ export default function Dashboard() {
                   <CardHeader className="border-b border-gray-100">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-200">
+                        <div className="w-14 h-14 bg-gradient-to-br from-purple-50 via-white to-purple-50 rounded-xl flex items-center justify-center border border-purple-100">
                           <img
                             src={agent.mascot_image_url}
                             alt={agent.name}
