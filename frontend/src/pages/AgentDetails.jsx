@@ -172,7 +172,7 @@ export default function AgentDetails() {
             <div className="space-y-4">
               <div>
                 <h3 className="font-semibold text-gray-700 mb-2">Segmento</h3>
-                <Badge className="bg-indigo-100 text-indigo-700 text-sm">{agent.segment}</Badge>
+                <Badge className="bg-purple-50 text-purple-700 text-sm">{agent.segment}</Badge>
               </div>
               <div>
                 <h3 className="font-semibold text-gray-700 mb-2">Recursos</h3>
