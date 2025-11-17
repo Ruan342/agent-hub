@@ -67,48 +67,24 @@ export default function AgentDetails() {
     }
   };
 
-  const handleTestVoice = async () => {
-    if (!testText.trim()) {
-      toast.error("Digite um texto para testar");
+  const handlePlaySample = () => {
+    if (!agent?.voice_sample_url) {
+      toast.error("Nenhum áudio de exemplo disponível para este agente.");
       return;
     }
 
-    if (testText.length > 100) {
-      toast.error("Texto muito longo para teste. Máximo 100 caracteres.");
-      return;
-    }
-
-    setTestingVoice(true);
     try {
-      const response = await axios.post(`${API}/tts/test`, {
-        text: testText,
-        voice_id: agent.elevenlabs_voice_id,
-        stability: 0.5,
-        similarity_boost: 0.75,
-      });
-
-      const audioElement = new Audio(response.data.audio_url);
+      const audioElement = new Audio(agent.voice_sample_url);
       setAudio(audioElement);
+      setTestingVoice(true);
       audioElement.play();
-
       audioElement.onended = () => {
+        setTestingVoice(false);
         setAudio(null);
       };
-
-      // Update remaining tests
-      await checkRemainingTests();
-
-      toast.success("Reproduzindo amostra de voz!");
     } catch (error) {
-      if (error.response?.status === 429) {
-        toast.error(
-          "Limite de testes atingido! Faça login e compre para uso ilimitado."
-        );
-      } else {
-        toast.error(error.response?.data?.detail || "Erro ao gerar áudio");
-      }
-    } finally {
       setTestingVoice(false);
+      toast.error("Erro ao reproduzir o áudio de exemplo.");
     }
   };
 
