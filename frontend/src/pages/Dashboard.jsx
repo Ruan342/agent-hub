@@ -206,7 +206,7 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold">${agent.price}</div>
+                        <div className="text-2xl font-bold text-purple-700">${agent.price}</div>
                         <div className="text-sm text-gray-500">por mês</div>
                       </div>
                     </div>
