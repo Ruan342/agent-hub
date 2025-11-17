@@ -82,6 +82,7 @@ class Agent(BaseModel):
     features: List[str]
     mascot_image_url: str
     elevenlabs_voice_id: str
+    base_prompt: Optional[str] = None
     status: str = "active"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -93,6 +94,7 @@ class AgentCreate(BaseModel):
     features: List[str]
     mascot_image_url: str
     elevenlabs_voice_id: str
+    base_prompt: Optional[str] = None
 
 class Subscription(BaseModel):
     model_config = ConfigDict(extra="ignore")
