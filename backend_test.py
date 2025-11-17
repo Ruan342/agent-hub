@@ -417,7 +417,17 @@ class VoiceAIPlatformTester:
         print("\n🔧 Admin Tests")
         self.test_admin_create_agent()
         self.test_admin_get_requests()
+        self.test_admin_upload_image()
         self.test_admin_delete_agent()
+        
+        # TTS tests
+        print("\n🎤 TTS Tests")
+        self.test_tts_test_endpoint()
+        self.test_tts_remaining_tests()
+        
+        # Billing tests
+        print("\n💳 Billing Tests")
+        self.test_billing_invoices()
         
         # Print results
         print("\n" + "=" * 50)
