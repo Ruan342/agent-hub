@@ -320,6 +320,31 @@ async def upload_image(file: UploadFile = File(...), current_user: dict = Depend
 # Customer endpoints
 @api_router.get("/subscriptions/my", response_model=List[Subscription])
 async def get_my_subscriptions(current_user: dict = Depends(get_current_user)):
+
+@api_router.put("/subscriptions/{subscription_id}/config")
+async def update_subscription_config(subscription_id: str, config: SubscriptionConfigUpdate, current_user: dict = Depends(get_current_user)):
+    sub_doc = await db.subscriptions.find_one({"id": subscription_id})
+    if not sub_doc:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+
+    if sub_doc.get("user_id") != current_user["user_id"] and current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Not allowed to update this subscription")
+
+    update_data = {}
+    if config.custom_prompt is not None:
+        update_data["custom_prompt"] = config.custom_prompt
+
+    if update_data:
+        await db.subscriptions.update_one({"id": subscription_id}, {"$set": update_data})
+
+    updated = await db.subscriptions.find_one({"id": subscription_id}, {"_id": 0})
+    # normalize datetime fields
+    for field in ["created_at", "start_date", "end_date"]:
+        if isinstance(updated.get(field), str):
+            updated[field] = datetime.fromisoformat(updated[field])
+
+    return Subscription(**updated)
+
     subs = await db.subscriptions.find({"user_id": current_user['user_id']}, {"_id": 0}).to_list(1000)
     for sub in subs:
         for field in ['created_at', 'start_date', 'end_date']:
