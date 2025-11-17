@@ -83,7 +83,7 @@ export default function VoiceTest({ agentId, subscriptionId, voiceId }) {
         <Button
           onClick={handleGenerate}
           disabled={loading || !text.trim()}
-          className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+          className="flex-1 bg-purple-600 hover:bg-purple-700"
         >
           {loading ? (
             <>
