@@ -67,11 +67,12 @@ export default function Marketplace() {
 
     // Filter by search query
     if (searchQuery) {
-      filtered = filtered.filter(
-        (agent) =>
-          agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          agent.description.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((agent) => {
+        const name = (agent.name || "").toLowerCase();
+        const description = (agent.description || "").toLowerCase();
+        return name.includes(query) || description.includes(query);
+      });
     }
 
     // Filter by price range
