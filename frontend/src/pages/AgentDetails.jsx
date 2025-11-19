@@ -224,17 +224,53 @@ export default function AgentDetails() {
                   </li>
                   <li className="flex items-start">
                     <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                    Webhook para conectar com seu CRM
+                    Webhook para conectar com seu CRM ou sistema interno
                   </li>
                   <li className="flex items-start">
                     <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                    Dashboard de monitoramento
+                    Dashboard de monitoramento de uso
                   </li>
                   <li className="flex items-start">
                     <Check className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
                     Suporte técnico
                   </li>
                 </ul>
+              </div>
+
+              {/* Para quem é este agente */}
+              <div className="mt-10 space-y-3">
+                <h3 className="font-semibold text-gray-900">
+                  Para quem é este agente
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  O <span className="font-semibold">{agent.name}</span> foi criado para negócios que precisam de
+                  soluções de <span className="font-semibold">{agent.segment}</span> orientadas por IA, sem precisar
+                  construir tudo do zero. Ideal para empresas que querem automatizar operações, manter uma experiência
+                  consistente e ainda ter controle total via API e webhooks.
+                </p>
+              </div>
+
+              {/* Como funciona na prática */}
+              <div className="mt-8 space-y-3">
+                <h3 className="font-semibold text-gray-900">Como funciona na prática</h3>
+                <ol className="space-y-2 text-gray-600 text-sm list-decimal list-inside">
+                  <li>
+                    Você assina o agente e configura os dados da sua empresa no dashboard (nome, produto, público-alvo,
+                    tom de voz e informações chave).
+                  </li>
+                  <li>
+                    Integra o agente ao seu sistema através da API Key e de um Webhook, conectando com CRM,
+                    WhatsApp, ERP ou qualquer backend que você já utilize.
+                  </li>
+                  <li>
+                    Seu sistema envia eventos e dados para o VoiceAI Hub; o agente processa e responde falando com seus
+                    clientes, usando a voz de exemplo configurada e o contexto que você definiu.
+                  </li>
+                  <li>
+                    Tudo é monitorado pelo dashboard, onde você pode ajustar configurações, acompanhar uso e evoluir o
+                    comportamento do agente ao longo do tempo.
+                  </li>
+                </ol>
               </div>
             </div>
           </div>
