@@ -1,82 +1,77 @@
 <analysis>
-The trajectory documents the creation of a VoiceAI Hub from scratch. The initial phase involved understanding the user's Portuguese request for a platform selling voice AI agents with Stripe payments and an admin panel. The AI engineer built a full-stack MVP using FastAPI, React, and MongoDB, including JWT authentication and seeded data.
+The trajectory details the development and iterative refinement of VoiceAI Hub, a full-stack application. The initial phase involved building the MVP with FastAPI, React, and MongoDB, featuring JWT authentication, Stripe payments, and ElevenLabs integration for voice synthesis.
 
-Subsequently, the project entered an iterative refinement cycle driven by user feedback. The user requested multiple UI/UX redesigns, pushing for a cleaner, more tech-focused aesthetic inspired by sites like ElevenLabs and Vercel. The engineer responded by rewriting frontend components and CSS.
+The project then transitioned into a heavy UI/UX redesign phase, driven by the user's request to emulate the professional, modern aesthetic of sintra.ai. This led to a complete visual overhaul, adopting a purple-centric theme and replacing top-tab navigation with a consistent, collapsible sidebar menu across all authenticated pages.
 
-Key features were then added incrementally. This included a full integration with the ElevenLabs API for real-time voice synthesis, a public-facing voice test feature with a 3-test limit tracked by IP, and the removal of all ElevenLabs branding. The engineer also built out pages for API docs, billing, and improved the admin/client dashboards.
+A significant architectural evolution was the introduction of a two-tiered prompt system for agents. The admin now defines a  (the agent's core training) and a  (a fixed audio demo), while the end-customer configures a  via a structured form in their dashboard to provide company-specific context. This separates the agent's core function from its personalization layer.
 
-The final request was to change the dashboard navigation from top tabs to a collapsible sidebar menu. The engineer began implementing this, starting with the main  page, but had not yet applied the change to the other related pages (, ) when the trajectory ended.
+The most recent interactions focus on fixing a critical bug. The user reported that clicking on an agent in the Marketplace results in an error, preventing the agent's detail page from opening. Despite several attempts to fix potential causes (null checks, syntax errors), the issue persists.
+
+The user's primary language is Portuguese. The next agent must communicate in **Portuguese**.
 </analysis>
 
 <product_requirements>
-The project is to build VoiceAI Hub, an online platform where clients can purchase monthly subscriptions to voice-based AI agents. These agents, generated using ElevenLabs, are intended for integration into client systems like CRMs, WhatsApp, and email.
+The project, VoiceAI Hub, is a platform for selling subscriptions to specialized voice AI agents. The core functionality allows clients to browse a marketplace of agents, test their voices, and purchase monthly subscriptions via Stripe.
 
-**Core Features Implemented:**
-- **Marketplace:** A public page where users can browse and view details of available AI agents, each represented by a cartoon mascot.
-- **Voice Testing:** Unauthenticated users can test an agent's voice up to three times from the agent's detail page. Usage is tracked by IP address.
-- **User Authentication:** A JWT-based system for user registration and login, with distinct roles for 'admin' and 'client'.
-- **Admin Dashboard:** A protected area for administrators to add new AI agents (including uploading mascot images), view custom agent requests, and manage the platform.
-- **Client Dashboard:** A protected area for subscribed customers to manage their agents, view API keys, and see usage analytics.
-- **Payments:** Stripe integration for handling monthly subscription payments.
-- **API & Billing Pages:** Dedicated pages for API documentation and customer billing management.
-- **ElevenLabs Integration:** The platform is connected to the ElevenLabs API to generate voice audio in real-time.
+**Implemented Features:**
+- **Marketplace & Agent Pages:** A public marketplace to browse agents. Each agent has a detailed page styled after sintra.ai, featuring its purpose, target audience, how it works, and a fixed audio sample () for demonstration, replacing the original dynamic text-to-speech testing.
+- **Dual-Layer Agent Configuration:** A key architectural decision. Agents have a core function defined by an admin-set . Customers who subscribe can then personalize this agent with their own business context via a structured form in their dashboard, which generates a . This ensures agents are specialized yet customizable.
+- **Admin & Client Dashboards:** An admin panel for creating new agents (including uploading mascots, setting  and ). A client dashboard to manage subscriptions, API keys, and configure agent context ().
+- **UI/UX:** A full UI overhaul was completed to match the sintra.ai aesthetic, featuring a consistent collapsible sidebar navigation (defaulting to closed) and a light, purple-accented color scheme.
+- **Future Integration:** The architecture is being prepared to integrate with external intelligence workflows built by the user in n8n, using the prompt layers.
 </product_requirements>
 
 <key_technical_concepts>
 - **Backend:** FastAPI (Python)
-- **Frontend:** React.js
+- **Frontend:** React.js, Tailwind CSS
 - **Database:** MongoDB
-- **Authentication:** JWT (JSON Web Tokens)
-- **Payments:** Stripe API
-- **Voice Synthesis:** ElevenLabs API
-- **Styling:** Tailwind CSS, Shadcn UI components
-- **File Storage:** Local server-side storage for uploaded agent mascot images.
-- **Rate Limiting:** IP-based tracking for public API endpoints (voice testing).
+- **Authentication:** JSON Web Tokens (JWT)
+- **Core Logic:** A two-tier prompt system ( set by admin,  and  set by client) to separate agent function from user-specific context.
+- **Integrations:** Stripe (Payments), ElevenLabs (Voice Synthesis), and a planned n8n integration for agent logic.
 </key_technical_concepts>
 
 <code_architecture>
-The application follows a standard monolithic repository structure with separate directories for the backend and frontend.
-
+The application is a monorepo with distinct  and  directories.
 
 
 - ****
-    - **Importance:** This is the core of the application. It's a single FastAPI file that defines all API endpoints, including user authentication (register, login), CRUD operations for AI agents, Stripe webhook handling, ElevenLabs voice generation, and image uploads.
-    - **Changes:** The file was created from scratch and heavily modified throughout the trajectory. Key additions include endpoints for , , , , , and admin-specific routes. It also handles local file saving for image uploads.
+  - **Importance:** The single source of truth for all API logic.
+  - **Summary of Changes:** It was heavily modified to support the dual-prompt architecture. The  model was updated to include  and . The  model was updated to include  and . A new endpoint, , was added to allow clients to save their agent personalization. The public voice test endpoint () is no longer used by the agent details page but remains in the code.
 
 - ****
-    - **Importance:** This is the main landing page for logged-in clients. It's designed to be a central hub displaying analytics, purchased agents, and navigation to other key areas like Billing and API Docs.
-    - **Changes:** This file has undergone significant rework. Initially a simple page, it was enhanced with analytics charts and metrics. Most recently, it was completely rewritten to replace a tab-based navigation with a new collapsible sidebar menu to improve UX.
+  - **Importance:** The interface for the administrator to create and manage the agent catalog.
+  - **Summary of Changes:** The agent creation form was expanded to include new  and  fields for  and , allowing the admin to define an agent's core function and provide a fixed audio demo.
 
 - ****
-    - **Importance:** This page displays information about a single AI agent and is crucial for user conversion. It contains the public voice testing feature.
-    - **Changes:** It was modified to include a voice testing section where unauthenticated users can input text and hear the agent's voice. The logic was added to check the user's remaining test attempts against the IP-based limit and display a counter.
+  - **Importance:** The public-facing product page for each agent, crucial for user conversion.
+  - **Summary of Changes:** This page underwent a major redesign. The dynamic text-to-speech test was completely removed. It was replaced by a simple audio player that plays the  for that agent. The page layout was restructured to be more professional (Sintra-like) with dedicated sections for Para quem é este agente and Como funciona na prática, with content that dynamically changes based on the agent's  property. It was recently patched to prevent crashing if  is null.
 
 - ****
-    - **Importance:** The control panel for the site administrator. It allows for the creation of new agents.
-    - **Changes:** It was updated to include a form for adding new agents, which features a file input for uploading the agent's mascot image to the backend.
+  - **Importance:** The main hub for logged-in customers.
+  - **Summary of Changes:** This page was refactored to include a sophisticated form within each subscription card. This form allows clients to fill out structured fields (company name, product, audience, tone) which are then used to generate and save a  for their specific agent instance via the new  endpoint.
 
 - ****
-    - **Importance:** A utility script to populate the database with initial data.
-    - **Changes:** Created to add an initial admin user () and several sample AI agents to make the platform testable immediately after setup. It was also used later to add a specific Nutricionista agent.
+  - **Importance:** The main entry point for users to discover and select agents.
+  - **Summary of Changes:** The page was refactored to use the shared  for UI consistency. It has been the source of several runtime errors (, , JSX syntax issues), which were sequentially fixed. It is currently the source of the active bug, where clicking an agent card fails to open the details page.
+
+- ****
+  - **Importance:** A shared component that provides consistent navigation across the authenticated sections of the app.
+  - **Summary of Changes:** Created from scratch to replace a tab-based navigation system. Based on user feedback, its initial state was changed from  to , so it starts closed by default.
 </code_architecture>
 
 <pending_tasks>
-- Apply the new collapsible sidebar menu to the  and  pages to ensure a consistent UI with the updated .
-- Revisit the discussion on how mascot images should be handled (e.g., local storage vs. a cloud service like S3 or Cloudinary), which was previously postponed.
+- Implement the Duplicar agente (Duplicate Agent) functionality in the Admin Dashboard to speed up the creation of similar agents.
+- Begin the integration with the user's n8n workflows, defining the final payload structure (combining  and ) and creating the backend endpoint to call the n8n webhook.
 </pending_tasks>
 
 <current_work>
-The most recent task was a direct response to the user's feedback: ainda não vejo o menu que pedi. coloca na lateral, quando clica ele espande com as abas (I still don't see the menu I asked for. put it on the side, when you click it expands with the tabs).
+The current and most immediate task is fixing a critical bug reported by the user: **no marketplace, da erro ao tentar abrir o agente** (in the marketplace, it gives an error when trying to open the agent).
 
-The AI engineer acknowledged the request and started implementing a new collapsible sidebar navigation for the client and admin areas to replace the previous tab-based system.
+This issue prevents users from navigating from the agent list in  to the  page. The AI engineer previously attempted a fix by adding a defensive check for  in , suspecting a null array was causing a crash. However, the user reported the error persists.
 
-The work began by completely rewriting the  file to incorporate this new sidebar menu component. The file was successfully written, but the engineer noted that the same change needed to be applied to  and  for UI consistency. The trajectory ends just after this first file was written and before the other two were updated.
-
-**File Modified:** 
-
-The immediate plan was to apply this same  structure to the  and  pages.
+The last actions in the trajectory show the engineer re-examining the frontend logs and the  code, indicating the bug is likely a frontend runtime error related to navigation or data passing between the  and  pages. The console logs captured during automated tests show , but this might be an artifact of the testing environment. The user's direct report of a runtime error is the primary focus. The platform is currently in a broken state for this core user flow.
 </current_work>
 
 <optional_next_step>
-I will now apply the new collapsible sidebar layout to the  and  pages to ensure a consistent navigation experience across the entire user dashboard, as I was doing before this summary.
+Debug and fix the runtime error that occurs when clicking on an agent card in the Marketplace, ensuring the  page loads correctly.
 </optional_next_step>
