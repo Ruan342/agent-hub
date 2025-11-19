@@ -247,14 +247,14 @@ export default function Marketplace() {
                   
                   {/* Features Preview */}
                   <div className="mb-4 space-y-1">
-                    {agent.features.slice(0, 2).map((feature, idx) => (
+                    {(agent.features || []).slice(0, 2).map((feature, idx) => (
                       <div key={idx} className="flex items-start text-xs text-gray-500">
                         <span className="mr-1">✓</span>
                         <span className="line-clamp-1">{feature}</span>
                       </div>
                     ))}
-                    {agent.features.length > 2 && (
-                      <div className="text-xs text-gray-400">+{agent.features.length - 2} recursos</div>
+                    {(agent.features || []).length > 2 && (
+                      <div className="text-xs text-gray-400">+{(agent.features || []).length - 2} recursos</div>
                     )}
                   </div>
 
