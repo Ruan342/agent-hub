@@ -78,6 +78,9 @@ class Agent(BaseModel):
     price: float
     features: List[str]
     mascot_image_url: str
+    mascot_image_hero_url: Optional[str] = None  # Imagem grande do hero (topo)
+    mascot_image_feature_url: Optional[str] = None  # Imagem da seção de recursos
+    mascot_image_cta_url: Optional[str] = None  # Imagem do CTA final
     elevenlabs_voice_id: str
     base_prompt: Optional[str] = None
     voice_sample_url: Optional[str] = None
