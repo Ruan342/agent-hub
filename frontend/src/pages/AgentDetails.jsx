@@ -165,7 +165,7 @@ export default function AgentDetails() {
       return (
         <>
           O <span className="font-semibold">{agent.name}</span> foi projetado para equipes de marketing e CS que querem
-          rodar pesquisas de satisfae7e3o, NPS e pf3s-venda de forma automatizada, coletando notas e comente1rios
+          rodar pesquisas de satisfação, NPS e pf3s-venda de forma automatizada, coletando notas e comente1rios
           que alimentam diretamente seu CRM ou ferramentas de BI.
         </>
       );
