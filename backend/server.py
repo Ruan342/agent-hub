@@ -254,6 +254,20 @@ async def require_admin(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user
 
+async def verify_api_key(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Verify API Key and return subscription"""
+    api_key = credentials.credentials
+    
+    if not api_key.startswith("vapi_"):
+        raise HTTPException(status_code=401, detail="Invalid API key format")
+    
+    subscription = await db.subscriptions.find_one({"api_key": api_key, "status": "active"})
+    if not subscription:
+        raise HTTPException(status_code=401, detail="Invalid or inactive API key")
+    
+    return subscription
+
+
 # Auth endpoints
 @api_router.post("/auth/register")
 async def register(user_data: UserCreate):
