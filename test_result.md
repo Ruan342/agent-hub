@@ -173,6 +173,15 @@ backend:
         agent: "testing"
         comment: "✅ Complete image upload flow verified: Upload image → Update agent → Verify persistence. All steps working correctly. Image URLs are properly saved in database and persist after agent updates."
 
+  - task: "Admin Duplicate Agent"
+    implemented: true
+    working: false
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history: []
+
   - task: "TTS Test Endpoint"
     implemented: true
     working: true
