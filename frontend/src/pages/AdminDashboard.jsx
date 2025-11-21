@@ -40,6 +40,7 @@ export default function AdminDashboard() {
     llm_model: "gpt-5"
   });
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
