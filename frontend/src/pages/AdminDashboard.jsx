@@ -383,8 +383,9 @@ export default function AdminDashboard() {
                             {newAgent.mascot_image_url && (
                               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                                 <img 
-                                  src={`${BACKEND_URL}${newAgent.mascot_image_url}`}
+                                  src={newAgent.mascot_image_url.startsWith('http') ? newAgent.mascot_image_url : `${API}${newAgent.mascot_image_url}`}
                                   alt="Preview"
+                                  crossOrigin="anonymous"
                                   className="w-12 h-12 object-contain rounded"
                                 />
                                 <div className="flex-1 text-xs text-gray-600">
