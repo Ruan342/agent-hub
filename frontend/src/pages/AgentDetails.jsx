@@ -184,7 +184,7 @@ export default function AgentDetails() {
     // fallback genérico
     return (
       <>
-        O <span className="font-semibold">{agent.name}</span> foi criado para negócios que precisam de solue7f5es de
+        O <span className="font-semibold">{agent.name}</span> foi criado para negócios que precisam de soluções de
         <span className="font-semibold"> {agent.segment}</span> orientadas por IA, sem precisar construir tudo do zero.
         Ideal para empresas que querem automatizar operae7f5es, manter uma experieancia consistente e ainda ter
         controle total via API e webhooks.
