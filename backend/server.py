@@ -274,7 +274,17 @@ async def login(credentials: UserLogin):
 # Public agent endpoints
 def convert_relative_to_absolute_url(url: str, request: Request) -> str:
     """Convert relative URLs to absolute URLs via /api/uploads"""
-    if not url or url.startswith('http://') or url.startswith('https://'):
+    if not url:
+        return url
+    
+    # If URL is already absolute, check if it needs to be updated to use /api/uploads
+    if url.startswith('http://') or url.startswith('https://'):
+        # Convert old /uploads/ URLs to /api/uploads/
+        if '/uploads/agents/' in url and '/api/uploads/' not in url:
+            url = url.replace('/uploads/agents/', '/api/uploads/agents/')
+        # Force HTTPS
+        if 'emergentagent.com' in url or 'preview' in url:
+            url = url.replace('http://', 'https://')
         return url
     
     base_url = str(request.base_url).rstrip('/')
