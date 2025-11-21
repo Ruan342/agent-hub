@@ -513,7 +513,9 @@ export default function AgentDetails() {
                     "Dashboard de monitoramento de uso",
                     "Suporte técnico dedicado",
                     "Atualizações automáticas",
-                    "Cancelamento a qualquer momento"
+                    "Cancelamento a qualquer momento",
+                    "Suporte multilíngue (PT, ES, EN)",
+                    "Detecção automática de idioma"
                   ].map((item, index) => (
                     <div key={index} className="flex items-start">
                       <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-4 mt-1 flex-shrink-0">
