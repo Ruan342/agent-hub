@@ -275,8 +275,21 @@ async def login(credentials: UserLogin):
     return {"token": token, "user": user}
 
 # Public agent endpoints
+def convert_relative_to_absolute_url(url: str, request: Request) -> str:
+    """Convert relative URLs to absolute URLs"""
+    if not url or url.startswith('http://') or url.startswith('https://'):
+        return url
+    
+    base_url = str(request.base_url).rstrip('/')
+    if base_url.endswith('/api'):
+        base_url = base_url[:-4]
+    
+    # Remove leading slash if present to avoid double slashes
+    url = url.lstrip('/')
+    return f"{base_url}/{url}"
+
 @api_router.get("/agents", response_model=List[Agent])
-async def get_agents(segment: Optional[str] = None):
+async def get_agents(request: Request, segment: Optional[str] = None):
     query = {"status": "active"}
     if segment:
         query["segment"] = segment
@@ -285,15 +298,25 @@ async def get_agents(segment: Optional[str] = None):
     for agent in agents:
         if isinstance(agent.get('created_at'), str):
             agent['created_at'] = datetime.fromisoformat(agent['created_at'])
+        # Convert relative URLs to absolute
+        if agent.get('mascot_image_url'):
+            agent['mascot_image_url'] = convert_relative_to_absolute_url(agent['mascot_image_url'], request)
+        if agent.get('voice_sample_url'):
+            agent['voice_sample_url'] = convert_relative_to_absolute_url(agent['voice_sample_url'], request)
     return agents
 
 @api_router.get("/agents/{agent_id}", response_model=Agent)
-async def get_agent(agent_id: str):
+async def get_agent(agent_id: str, request: Request):
     agent = await db.agents.find_one({"id": agent_id}, {"_id": 0})
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
     if isinstance(agent.get('created_at'), str):
         agent['created_at'] = datetime.fromisoformat(agent['created_at'])
+    # Convert relative URLs to absolute
+    if agent.get('mascot_image_url'):
+        agent['mascot_image_url'] = convert_relative_to_absolute_url(agent['mascot_image_url'], request)
+    if agent.get('voice_sample_url'):
+        agent['voice_sample_url'] = convert_relative_to_absolute_url(agent['voice_sample_url'], request)
     return Agent(**agent)
 
 # Image upload endpoint
