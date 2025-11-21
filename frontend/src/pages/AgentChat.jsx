@@ -25,10 +25,10 @@ export default function AgentChat() {
   const [inputMessage, setInputMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [copiedKey, setCopiedKey] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState(null);
-  const [audioChunks, setAudioChunks] = useState([]);
+  const [recognition, setRecognition] = useState(null);
+  const [interimTranscript, setInterimTranscript] = useState("");
   const [customConfig, setCustomConfig] = useState({
     company_name: "",
     brand_name: "",
