@@ -47,7 +47,69 @@ export default function AgentChat() {
       return;
     }
     fetchData();
+    setupSpeechRecognition();
   }, [subscriptionId]);
+
+  const setupSpeechRecognition = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      console.warn("Speech Recognition not supported");
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognitionInstance = new SpeechRecognition();
+    
+    recognitionInstance.continuous = true;
+    recognitionInstance.interimResults = true;
+    recognitionInstance.lang = 'pt-BR';
+    recognitionInstance.maxAlternatives = 1;
+
+    recognitionInstance.onresult = (event) => {
+      let interim = '';
+      let final = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          final += transcript;
+        } else {
+          interim += transcript;
+        }
+      }
+
+      if (interim) {
+        setInterimTranscript(interim);
+      }
+
+      if (final) {
+        setInterimTranscript('');
+        handleSendMessage(null, final);
+      }
+    };
+
+    recognitionInstance.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      if (event.error === 'no-speech') {
+        // Silently ignore no-speech errors
+        return;
+      }
+      toast.error('Erro no reconhecimento de voz. Tente novamente.');
+      setIsListening(false);
+    };
+
+    recognitionInstance.onend = () => {
+      if (isListening) {
+        // Restart if still in listening mode
+        try {
+          recognitionInstance.start();
+        } catch (e) {
+          console.log('Recognition restart error:', e);
+        }
+      }
+    };
+
+    setRecognition(recognitionInstance);
+  };
 
   useEffect(() => {
     scrollToBottom();
