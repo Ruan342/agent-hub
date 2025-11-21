@@ -280,18 +280,20 @@ export default function Dashboard() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <div className="text-2xl font-bold text-purple-700">${agent.price}</div>
-                          <div className="text-sm text-gray-500">por mês</div>
-                        </div>
-                        <div className="text-gray-400">
-                          {expandedCards[subscription.id] ? (
-                            <ChevronDown className="w-6 h-6" />
-                          ) : (
-                            <ChevronUp className="w-6 h-6" />
-                          )}
-                        </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-purple-700">${agent.price}</div>
+                        <div className="text-sm text-gray-500">por mês</div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/agent-chat/${subscription.id}`);
+                          }}
+                        >
+                          Abrir
+                        </Button>
                       </div>
                     </div>
                   </CardHeader>
