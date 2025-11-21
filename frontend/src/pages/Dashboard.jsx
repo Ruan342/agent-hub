@@ -39,20 +39,6 @@ export default function Dashboard() {
       });
       setSubscriptions(response.data);
 
-      // Initialize custom config state with existing values
-      const configState = {};
-      response.data.forEach((sub) => {
-        configState[sub.id] = {
-          company_name: sub.config?.company_name || "",
-          brand_name: sub.config?.brand_name || "",
-          product: sub.config?.product || "",
-          audience: sub.config?.audience || "",
-          tone: sub.config?.tone || "",
-          extra: sub.config?.extra || "",
-        };
-      });
-      setCustomConfig(configState);
-
       const agentIds = [...new Set(response.data.map(sub => sub.agent_id))];
       const agentData = {};
       for (const agentId of agentIds) {
@@ -70,109 +56,6 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
-
-  const copyToClipboard = (text, key) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    toast.success("Copiado para área de transferência!");
-    setTimeout(() => setCopiedKey(null), 2000);
-  };
-
-  const toggleCard = (subscriptionId) => {
-    setExpandedCards(prev => ({
-      ...prev,
-      [subscriptionId]: !prev[subscriptionId]
-    }));
-  };
-
-
-  const handleUpdateWebhook = async (subscriptionId) => {
-    const webhookUrl = editingWebhook[subscriptionId];
-    if (!webhookUrl || !webhookUrl.startsWith('http')) {
-      toast.error("Digite uma URL válida (deve começar com http:// ou https://)");
-      return;
-    }
-
-    setSavingWebhook({ ...savingWebhook, [subscriptionId]: true });
-    try {
-      await axios.put(
-        `${API}/subscriptions/${subscriptionId}/webhook`,
-        { webhook_url: webhookUrl },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success("Webhook atualizado com sucesso!");
-      fetchSubscriptions();
-      setEditingWebhook({ ...editingWebhook, [subscriptionId]: "" });
-    } catch (error) {
-      toast.error("Erro ao atualizar webhook");
-    } finally {
-      setSavingWebhook({ ...savingWebhook, [subscriptionId]: false });
-    }
-  };
-
-  const buildCustomPromptFromConfig = (config) => {
-    const parts = [];
-    if (config.company_name || config.brand_name) {
-      parts.push(
-        `Minha empresa se chama ${config.company_name || config.brand_name}.`.
-          trim()
-      );
-    }
-    if (config.product) {
-      parts.push(`Nosso produto/serviço principal é: ${config.product}.`);
-    }
-    if (config.audience) {
-      parts.push(`Atendemos principalmente: ${config.audience}.`);
-    }
-    if (config.tone) {
-      parts.push(`O agente deve falar em um tom: ${config.tone}.`);
-    }
-    if (config.extra) {
-      parts.push(config.extra);
-    }
-    return parts.join(" ");
-  };
-
-  const handleUpdateCustomConfig = async (subscriptionId) => {
-    const config = customConfig[subscriptionId] || {};
-    const custom_prompt = buildCustomPromptFromConfig(config);
-
-    try {
-      await axios.put(
-        `${API}/subscriptions/${subscriptionId}/config`,
-        { config, custom_prompt },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success("Configuração do agente atualizada!");
-      fetchSubscriptions();
-    } catch (error) {
-      toast.error("Erro ao salvar configuração do agente");
-    }
-  };
-
-  const getPreviewText = (subscriptionId) => {
-    const cfg = customConfig[subscriptionId] || {};
-    const base = buildCustomPromptFromConfig(cfg);
-    if (!base) return "Preencha os campos acima para ver como o agente vai se apresentar.";
-    return base;
-  };
-
-  const getAnalytics = (subscriptionId) => {
-    return {
-      totalCalls: Math.floor(Math.random() * 1000) + 100,
-      successRate: (Math.random() * 10 + 90).toFixed(1),
-      avgDuration: (Math.random() * 3 + 1).toFixed(1),
-      lastCall: new Date(Date.now() - Math.random() * 86400000).toLocaleString('pt-BR')
-    };
-  };
-
-  const menuItems = [
-    { icon: Home, label: "Início", path: "/" },
-    { icon: ShoppingBag, label: "Marketplace", path: "/marketplace" },
-    { icon: LayoutDashboard, label: "Minhas Assinaturas", path: "/dashboard", active: true },
-    { icon: FileText, label: "Faturas", path: "/billing" },
-    { icon: Code2, label: "Documentação API", path: "/api-docs" },
-  ];
 
   if (loading) {
     return (
