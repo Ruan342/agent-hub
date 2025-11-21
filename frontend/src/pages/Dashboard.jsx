@@ -296,7 +296,7 @@ export default function Dashboard() {
                     </div>
                   </CardHeader>
 
-                  {expandedCards[subscription.id] && (
+                  {!expandedCards[subscription.id] && (
                   <CardContent className="pt-6">
                     <Tabs defaultValue="integration" className="w-full">
                       <TabsList className="grid w-full grid-cols-2 mb-6">
