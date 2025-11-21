@@ -736,6 +736,16 @@ export default function AdminDashboard() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
+                            data-testid={`duplicate-agent-${agent.id}`}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDuplicateAgent(agent)}
+                            className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                          >
+                            <Copy className="w-4 h-4 mr-1" />
+                            Duplicar
+                          </Button>
+                          <Button
                             data-testid={`edit-agent-${agent.id}`}
                             variant="outline"
                             size="sm"
