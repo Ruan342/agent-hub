@@ -164,15 +164,17 @@ export default function AgentChat() {
     }
   };
 
-  const handleSendMessage = async (e, audioBase64 = null) => {
+  const handleSendMessage = async (e, voiceText = null) => {
     if (e) e.preventDefault();
-    if ((!inputMessage.trim() && !audioBase64) || sending) return;
+    
+    const messageText = voiceText || inputMessage;
+    if (!messageText.trim() || sending) return;
 
     const userMessage = {
       role: "user",
-      content: audioBase64 ? "🎤 Mensagem de voz" : inputMessage,
+      content: messageText,
       timestamp: new Date(),
-      isVoice: !!audioBase64
+      isVoice: !!voiceText
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -180,19 +182,12 @@ export default function AgentChat() {
     setSending(true);
 
     try {
-      const payload = {
-        session_id: `web_${subscriptionId}_${Date.now()}`
-      };
-
-      if (audioBase64) {
-        payload.input_audio_base64 = audioBase64;
-      } else {
-        payload.input_text = inputMessage;
-      }
-
       const response = await axios.post(
         `${API}/agent/execute`,
-        payload,
+        {
+          input_text: messageText,
+          session_id: `web_${subscriptionId}_${Date.now()}`
+        },
         {
           headers: {
             Authorization: `Bearer ${subscription.api_key}`
@@ -215,7 +210,6 @@ export default function AgentChat() {
       }
     } catch (error) {
       toast.error(error.response?.data?.detail || "Erro ao enviar mensagem");
-      // Remove user message on error
       setMessages(prev => prev.slice(0, -1));
     } finally {
       setSending(false);
