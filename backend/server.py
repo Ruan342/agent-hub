@@ -273,17 +273,19 @@ async def login(credentials: UserLogin):
 
 # Public agent endpoints
 def convert_relative_to_absolute_url(url: str, request: Request) -> str:
-    """Convert relative URLs to absolute URLs"""
-    if not url or url.startswith('http://') or url.startswith('https://'):
+    """Convert relative URLs to absolute URLs via /api/uploads"""
+    if not url or url.startsWith('http://') or url.startswith('https://'):
         return url
     
     base_url = str(request.base_url).rstrip('/')
-    if base_url.endswith('/api'):
-        base_url = base_url[:-4]
     
     # Force HTTPS in production
     if 'emergentagent.com' in base_url or 'preview' in base_url:
         base_url = base_url.replace('http://', 'https://')
+    
+    # Convert /uploads/* to /api/uploads/* to ensure it goes through FastAPI
+    if url.startswith('/uploads/'):
+        url = f"/api{url}"
     
     # Remove leading slash if present to avoid double slashes
     url = url.lstrip('/')
