@@ -102,14 +102,15 @@ export default function AgentChat() {
     }
   };
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!inputMessage.trim() || sending) return;
+  const handleSendMessage = async (e, audioBase64 = null) => {
+    if (e) e.preventDefault();
+    if ((!inputMessage.trim() && !audioBase64) || sending) return;
 
     const userMessage = {
       role: "user",
-      content: inputMessage,
-      timestamp: new Date()
+      content: audioBase64 ? "🎤 Mensagem de voz" : inputMessage,
+      timestamp: new Date(),
+      isVoice: !!audioBase64
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -117,12 +118,19 @@ export default function AgentChat() {
     setSending(true);
 
     try {
+      const payload = {
+        session_id: `web_${subscriptionId}_${Date.now()}`
+      };
+
+      if (audioBase64) {
+        payload.input_audio_base64 = audioBase64;
+      } else {
+        payload.input_text = inputMessage;
+      }
+
       const response = await axios.post(
         `${API}/agent/execute`,
-        {
-          input_text: inputMessage,
-          session_id: `web_${subscriptionId}_${Date.now()}`
-        },
+        payload,
         {
           headers: {
             Authorization: `Bearer ${subscription.api_key}`
@@ -133,16 +141,77 @@ export default function AgentChat() {
       const assistantMessage = {
         role: "assistant",
         content: response.data.output_text,
-        timestamp: new Date()
+        timestamp: new Date(),
+        audioBase64: response.data.output_audio_base64
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Auto-play audio response if in voice mode
+      if (voiceMode && response.data.output_audio_base64) {
+        playAudio(response.data.output_audio_base64);
+      }
     } catch (error) {
       toast.error(error.response?.data?.detail || "Erro ao enviar mensagem");
       // Remove user message on error
       setMessages(prev => prev.slice(0, -1));
     } finally {
       setSending(false);
+    }
+  };
+
+  const playAudio = (audioBase64) => {
+    try {
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.src = audioBase64;
+        audioPlayerRef.current.play().catch(err => {
+          console.error("Error playing audio:", err);
+        });
+      }
+    } catch (error) {
+      console.error("Error setting audio:", error);
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks = [];
+
+      recorder.ondataavailable = (e) => {
+        chunks.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/wav' });
+        const reader = new FileReader();
+        
+        reader.onloadend = () => {
+          const base64Audio = reader.result.split(',')[1];
+          handleSendMessage(null, base64Audio);
+        };
+        
+        reader.readAsDataURL(audioBlob);
+        
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+    } catch (error) {
+      toast.error("Erro ao acessar microfone. Permita o acesso ao microfone.");
+      console.error("Error accessing microphone:", error);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      setIsRecording(false);
+      setMediaRecorder(null);
     }
   };
 
