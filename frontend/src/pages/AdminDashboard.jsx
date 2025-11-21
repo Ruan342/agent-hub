@@ -32,7 +32,9 @@ export default function AdminDashboard() {
     mascot_image_url: "",
     elevenlabs_voice_id: "",
     base_prompt: "",
-    voice_sample_url: ""
+    voice_sample_url: "",
+    llm_provider: "openai",
+    llm_model: "gpt-5"
   });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
