@@ -882,10 +882,28 @@ app.add_middleware(
     allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
-# Mount uploads directory AFTER CORS middleware
-app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
+# Serve uploaded images with proper CORS headers
+from fastapi.responses import FileResponse
+
+@app.get("/uploads/agents/{filename}")
+async def serve_agent_image(filename: str):
+    """Serve agent images with proper CORS headers"""
+    file_path = UPLOAD_DIR / "agents" / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Image not found")
+    
+    return FileResponse(
+        file_path,
+        media_type="image/jpeg",
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
 
 logging.basicConfig(
     level=logging.INFO,
