@@ -181,7 +181,7 @@ export default function AgentDetails() {
       );
     }
 
-    // fallback gene9rico
+    // fallback genérico
     return (
       <>
         O <span className="font-semibold">{agent.name}</span> foi criado para negócios que precisam de solue7f5es de
