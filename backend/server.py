@@ -51,9 +51,6 @@ security = HTTPBearer()
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
-# Mount uploads directory
-app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
-
 # Models
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
