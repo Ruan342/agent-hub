@@ -96,6 +96,9 @@ class AgentCreate(BaseModel):
     price: float
     features: List[str]
     mascot_image_url: str
+    mascot_image_hero_url: Optional[str] = None
+    mascot_image_feature_url: Optional[str] = None
+    mascot_image_cta_url: Optional[str] = None
     elevenlabs_voice_id: str
     base_prompt: Optional[str] = None
     voice_sample_url: Optional[str] = None
