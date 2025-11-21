@@ -511,36 +511,51 @@ export default function AgentChat() {
 
                 {/* Voice Mode */}
                 {voiceMode && (
-                  <div className="flex flex-col items-center gap-3">
-                    {!isRecording ? (
-                      <Button
-                        onClick={startRecording}
-                        disabled={sending}
-                        className="w-full h-16 bg-purple-600 hover:bg-purple-700 text-lg"
-                      >
-                        <Mic className="w-6 h-6 mr-2" />
-                        Pressione para falar
-                      </Button>
-                    ) : (
-                      <div className="w-full">
-                        <Button
-                          onClick={stopRecording}
-                          className="w-full h-16 bg-red-600 hover:bg-red-700 text-lg animate-pulse"
-                        >
-                          <MicOff className="w-6 h-6 mr-2" />
-                          Gravando... Clique para enviar
-                        </Button>
-                        <div className="flex items-center justify-center gap-1 mt-2">
-                          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse delay-75"></div>
-                          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse delay-150"></div>
-                        </div>
+                  <div className="flex flex-col gap-3">
+                    {/* Interim transcript display */}
+                    {interimTranscript && (
+                      <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                        <p className="text-sm text-purple-700 italic">
+                          "{interimTranscript}"
+                        </p>
                       </div>
                     )}
+
+                    {/* Control Button */}
+                    {!isListening ? (
+                      <Button
+                        onClick={startListening}
+                        disabled={sending}
+                        className="w-full h-16 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-lg shadow-lg"
+                      >
+                        <Mic className="w-6 h-6 mr-2" />
+                        Iniciar Conversa por Voz
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={stopListening}
+                        className="w-full h-16 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-lg shadow-lg"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                          <span>Escutando... Clique para parar</span>
+                        </div>
+                      </Button>
+                    )}
+
+                    {/* Status Messages */}
                     {sending && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="flex items-center justify-center gap-2 text-sm text-gray-600 p-2">
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Processando sua mensagem...
+                        <span>O agente está pensando...</span>
+                      </div>
+                    )}
+
+                    {/* Instructions */}
+                    {isListening && !sending && (
+                      <div className="text-center text-sm text-gray-600 space-y-1">
+                        <p>💬 Fale naturalmente</p>
+                        <p className="text-xs">O agente detectará quando você terminar</p>
                       </div>
                     )}
                   </div>
