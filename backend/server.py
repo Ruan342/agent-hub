@@ -986,6 +986,171 @@ async def stripe_webhook(request: Request):
     
     return {"success": True}
 
+
+@api_router.post("/agent/execute", response_model=AgentExecuteResponse)
+async def execute_agent(
+    request: AgentExecuteRequest,
+    subscription: dict = Depends(verify_api_key)
+):
+    """
+    Execute agent with text or voice input
+    Requires API Key in Authorization header: Bearer vapi_...
+    """
+    try:
+        # Get agent details
+        agent = await db.agents.find_one({"id": subscription['agent_id']})
+        if not agent:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        
+        # Get EMERGENT_LLM_KEY
+        emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
+        if not emergent_llm_key:
+            raise HTTPException(status_code=503, detail="LLM service not configured")
+        
+        input_text = request.input_text
+        
+        # If audio input, transcribe it first with Whisper
+        if request.input_audio_base64 and not input_text:
+            try:
+                from openai import OpenAI
+                openai_client = OpenAI(api_key=emergent_llm_key)
+                
+                # Decode base64 audio
+                audio_bytes = base64.b64decode(request.input_audio_base64)
+                
+                # Save temporarily
+                temp_audio_path = f"/tmp/{uuid.uuid4()}.wav"
+                with open(temp_audio_path, "wb") as f:
+                    f.write(audio_bytes)
+                
+                # Transcribe with Whisper
+                with open(temp_audio_path, "rb") as audio_file:
+                    transcription = openai_client.audio.transcriptions.create(
+                        file=audio_file,
+                        model="whisper-1",
+                        response_format="text"
+                    )
+                
+                input_text = transcription if isinstance(transcription, str) else transcription.text
+                
+                # Cleanup
+                os.remove(temp_audio_path)
+                
+            except Exception as e:
+                logging.error(f"Error transcribing audio: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Error transcribing audio: {str(e)}")
+        
+        if not input_text:
+            raise HTTPException(status_code=400, detail="Either input_text or input_audio_base64 is required")
+        
+        # Build system message combining base_prompt + custom_prompt
+        system_message = ""
+        if agent.get('base_prompt'):
+            system_message += agent['base_prompt']
+        
+        if subscription.get('custom_prompt'):
+            system_message += f"\n\n{subscription['custom_prompt']}"
+        
+        if subscription.get('config'):
+            config = subscription['config']
+            context_parts = []
+            if config.get('company_name'):
+                context_parts.append(f"Empresa: {config['company_name']}")
+            if config.get('product_service'):
+                context_parts.append(f"Produto/Serviço: {config['product_service']}")
+            if config.get('target_audience'):
+                context_parts.append(f"Público-alvo: {config['target_audience']}")
+            if config.get('tone'):
+                context_parts.append(f"Tom de voz: {config['tone']}")
+            
+            if context_parts:
+                system_message += "\n\nContexto da empresa:\n" + "\n".join(context_parts)
+        
+        if not system_message:
+            system_message = "Você é um assistente de voz inteligente e prestativo."
+        
+        # Add multilingual support instruction
+        system_message += "\n\n[IMPORTANTE - SUPORTE MULTILÍNGUE]\nVocê deve detectar automaticamente o idioma do usuário e responder no mesmo idioma. Suporte completo para: Português (pt-BR), Espanhol (es) e Inglês (en). Se o usuário escrever em espanhol, responda em espanhol. Se escrever em inglês, responda em inglês. Se escrever em português, responda em português. Mantenha naturalidade e fluidez no idioma escolhido."
+        
+        # Generate session_id if not provided
+        session_id = request.session_id or str(uuid.uuid4())
+        
+        # Process with LLM using emergentintegrations
+        try:
+            from emergentintegrations.llm.chat import LlmChat, UserMessage
+            
+            chat = LlmChat(
+                api_key=emergent_llm_key,
+                session_id=session_id,
+                system_message=system_message
+            )
+            
+            # Set the model based on agent configuration
+            chat.with_model(agent.get('llm_provider', 'openai'), agent.get('llm_model', 'gpt-5'))
+            
+            user_message = UserMessage(text=input_text)
+            response_text = await chat.send_message(user_message)
+            
+        except Exception as e:
+            logging.error(f"Error processing with LLM: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Error processing with LLM: {str(e)}")
+        
+        # Generate audio response with ElevenLabs
+        output_audio_base64 = None
+        if eleven_client and agent.get('elevenlabs_voice_id'):
+            try:
+                voice_settings = VoiceSettings(
+                    stability=0.5,
+                    similarity_boost=0.75,
+                    style=0.0,
+                    use_speaker_boost=True
+                )
+                
+                audio_generator = eleven_client.text_to_speech.convert(
+                    text=response_text,
+                    voice_id=agent['elevenlabs_voice_id'],
+                    model_id="eleven_multilingual_v2",
+                    voice_settings=voice_settings
+                )
+                
+                # Collect audio
+                audio_data = b""
+                for chunk in audio_generator:
+                    audio_data += chunk
+                
+                # Encode to base64
+                output_audio_base64 = base64.b64encode(audio_data).decode('utf-8')
+                
+            except Exception as e:
+                logging.error(f"Error generating audio: {str(e)}")
+                # Continue without audio if TTS fails
+        
+        # Log the execution
+        execution_log = {
+            "id": str(uuid.uuid4()),
+            "subscription_id": subscription['id'],
+            "agent_id": agent['id'],
+            "session_id": session_id,
+            "input_text": input_text,
+            "output_text": response_text,
+            "llm_provider": agent.get('llm_provider', 'openai'),
+            "llm_model": agent.get('llm_model', 'gpt-5'),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.agent_executions.insert_one(execution_log)
+        
+        return AgentExecuteResponse(
+            output_text=response_text,
+            output_audio_base64=output_audio_base64,
+            session_id=session_id
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Unexpected error in execute_agent: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 app.include_router(api_router)
 
 # Serve uploaded images via /api/uploads with proper CORS
