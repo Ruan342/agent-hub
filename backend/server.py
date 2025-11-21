@@ -1239,15 +1239,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Agent Execution Models
-class AgentExecuteRequest(BaseModel):
-    input_text: Optional[str] = None
-    input_audio_base64: Optional[str] = None  # Base64 encoded audio
-    session_id: Optional[str] = None
-
-class AgentExecuteResponse(BaseModel):
-    output_text: str
-    output_audio_base64: Optional[str] = None
-    session_id: str
 
 # Agent Execution with API Key
 async def verify_api_key(credentials: HTTPAuthorizationCredentials = Depends(security)):
