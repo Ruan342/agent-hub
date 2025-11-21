@@ -148,6 +148,53 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleEditAgent = (agent) => {
+    setEditingAgent(agent);
+    setNewAgent({
+      name: agent.name,
+      description: agent.description,
+      segment: agent.segment,
+      price: agent.price.toString(),
+      features: agent.features.join("\n"),
+      mascot_image_url: agent.mascot_image_url,
+      elevenlabs_voice_id: agent.elevenlabs_voice_id,
+      base_prompt: agent.base_prompt || "",
+      voice_sample_url: agent.voice_sample_url || "",
+      llm_provider: agent.llm_provider || "openai",
+      llm_model: agent.llm_model || "gpt-5"
+    });
+    setShowCreateDialog(true);
+  };
+
+  const handleUpdateAgent = async (e) => {
+    e.preventDefault();
+    
+    if (!newAgent.name || !newAgent.segment || !newAgent.price) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    try {
+      const features = newAgent.features.split("\n").filter(f => f.trim());
+      await axios.put(
+        `${API}/admin/agents/${editingAgent.id}`,
+        {
+          ...newAgent,
+          price: parseFloat(newAgent.price),
+          features
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Agente atualizado com sucesso!");
+      setShowCreateDialog(false);
+      setEditingAgent(null);
+      resetForm();
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Erro ao atualizar agente");
+    }
+  };
+
   const resetForm = () => {
     setNewAgent({
       name: "",
@@ -157,9 +204,13 @@ export default function AdminDashboard() {
       features: "",
       mascot_image_url: "",
       elevenlabs_voice_id: "",
-      base_prompt: ""
+      base_prompt: "",
+      voice_sample_url: "",
+      llm_provider: "openai",
+      llm_model: "gpt-5"
     });
     setSelectedFile(null);
+    setEditingAgent(null);
   };
 
   const segments = ["vendas", "suporte", "marketing", "financeiro", "rh"];
