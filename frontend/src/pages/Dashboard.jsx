@@ -298,7 +298,6 @@ export default function Dashboard() {
                     </div>
                   </CardHeader>
                 </Card>
-                </Card>
               );
             })}
           </div>
