@@ -229,7 +229,8 @@ export default function Marketplace() {
                 <div className="h-48 bg-gradient-to-br from-purple-50 via-white to-purple-50 flex items-center justify-center border-b border-gray-100">
                   <img 
                     src={agent.mascot_image_url} 
-                    alt={agent.name} 
+                    alt={agent.name}
+                    crossOrigin="anonymous"
                     className="w-28 h-28 object-contain"
                     onError={(e) => {
                       e.target.src = "https://via.placeholder.com/112/f9fafb/9ca3af?text=AI";
