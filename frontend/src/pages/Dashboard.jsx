@@ -246,12 +246,15 @@ export default function Dashboard() {
                 <Card
                   key={subscription.id}
                   data-testid={`subscription-card-${subscription.id}`}
-                  className="border-gray-200"
+                  className="border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-md"
                 >
-                  <CardHeader className="border-b border-gray-100">
+                  <CardHeader 
+                    className="border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => toggleCard(subscription.id)}
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-gradient-to-br from-purple-50 via-white to-purple-50 rounded-xl flex items-center justify-center border border-purple-100">
+                        <div className="w-14 h-14 bg-gradient-to-br from-purple-50 via-white to-purple-50 rounded-xl flex items-center justify-center border border-purple-100 shrink-0">
                           <img
                             src={agent.mascot_image_url}
                             alt={agent.name}
@@ -277,9 +280,18 @@ export default function Dashboard() {
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-purple-700">${agent.price}</div>
-                        <div className="text-sm text-gray-500">por mês</div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-purple-700">${agent.price}</div>
+                          <div className="text-sm text-gray-500">por mês</div>
+                        </div>
+                        <div className="text-gray-400">
+                          {expandedCards[subscription.id] ? (
+                            <ChevronUp className="w-6 h-6" />
+                          ) : (
+                            <ChevronDown className="w-6 h-6" />
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardHeader>
