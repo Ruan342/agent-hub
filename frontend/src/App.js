@@ -25,6 +25,7 @@ function App() {
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/agent/:id" element={<AgentDetails />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/agent-chat/:subscriptionId" element={<AgentChat />} />
           <Route path="/request-agent" element={<RequestAgent />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
