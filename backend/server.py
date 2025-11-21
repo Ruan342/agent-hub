@@ -1253,8 +1253,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Agent Execution Models
-    
-    return subscription
 
 async def shutdown_db_client():
     client.close()
