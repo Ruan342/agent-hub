@@ -669,6 +669,28 @@ async def delete_agent(agent_id: str, current_user: dict = Depends(require_admin
         raise HTTPException(status_code=404, detail="Agent not found")
     return {"success": True}
 
+@api_router.post("/admin/duplicate-agent/{agent_id}", response_model=Agent)
+async def duplicate_agent(agent_id: str, current_user: dict = Depends(require_admin)):
+    """Duplicate an existing agent with all its configurations"""
+    # Find the original agent
+    original_agent = await db.agents.find_one({"id": agent_id}, {"_id": 0})
+    if not original_agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    # Create a new agent with duplicated data
+    duplicated_agent = Agent(**original_agent)
+    duplicated_agent.id = str(uuid.uuid4())  # Generate new ID
+    duplicated_agent.name = f"(Cópia) {original_agent['name']}"  # Add prefix to name
+    duplicated_agent.created_at = datetime.now(timezone.utc)  # Set new creation date
+    
+    # Save to database
+    agent_dict = duplicated_agent.model_dump()
+    agent_dict['created_at'] = agent_dict['created_at'].isoformat()
+    await db.agents.insert_one(agent_dict)
+    
+    return duplicated_agent
+
+
 @api_router.get("/admin/agent-requests", response_model=List[AgentRequest])
 async def get_all_requests(current_user: dict = Depends(require_admin)):
     reqs = await db.agent_requests.find({}, {"_id": 0}).to_list(1000)
