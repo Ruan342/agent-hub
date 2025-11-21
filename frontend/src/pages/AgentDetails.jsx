@@ -73,6 +73,14 @@ export default function AgentDetails() {
       return;
     }
 
+    // Se já está tocando, pausa
+    if (testingVoice && audio) {
+      audio.pause();
+      setTestingVoice(false);
+      setAudio(null);
+      return;
+    }
+
     try {
       const audioElement = new Audio(agent.voice_sample_url);
       setAudio(audioElement);
@@ -81,6 +89,11 @@ export default function AgentDetails() {
       audioElement.onended = () => {
         setTestingVoice(false);
         setAudio(null);
+      };
+      audioElement.onerror = () => {
+        setTestingVoice(false);
+        setAudio(null);
+        toast.error("Erro ao reproduzir o áudio de exemplo.");
       };
     } catch (error) {
       setTestingVoice(false);
