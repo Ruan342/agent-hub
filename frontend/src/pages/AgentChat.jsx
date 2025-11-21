@@ -376,6 +376,15 @@ export default function AgentChat() {
                       }`}
                     >
                       <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                      {msg.audioBase64 && msg.role === "assistant" && (
+                        <button
+                          onClick={() => playAudio(msg.audioBase64)}
+                          className="mt-2 flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700"
+                        >
+                          <Volume2 className="w-3 h-3" />
+                          Ouvir resposta
+                        </button>
+                      )}
                       <span className={`text-xs mt-1 block ${
                         msg.role === "user" ? "text-purple-200" : "text-gray-500"
                       }`}>
