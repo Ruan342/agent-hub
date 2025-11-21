@@ -298,7 +298,7 @@ async def get_agent(agent_id: str):
 
 # Image upload endpoint
 @api_router.post("/admin/upload-image")
-async def upload_image(file: UploadFile = File(...), current_user: dict = Depends(require_admin)):
+async def upload_image(file: UploadFile = File(...), current_user: dict = Depends(require_admin), request: Request = None):
     if not file.content_type.startswith('image/'):
         raise HTTPException(status_code=400, detail="File must be an image")
     
@@ -321,8 +321,17 @@ async def upload_image(file: UploadFile = File(...), current_user: dict = Depend
         os.remove(file_path)
         raise HTTPException(status_code=400, detail="Invalid image file")
     
-    # Return URL
-    image_url = f"/uploads/agents/{filename}"
+    # Build full URL - get base URL from request
+    if request:
+        base_url = str(request.base_url).rstrip('/')
+        # Remove /api if present in base_url
+        if base_url.endswith('/api'):
+            base_url = base_url[:-4]
+        image_url = f"{base_url}/uploads/agents/{filename}"
+    else:
+        # Fallback to relative URL
+        image_url = f"/uploads/agents/{filename}"
+    
     return {"url": image_url}
 
 # Customer endpoints
