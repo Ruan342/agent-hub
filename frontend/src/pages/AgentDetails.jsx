@@ -174,7 +174,7 @@ export default function AgentDetails() {
     if (segment.includes("hospita") || segment.includes("restaur") || segment.includes("hotel")) {
       return (
         <>
-          O <span className="font-semibold">{agent.name}</span> é ideal para restaurantes, hote9is e espae7os de
+          O <span className="font-semibold">{agent.name}</span> é ideal para restaurantes, hotéis e espae7os de
           eventos que precisam confirmar reservas, ajustar hore1rios e reduzir faltas, mantendo uma comunicae7e3o
           cordial com seus clientes.
         </>
