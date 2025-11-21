@@ -324,8 +324,27 @@ export default function AgentDetails() {
                   <h2 className="text-4xl font-bold text-gray-900 mb-4">
                     Como o agente fala
                   </h2>
-                  <p className="text-gray-600 text-xl max-w-2xl mx-auto mb-8">
+                  <p className="text-gray-600 text-xl max-w-2xl mx-auto mb-6">
                     Ouça um áudio de exemplo da voz usada por este agente
+                  </p>
+                  
+                  {/* Multilingual badges */}
+                  <div className="flex items-center justify-center gap-3 mb-8">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-full">
+                      <span className="text-lg">🇧🇷</span>
+                      <span className="text-sm font-medium text-green-700">Português</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-full">
+                      <span className="text-lg">🇪🇸</span>
+                      <span className="text-sm font-medium text-red-700">Español</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-full">
+                      <span className="text-lg">🇺🇸</span>
+                      <span className="text-sm font-medium text-blue-700">English</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500 mb-8">
+                    ✨ Este agente detecta e responde automaticamente no idioma do cliente
                   </p>
                   
                   {agent.voice_sample_url ? (
