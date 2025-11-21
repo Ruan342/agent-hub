@@ -258,9 +258,9 @@ export default function AdminDashboard() {
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
-                        <DialogTitle>Criar Novo Agente</DialogTitle>
+                        <DialogTitle>{editingAgent ? "Editar Agente" : "Criar Novo Agente"}</DialogTitle>
                       </DialogHeader>
-                      <form onSubmit={handleCreateAgent} className="space-y-4 mt-4">
+                      <form onSubmit={editingAgent ? handleUpdateAgent : handleCreateAgent} className="space-y-4 mt-4">
                         <div>
                           <Label className="text-sm font-medium">Nome do Agente *</Label>
                           <Input
