@@ -370,40 +370,120 @@ export default function AdminDashboard() {
                           />
                         </div>
                         
-                        <div>
-                          <Label className="text-sm font-medium">Imagem do Mascote *</Label>
-                          <div className="mt-1 space-y-3">
-                            <div className="flex gap-2">
-                              <Input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageUpload}
-                                className="flex-1 border-gray-300"
-                              />
-                              <Button
-                                type="button"
-                                variant="outline"
-                                disabled={uploadingImage}
-                                className="border-gray-300"
-                              >
-                                {uploadingImage ? "Enviando..." : "Upload"}
-                              </Button>
-                            </div>
-                            {newAgent.mascot_image_url && (
-                              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                <img 
-                                  src={newAgent.mascot_image_url.startsWith('http') ? newAgent.mascot_image_url : `${API}${newAgent.mascot_image_url}`}
-                                  alt="Preview"
-                                  crossOrigin="anonymous"
-                                  className="w-12 h-12 object-contain rounded"
-                                />
-                                <div className="flex-1 text-xs text-gray-600">
-                                  Imagem carregada com sucesso
+                        {/* Imagens do Mascote */}
+                        <div className="border-t border-gray-200 pt-4 mt-4">
+                          <h3 className="text-sm font-semibold text-gray-900 mb-3">🖼️ Imagens do Agente</h3>
+                          <p className="text-xs text-gray-500 mb-4">Configure 4 imagens para diferentes seções da página do agente</p>
+                          
+                          <div className="space-y-4">
+                            {/* Imagem Principal (Marketplace) */}
+                            <div>
+                              <Label className="text-sm font-medium">1. Marketplace & Cards *</Label>
+                              <div className="mt-1 space-y-2">
+                                <div className="flex gap-2">
+                                  <Input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => handleImageUpload(e, 'mascot_image_url')}
+                                    className="flex-1 border-gray-300"
+                                  />
                                 </div>
+                                {newAgent.mascot_image_url && (
+                                  <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                                    <img 
+                                      src={newAgent.mascot_image_url.startsWith('http') ? newAgent.mascot_image_url : `${API}${newAgent.mascot_image_url}`}
+                                      alt="Preview Marketplace"
+                                      crossOrigin="anonymous"
+                                      className="w-10 h-10 object-cover rounded"
+                                    />
+                                    <span className="text-xs text-gray-600">Imagem carregada</span>
+                                  </div>
+                                )}
                               </div>
-                            )}
+                            </div>
+
+                            {/* Imagem Hero */}
+                            <div>
+                              <Label className="text-sm font-medium">2. Hero Section (Topo Grande)</Label>
+                              <div className="mt-1 space-y-2">
+                                <div className="flex gap-2">
+                                  <Input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => handleImageUpload(e, 'mascot_image_hero_url')}
+                                    className="flex-1 border-gray-300"
+                                  />
+                                </div>
+                                {newAgent.mascot_image_hero_url && (
+                                  <div className="flex items-center gap-3 p-2 bg-purple-50 rounded-lg border border-purple-200">
+                                    <img 
+                                      src={newAgent.mascot_image_hero_url.startsWith('http') ? newAgent.mascot_image_hero_url : `${API}${newAgent.mascot_image_hero_url}`}
+                                      alt="Preview Hero"
+                                      crossOrigin="anonymous"
+                                      className="w-10 h-10 object-cover rounded"
+                                    />
+                                    <span className="text-xs text-purple-700">Imagem do topo</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Imagem Features */}
+                            <div>
+                              <Label className="text-sm font-medium">3. Seção de Recursos (Meio)</Label>
+                              <div className="mt-1 space-y-2">
+                                <div className="flex gap-2">
+                                  <Input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => handleImageUpload(e, 'mascot_image_feature_url')}
+                                    className="flex-1 border-gray-300"
+                                  />
+                                </div>
+                                {newAgent.mascot_image_feature_url && (
+                                  <div className="flex items-center gap-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                                    <img 
+                                      src={newAgent.mascot_image_feature_url.startsWith('http') ? newAgent.mascot_image_feature_url : `${API}${newAgent.mascot_image_feature_url}`}
+                                      alt="Preview Features"
+                                      crossOrigin="anonymous"
+                                      className="w-10 h-10 object-cover rounded"
+                                    />
+                                    <span className="text-xs text-blue-700">Imagem dos recursos</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Imagem CTA */}
+                            <div>
+                              <Label className="text-sm font-medium">4. CTA Final (Fundo Roxo)</Label>
+                              <div className="mt-1 space-y-2">
+                                <div className="flex gap-2">
+                                  <Input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => handleImageUpload(e, 'mascot_image_cta_url')}
+                                    className="flex-1 border-gray-300"
+                                  />
+                                </div>
+                                {newAgent.mascot_image_cta_url && (
+                                  <div className="flex items-center gap-3 p-2 bg-green-50 rounded-lg border border-green-200">
+                                    <img 
+                                      src={newAgent.mascot_image_cta_url.startsWith('http') ? newAgent.mascot_image_cta_url : `${API}${newAgent.mascot_image_cta_url}`}
+                                      alt="Preview CTA"
+                                      crossOrigin="anonymous"
+                                      className="w-10 h-10 object-cover rounded"
+                                    />
+                                    <span className="text-xs text-green-700">Imagem do CTA</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">Recomendado: 512x512px, PNG com fundo transparente</p>
+                          
+                          <p className="text-xs text-gray-500 mt-3">
+                            💡 Dica: Use imagens diferentes para cada seção ou repita a mesma. Recomendado: 512x512px
+                          </p>
                         </div>
                         
                         <div>
