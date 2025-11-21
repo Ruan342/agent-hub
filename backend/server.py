@@ -885,23 +885,30 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Serve uploaded images with proper CORS headers
+# Serve uploaded images via /api/uploads to ensure proper CORS
 from fastapi.responses import FileResponse
+import mimetypes
 
-@app.get("/uploads/agents/{filename}")
+@api_router.get("/uploads/agents/{filename}")
 async def serve_agent_image(filename: str):
-    """Serve agent images with proper CORS headers"""
+    """Serve agent images with proper CORS headers via /api/uploads"""
     file_path = UPLOAD_DIR / "agents" / filename
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Image not found")
     
+    # Detect mime type
+    mime_type, _ = mimetypes.guess_type(str(file_path))
+    if not mime_type:
+        mime_type = "application/octet-stream"
+    
     return FileResponse(
         file_path,
-        media_type="image/jpeg",
+        media_type=mime_type,
         headers={
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET, OPTIONS",
             "Access-Control-Allow-Headers": "*",
+            "Cache-Control": "public, max-age=31536000"
         }
     )
 
