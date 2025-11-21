@@ -21,11 +21,6 @@ export default function Dashboard() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [agents, setAgents] = useState({});
   const [loading, setLoading] = useState(true);
-  const [copiedKey, setCopiedKey] = useState(null);
-  const [editingWebhook, setEditingWebhook] = useState({});
-  const [savingWebhook, setSavingWebhook] = useState({});
-  const [customConfig, setCustomConfig] = useState({});
-  const [expandedCards, setExpandedCards] = useState({});
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
