@@ -90,10 +90,7 @@ export default function AgentChat() {
       if (final && final.trim()) {
         console.log("Final transcript detected:", final);
         setInterimTranscript('');
-        // Use a small delay to ensure state is updated
-        setTimeout(() => {
-          handleSendMessage(null, final.trim());
-        }, 100);
+        setFinalTranscript(final.trim());
       }
     };
 
