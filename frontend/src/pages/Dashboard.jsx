@@ -83,6 +83,14 @@ export default function Dashboard() {
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
+  const toggleCard = (subscriptionId) => {
+    setExpandedCards(prev => ({
+      ...prev,
+      [subscriptionId]: !prev[subscriptionId]
+    }));
+  };
+
+
   const handleUpdateWebhook = async (subscriptionId) => {
     const webhookUrl = editingWebhook[subscriptionId];
     if (!webhookUrl || !webhookUrl.startsWith('http')) {
