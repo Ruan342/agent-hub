@@ -287,9 +287,9 @@ export default function Dashboard() {
                         </div>
                         <div className="text-gray-400">
                           {expandedCards[subscription.id] ? (
-                            <ChevronUp className="w-6 h-6" />
-                          ) : (
                             <ChevronDown className="w-6 h-6" />
+                          ) : (
+                            <ChevronUp className="w-6 h-6" />
                           )}
                         </div>
                       </div>
