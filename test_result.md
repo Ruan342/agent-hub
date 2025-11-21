@@ -225,3 +225,5 @@ agent_communication:
     message: "Comprehensive backend testing completed successfully. All 17 backend endpoints tested and working correctly. TTS integration with ElevenLabs API confirmed functional with real voice IDs. All authentication, CRUD operations, payment processing, and admin functions verified."
   - agent: "testing"
     message: "Focused verification completed for 2 critical endpoints after frontend bug fix: GET /api/agents and GET /api/agents/{id}. Both endpoints working correctly and returning all required fields (name, description, features, segment, price). Backend remains stable."
+  - agent: "testing"
+    message: "Admin agent update functionality verified successfully. PUT /api/admin/agents/{id} endpoint working correctly - tested with admin user (admin@voiceai.com), successfully updated agent price from $49.99 to $50.00, and confirmed changes persist when fetching agent data. All admin CRUD operations fully functional."
