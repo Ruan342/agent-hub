@@ -401,6 +401,22 @@ export default function AgentDetails() {
               <div className="grid md:grid-cols-2 gap-16 items-center">
                 <div>
                   <ul className="space-y-5">
+                    {/* Multilingual feature first */}
+                    <li className="flex items-start">
+                      <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-green-100 to-blue-100 rounded-full flex items-center justify-center mr-4 mt-1">
+                        <span className="text-base">🌍</span>
+                      </div>
+                      <div className="flex-1">
+                        <span className="text-gray-800 text-xl leading-relaxed font-semibold">Suporte multilíngue</span>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="px-2 py-1 bg-green-50 border border-green-200 rounded-md text-xs font-medium text-green-700">🇧🇷 PT</span>
+                          <span className="px-2 py-1 bg-red-50 border border-red-200 rounded-md text-xs font-medium text-red-700">🇪🇸 ES</span>
+                          <span className="px-2 py-1 bg-blue-50 border border-blue-200 rounded-md text-xs font-medium text-blue-700">🇺🇸 EN</span>
+                        </div>
+                      </div>
+                    </li>
+                    
+                    {/* Agent features */}
                     {(agent.features || []).map((feature, index) => (
                       <li key={index} className="flex items-start">
                         <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-4 mt-1">
