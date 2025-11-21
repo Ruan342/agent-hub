@@ -456,7 +456,7 @@ export default function AgentChat() {
                     <Button
                       variant={!voiceMode ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setVoiceMode(false)}
+                      onClick={() => toggleVoiceMode(false)}
                       className={!voiceMode ? "bg-purple-600" : ""}
                     >
                       <Keyboard className="w-4 h-4 mr-1" />
@@ -465,16 +465,22 @@ export default function AgentChat() {
                     <Button
                       variant={voiceMode ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setVoiceMode(true)}
+                      onClick={() => toggleVoiceMode(true)}
                       className={voiceMode ? "bg-purple-600" : ""}
                     >
                       <Volume2 className="w-4 h-4 mr-1" />
-                      Voz
+                      Voz em Tempo Real
                     </Button>
                   </div>
-                  {voiceMode && (
+                  {voiceMode && !isListening && (
                     <span className="text-xs text-gray-500">
-                      🎙️ Modo voz ativo - clique para gravar
+                      🎙️ Clique no botão para iniciar
+                    </span>
+                  )}
+                  {voiceMode && isListening && (
+                    <span className="text-xs text-green-600 flex items-center gap-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      Escutando em tempo real...
                     </span>
                   )}
                 </div>
