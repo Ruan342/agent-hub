@@ -396,26 +396,98 @@ export default function AgentChat() {
 
               {/* Input Area */}
               <div className="border-t border-gray-200 bg-white p-4">
-                <form onSubmit={handleSendMessage} className="flex gap-2">
-                  <Input
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    placeholder="Digite sua mensagem..."
-                    disabled={sending}
-                    className="flex-1"
-                  />
-                  <Button
-                    type="submit"
-                    disabled={sending || !inputMessage.trim()}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    {sending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                {/* Mode Toggle */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant={!voiceMode ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setVoiceMode(false)}
+                      className={!voiceMode ? "bg-purple-600" : ""}
+                    >
+                      <Keyboard className="w-4 h-4 mr-1" />
+                      Texto
+                    </Button>
+                    <Button
+                      variant={voiceMode ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setVoiceMode(true)}
+                      className={voiceMode ? "bg-purple-600" : ""}
+                    >
+                      <Volume2 className="w-4 h-4 mr-1" />
+                      Voz
+                    </Button>
+                  </div>
+                  {voiceMode && (
+                    <span className="text-xs text-gray-500">
+                      🎙️ Modo voz ativo - clique para gravar
+                    </span>
+                  )}
+                </div>
+
+                {/* Text Mode */}
+                {!voiceMode && (
+                  <form onSubmit={handleSendMessage} className="flex gap-2">
+                    <Input
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      placeholder="Digite sua mensagem..."
+                      disabled={sending}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="submit"
+                      disabled={sending || !inputMessage.trim()}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      {sending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </form>
+                )}
+
+                {/* Voice Mode */}
+                {voiceMode && (
+                  <div className="flex flex-col items-center gap-3">
+                    {!isRecording ? (
+                      <Button
+                        onClick={startRecording}
+                        disabled={sending}
+                        className="w-full h-16 bg-purple-600 hover:bg-purple-700 text-lg"
+                      >
+                        <Mic className="w-6 h-6 mr-2" />
+                        Pressione para falar
+                      </Button>
                     ) : (
-                      <Send className="w-4 h-4" />
+                      <div className="w-full">
+                        <Button
+                          onClick={stopRecording}
+                          className="w-full h-16 bg-red-600 hover:bg-red-700 text-lg animate-pulse"
+                        >
+                          <MicOff className="w-6 h-6 mr-2" />
+                          Gravando... Clique para enviar
+                        </Button>
+                        <div className="flex items-center justify-center gap-1 mt-2">
+                          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse delay-75"></div>
+                          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse delay-150"></div>
+                        </div>
+                      </div>
                     )}
-                  </Button>
-                </form>
+                    {sending && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Processando sua mensagem...
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Hidden Audio Player */}
+                <audio ref={audioPlayerRef} className="hidden" />
               </div>
             </>
           )}
