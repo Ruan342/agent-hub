@@ -514,6 +514,16 @@ export default function AdminDashboard() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
+                            data-testid={`edit-agent-${agent.id}`}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditAgent(agent)}
+                            className="border-gray-300 hover:bg-gray-100"
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Editar
+                          </Button>
+                          <Button
                             data-testid={`delete-agent-${agent.id}`}
                             variant="outline"
                             size="sm"
