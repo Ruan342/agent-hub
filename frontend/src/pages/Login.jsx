@@ -34,7 +34,7 @@ export default function Login() {
       if (response.data.user.role === "admin") {
         navigate("/admin");
       } else {
-        navigate("/marketplace");
+        navigate("/dashboard");
       }
     } catch (error) {
       toast.error(error.response?.data?.detail || "Erro ao fazer login");
