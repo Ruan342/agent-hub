@@ -993,6 +993,38 @@ async def serve_agent_image(filename: str):
         }
     )
 
+@app.get("/api/uploads/audio/{filename}")
+async def serve_agent_audio(filename: str):
+    """Serve agent audio samples with proper CORS headers"""
+    file_path = UPLOAD_DIR / "audio" / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Audio not found")
+    
+    # Detect mime type
+    mime_type, _ = mimetypes.guess_type(str(file_path))
+    if not mime_type:
+        # Default to audio/mpeg for mp3 files
+        if filename.endswith('.mp3'):
+            mime_type = "audio/mpeg"
+        elif filename.endswith('.wav'):
+            mime_type = "audio/wav"
+        elif filename.endswith('.ogg'):
+            mime_type = "audio/ogg"
+        else:
+            mime_type = "application/octet-stream"
+    
+    return FileResponse(
+        file_path,
+        media_type=mime_type,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Cache-Control": "public, max-age=31536000",
+            "Accept-Ranges": "bytes"
+        }
+    )
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
