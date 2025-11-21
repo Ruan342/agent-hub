@@ -84,6 +84,8 @@ class Agent(BaseModel):
     elevenlabs_voice_id: str
     base_prompt: Optional[str] = None
     voice_sample_url: Optional[str] = None
+    llm_provider: str = "openai"  # openai, anthropic, gemini
+    llm_model: str = "gpt-5"  # gpt-5, claude-4-sonnet, gemini-2.5-pro, etc
     status: str = "active"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -97,6 +99,8 @@ class AgentCreate(BaseModel):
     elevenlabs_voice_id: str
     base_prompt: Optional[str] = None
     voice_sample_url: Optional[str] = None
+    llm_provider: str = "openai"
+    llm_model: str = "gpt-5"
 
 class Subscription(BaseModel):
     model_config = ConfigDict(extra="ignore")
