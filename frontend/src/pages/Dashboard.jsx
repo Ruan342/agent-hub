@@ -249,8 +249,8 @@ export default function Dashboard() {
                   className="border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-md"
                 >
                   <CardHeader 
-                    className={`cursor-pointer hover:bg-gray-50 transition-colors ${!expandedCards[subscription.id] ? 'border-b border-gray-100' : ''}`}
-                    onClick={() => toggleCard(subscription.id)}
+                    className="cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-100"
+                    onClick={() => navigate(`/agent-chat/${subscription.id}`)}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
