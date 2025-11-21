@@ -350,6 +350,43 @@ async def get_agent(agent_id: str, request: Request):
         agent['voice_sample_url'] = convert_relative_to_absolute_url(agent['voice_sample_url'], request)
     return Agent(**agent)
 
+# Audio upload endpoint
+@api_router.post("/admin/upload-audio")
+async def upload_audio(file: UploadFile = File(...), current_user: dict = Depends(require_admin), request: Request = None):
+    """Upload audio sample for agent"""
+    # Validate audio type
+    allowed_types = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/webm']
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="File must be an audio file (MP3, WAV, OGG, or WebM)")
+    
+    # Generate unique filename
+    file_ext = file.filename.split('.')[-1]
+    if file_ext.lower() not in ['mp3', 'wav', 'ogg', 'webm', 'mpeg']:
+        file_ext = 'mp3'  # default
+    filename = f"{uuid.uuid4()}.{file_ext}"
+    file_path = UPLOAD_DIR / "audio" / filename
+    
+    # Create audio directory if doesn't exist
+    (UPLOAD_DIR / "audio").mkdir(exist_ok=True)
+    
+    # Save file
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    # Build full URL via /api/uploads to ensure proper CORS
+    if request:
+        base_url = str(request.base_url).rstrip('/')
+        # Force HTTPS in production
+        if 'emergentagent.com' in base_url or 'preview' in base_url:
+            base_url = base_url.replace('http://', 'https://')
+        # Use /api/uploads path to go through FastAPI with CORS
+        audio_url = f"{base_url}/api/uploads/audio/{filename}"
+    else:
+        # Fallback to relative URL
+        audio_url = f"/api/uploads/audio/{filename}"
+    
+    return {"url": audio_url}
+
 # Image upload endpoint
 @api_router.post("/admin/upload-image")
 async def upload_image(file: UploadFile = File(...), current_user: dict = Depends(require_admin), request: Request = None):
