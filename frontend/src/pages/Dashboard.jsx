@@ -249,7 +249,7 @@ export default function Dashboard() {
                   className="border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-md"
                 >
                   <CardHeader 
-                    className="border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
+                    className={`cursor-pointer hover:bg-gray-50 transition-colors ${expandedCards[subscription.id] ? 'border-b border-gray-100' : ''}`}
                     onClick={() => toggleCard(subscription.id)}
                   >
                     <div className="flex items-center justify-between">
