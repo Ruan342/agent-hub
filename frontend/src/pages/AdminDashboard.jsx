@@ -96,6 +96,32 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleAudioUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingAudio(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await axios.post(`${API}/admin/upload-audio`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      setNewAgent({ ...newAgent, voice_sample_url: response.data.url });
+      toast.success("Áudio enviado com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao enviar áudio");
+    } finally {
+      setUploadingAudio(false);
+    }
+  };
+
   const handleCreateAgent = async (e) => {
     e.preventDefault();
     
