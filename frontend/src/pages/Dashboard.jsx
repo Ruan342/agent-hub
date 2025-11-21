@@ -112,8 +112,6 @@ export default function Dashboard() {
               const agent = agents[subscription.agent_id];
               if (!agent) return null;
 
-              const analytics = getAnalytics(subscription.id);
-
               return (
                 <Card
                   key={subscription.id}
