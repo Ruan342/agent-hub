@@ -170,6 +170,13 @@ export default function AgentChat() {
     const messageText = voiceText || inputMessage;
     if (!messageText.trim() || sending) return;
 
+    // Validate subscription is loaded
+    if (!subscription || !subscription.api_key) {
+      console.error("Subscription not loaded yet");
+      toast.error("Aguarde o carregamento do agente...");
+      return;
+    }
+
     const userMessage = {
       role: "user",
       content: messageText,
@@ -182,6 +189,9 @@ export default function AgentChat() {
     setSending(true);
 
     try {
+      console.log("Sending message:", messageText);
+      console.log("API Key:", subscription.api_key ? "Present" : "Missing");
+      
       const response = await axios.post(
         `${API}/agent/execute`,
         {
@@ -194,6 +204,8 @@ export default function AgentChat() {
           }
         }
       );
+
+      console.log("Response received:", response.data);
 
       const assistantMessage = {
         role: "assistant",
@@ -209,7 +221,10 @@ export default function AgentChat() {
         playAudio(response.data.output_audio_base64);
       }
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Erro ao enviar mensagem");
+      console.error("Error sending message:", error);
+      console.error("Error response:", error.response?.data);
+      const errorMsg = error.response?.data?.detail || error.message || "Erro ao enviar mensagem";
+      toast.error(errorMsg);
       setMessages(prev => prev.slice(0, -1));
     } finally {
       setSending(false);
