@@ -511,17 +511,34 @@ export default function AdminDashboard() {
                           <p className="text-xs text-gray-500 mt-1">Esse texto orienta o comportamento geral do agente. O cliente ainda poderá adicionar detalhes da empresa dele.</p>
                         </div>
 
-                        <div>
-                          <Label className="text-sm font-medium">URL do áudio de exemplo</Label>
-                          <Input
-                            value={newAgent.voice_sample_url}
-                            onChange={(e) => setNewAgent({ ...newAgent, voice_sample_url: e.target.value })}
-                            placeholder="Ex: https://.../samples/professor.mp3"
-                            className="mt-1 border-gray-300"
-                          />
-                          <p className="text-xs text-gray-500 mt-1">
-                            Áudio curto pré-gravado mostrando como a IA falará para este agente.
-                          </p>
+                        <div className="border-t border-gray-200 pt-4 mt-4">
+                          <h3 className="text-sm font-semibold text-gray-900 mb-3">🎙️ Áudio de Exemplo do Agente</h3>
+                          
+                          <div>
+                            <Label className="text-sm font-medium">URL do Áudio</Label>
+                            <Input
+                              value={newAgent.voice_sample_url}
+                              onChange={(e) => setNewAgent({ ...newAgent, voice_sample_url: e.target.value })}
+                              placeholder="Ex: https://seusite.com/audios/exemplo.mp3"
+                              className="mt-1 border-gray-300"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                              🎵 Cole a URL de um áudio MP3 hospedado online (Dropbox, Google Drive, servidor próprio, etc)
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              💡 Áudio curto (10-30 segundos) mostrando como a IA falará para este agente
+                            </p>
+                            
+                            {newAgent.voice_sample_url && (
+                              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                <div className="flex items-center gap-2 text-sm text-green-700">
+                                  <span>✓</span>
+                                  <span className="font-medium">Áudio configurado</span>
+                                </div>
+                                <p className="text-xs text-green-600 mt-1 truncate">{newAgent.voice_sample_url}</p>
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         <div className="border-t border-gray-200 pt-4 mt-4">
