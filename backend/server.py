@@ -284,6 +284,10 @@ def convert_relative_to_absolute_url(url: str, request: Request) -> str:
     if base_url.endswith('/api'):
         base_url = base_url[:-4]
     
+    # Force HTTPS in production
+    if 'emergentagent.com' in base_url or 'preview' in base_url:
+        base_url = base_url.replace('http://', 'https://')
+    
     # Remove leading slash if present to avoid double slashes
     url = url.lstrip('/')
     return f"{base_url}/{url}"
