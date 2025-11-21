@@ -229,45 +229,34 @@ export default function AgentChat() {
     }
   };
 
-  const startRecording = async () => {
+  const startListening = () => {
+    if (!recognition) {
+      toast.error("Reconhecimento de voz não suportado neste navegador");
+      return;
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      const chunks = [];
-
-      recorder.ondataavailable = (e) => {
-        chunks.push(e.data);
-      };
-
-      recorder.onstop = async () => {
-        const audioBlob = new Blob(chunks, { type: 'audio/wav' });
-        const reader = new FileReader();
-        
-        reader.onloadend = () => {
-          const base64Audio = reader.result.split(',')[1];
-          handleSendMessage(null, base64Audio);
-        };
-        
-        reader.readAsDataURL(audioBlob);
-        
-        // Stop all tracks
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      recorder.start();
-      setMediaRecorder(recorder);
-      setIsRecording(true);
+      recognition.start();
+      setIsListening(true);
+      toast.success("🎤 Escutando... Fale naturalmente");
     } catch (error) {
-      toast.error("Erro ao acessar microfone. Permita o acesso ao microfone.");
-      console.error("Error accessing microphone:", error);
+      console.error("Error starting recognition:", error);
+      toast.error("Erro ao iniciar reconhecimento de voz");
     }
   };
 
-  const stopRecording = () => {
-    if (mediaRecorder && isRecording) {
-      mediaRecorder.stop();
-      setIsRecording(false);
-      setMediaRecorder(null);
+  const stopListening = () => {
+    if (recognition && isListening) {
+      recognition.stop();
+      setIsListening(false);
+      setInterimTranscript('');
+    }
+  };
+
+  const toggleVoiceMode = (enable) => {
+    setVoiceMode(enable);
+    if (!enable && isListening) {
+      stopListening();
     }
   };
 
