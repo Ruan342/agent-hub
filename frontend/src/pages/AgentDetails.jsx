@@ -175,7 +175,7 @@ export default function AgentDetails() {
       return (
         <>
           O <span className="font-semibold">{agent.name}</span> é ideal para restaurantes, hotéis e espaços de
-          eventos que precisam confirmar reservas, ajustar horários e reduzir faltas, mantendo uma comunicae7e3o
+          eventos que precisam confirmar reservas, ajustar horários e reduzir faltas, mantendo uma comunicação
           cordial com seus clientes.
         </>
       );
