@@ -365,15 +365,37 @@ async def upload_image(file: UploadFile = File(...), current_user: dict = Depend
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
-    # Resize image if needed
+    # Optimize image without aggressive resizing
     try:
         img = Image.open(file_path)
-        if img.width > 512 or img.height > 512:
-            img.thumbnail((512, 512), Image.Resampling.LANCZOS)
-            img.save(file_path)
-    except Exception:
+        
+        # Convert RGBA to RGB for JPEG
+        if img.mode == 'RGBA':
+            rgb_img = Image.new('RGB', img.size, (255, 255, 255))
+            rgb_img.paste(img, mask=img.split()[3])
+            img = rgb_img
+        
+        # Only resize if image is extremely large (> 2048px)
+        # This preserves quality for hero images (1920x709)
+        max_dimension = max(img.width, img.height)
+        if max_dimension > 2048:
+            # Calculate new dimensions maintaining aspect ratio
+            ratio = 2048 / max_dimension
+            new_width = int(img.width * ratio)
+            new_height = int(img.height * ratio)
+            img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        
+        # Save with high quality
+        if file_ext.lower() in ['jpg', 'jpeg']:
+            img.save(file_path, 'JPEG', quality=95, optimize=True)
+        elif file_ext.lower() == 'png':
+            img.save(file_path, 'PNG', optimize=True)
+        else:
+            img.save(file_path, quality=95)
+            
+    except Exception as e:
         os.remove(file_path)
-        raise HTTPException(status_code=400, detail="Invalid image file")
+        raise HTTPException(status_code=400, detail=f"Invalid image file: {str(e)}")
     
     # Build full URL via /api/uploads to ensure proper CORS
     if request:
