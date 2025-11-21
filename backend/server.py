@@ -884,6 +884,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount uploads directory AFTER CORS middleware
+app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
