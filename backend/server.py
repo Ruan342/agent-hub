@@ -274,7 +274,7 @@ async def login(credentials: UserLogin):
 # Public agent endpoints
 def convert_relative_to_absolute_url(url: str, request: Request) -> str:
     """Convert relative URLs to absolute URLs via /api/uploads"""
-    if not url or url.startsWith('http://') or url.startswith('https://'):
+    if not url or url.startswith('http://') or url.startswith('https://'):
         return url
     
     base_url = str(request.base_url).rstrip('/')
