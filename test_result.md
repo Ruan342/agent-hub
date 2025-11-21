@@ -230,3 +230,5 @@ agent_communication:
     message: "Focused verification completed for 2 critical endpoints after frontend bug fix: GET /api/agents and GET /api/agents/{id}. Both endpoints working correctly and returning all required fields (name, description, features, segment, price). Backend remains stable."
   - agent: "testing"
     message: "Admin agent update functionality verified successfully. PUT /api/admin/agents/{id} endpoint working correctly - tested with admin user (admin@voiceai.com), successfully updated agent price from $49.99 to $50.00, and confirmed changes persist when fetching agent data. All admin CRUD operations fully functional."
+  - agent: "testing"
+    message: "✅ COMPLETE IMAGE UPLOAD FLOW TESTED AND WORKING: Tested full flow: 1) Admin login ✅ 2) GET /api/agents (got agent ID) ✅ 3) POST /api/admin/upload-image (uploaded 1x1 PNG) ✅ 4) PUT /api/admin/agents/{id} with mascot_image_url ✅ 5) GET /api/agents/{id} verified persistence ✅. The reported issue is NOT present - image URLs are correctly saved and persist in the database. User's issue may be frontend-related or user error."
