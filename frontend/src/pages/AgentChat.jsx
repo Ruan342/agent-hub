@@ -47,8 +47,11 @@ export default function AgentChat() {
       return;
     }
     fetchData();
-    setupSpeechRecognition();
   }, [subscriptionId]);
+
+  useEffect(() => {
+    setupSpeechRecognition();
+  }, []);
 
   const setupSpeechRecognition = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
