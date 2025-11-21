@@ -1147,6 +1147,9 @@ async def execute_agent(
         if not system_message:
             system_message = "Você é um assistente de voz inteligente e prestativo."
         
+        # Add multilingual support instruction
+        system_message += "\n\n[IMPORTANTE - SUPORTE MULTILÍNGUE]\nVocê deve detectar automaticamente o idioma do usuário e responder no mesmo idioma. Suporte completo para: Português (pt-BR), Espanhol (es) e Inglês (en). Se o usuário escrever em espanhol, responda em espanhol. Se escrever em inglês, responda em inglês. Se escrever em português, responda em português. Mantenha naturalidade e fluidez no idioma escolhido."
+        
         # Generate session_id if not provided
         session_id = request.session_id or str(uuid.uuid4())
         
