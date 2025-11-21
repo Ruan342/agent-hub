@@ -175,12 +175,15 @@ backend:
 
   - task: "Admin Duplicate Agent"
     implemented: true
-    working: false
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
-    status_history: []
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ POST /api/admin/duplicate-agent/{agent_id} working correctly - successfully duplicates agents with new UUID, '(Cópia)' prefix in name, new created_at timestamp, and all other properties copied correctly. Error handling for non-existent agents also working (returns 404). Duplicated agents appear in agents list as expected."
 
   - task: "TTS Test Endpoint"
     implemented: true
