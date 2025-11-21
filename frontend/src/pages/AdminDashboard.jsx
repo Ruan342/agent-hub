@@ -514,28 +514,66 @@ export default function AdminDashboard() {
                         <div className="border-t border-gray-200 pt-4 mt-4">
                           <h3 className="text-sm font-semibold text-gray-900 mb-3">🎙️ Áudio de Exemplo do Agente</h3>
                           
-                          <div>
-                            <Label className="text-sm font-medium">URL do Áudio</Label>
-                            <Input
-                              value={newAgent.voice_sample_url}
-                              onChange={(e) => setNewAgent({ ...newAgent, voice_sample_url: e.target.value })}
-                              placeholder="Ex: https://seusite.com/audios/exemplo.mp3"
-                              className="mt-1 border-gray-300"
-                            />
-                            <p className="text-xs text-gray-500 mt-1">
-                              🎵 Cole a URL de um áudio MP3 hospedado online (Dropbox, Google Drive, servidor próprio, etc)
-                            </p>
-                            <p className="text-xs text-gray-400 mt-1">
-                              💡 Áudio curto (10-30 segundos) mostrando como a IA falará para este agente
+                          <div className="space-y-4">
+                            {/* Upload de Áudio */}
+                            <div>
+                              <Label className="text-sm font-medium">Opção 1: Fazer Upload de Áudio</Label>
+                              <div className="mt-1 flex gap-2">
+                                <Input
+                                  type="file"
+                                  accept="audio/mp3,audio/mpeg,audio/wav,audio/ogg,audio/webm,.mp3,.wav,.ogg,.webm"
+                                  onChange={handleAudioUpload}
+                                  className="flex-1 border-gray-300"
+                                  disabled={uploadingAudio}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  disabled={uploadingAudio}
+                                  className="border-gray-300"
+                                >
+                                  {uploadingAudio ? "Enviando..." : "Upload"}
+                                </Button>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">
+                                🎵 Formatos aceitos: MP3, WAV, OGG, WebM
+                              </p>
+                            </div>
+
+                            <div className="text-center text-xs text-gray-400 font-medium">
+                              — OU —
+                            </div>
+
+                            {/* URL do Áudio */}
+                            <div>
+                              <Label className="text-sm font-medium">Opção 2: Cole a URL do Áudio</Label>
+                              <Input
+                                value={newAgent.voice_sample_url}
+                                onChange={(e) => setNewAgent({ ...newAgent, voice_sample_url: e.target.value })}
+                                placeholder="Ex: https://seusite.com/audios/exemplo.mp3"
+                                className="mt-1 border-gray-300"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                🌐 Cole a URL de um áudio hospedado online
+                              </p>
+                            </div>
+
+                            <p className="text-xs text-gray-400">
+                              💡 Recomendação: Áudio curto (10-30 segundos) mostrando como a IA falará
                             </p>
                             
                             {newAgent.voice_sample_url && (
-                              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                                <div className="flex items-center gap-2 text-sm text-green-700">
-                                  <span>✓</span>
-                                  <span className="font-medium">Áudio configurado</span>
+                              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2 text-sm text-green-700">
+                                    <span>✓</span>
+                                    <span className="font-medium">Áudio configurado</span>
+                                  </div>
+                                  <audio controls className="h-8">
+                                    <source src={newAgent.voice_sample_url} type="audio/mpeg" />
+                                  </audio>
                                 </div>
-                                <p className="text-xs text-green-600 mt-1 truncate">{newAgent.voice_sample_url}</p>
+                                <p className="text-xs text-green-600 mt-2 truncate">{newAgent.voice_sample_url}</p>
                               </div>
                             )}
                           </div>
