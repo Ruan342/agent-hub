@@ -560,6 +560,10 @@ class VoiceAIPlatformTester:
         print("\n💳 Billing Tests")
         self.test_billing_invoices()
         
+        # Cleanup
+        print("\n🧹 Cleanup")
+        self.cleanup_duplicated_agent()
+        
         # Print results
         print("\n" + "=" * 50)
         print(f"📊 Tests completed: {self.tests_passed}/{self.tests_run}")
