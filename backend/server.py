@@ -320,6 +320,12 @@ async def get_agents(request: Request, segment: Optional[str] = None):
         # Convert relative URLs to absolute
         if agent.get('mascot_image_url'):
             agent['mascot_image_url'] = convert_relative_to_absolute_url(agent['mascot_image_url'], request)
+        if agent.get('mascot_image_hero_url'):
+            agent['mascot_image_hero_url'] = convert_relative_to_absolute_url(agent['mascot_image_hero_url'], request)
+        if agent.get('mascot_image_feature_url'):
+            agent['mascot_image_feature_url'] = convert_relative_to_absolute_url(agent['mascot_image_feature_url'], request)
+        if agent.get('mascot_image_cta_url'):
+            agent['mascot_image_cta_url'] = convert_relative_to_absolute_url(agent['mascot_image_cta_url'], request)
         if agent.get('voice_sample_url'):
             agent['voice_sample_url'] = convert_relative_to_absolute_url(agent['voice_sample_url'], request)
     return agents
