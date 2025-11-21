@@ -298,24 +298,35 @@ export default function AgentDetails() {
                   <p className="text-gray-600 text-xl max-w-2xl mx-auto mb-8">
                     Ouça um áudio de exemplo da voz usada por este agente
                   </p>
-                  <Button
-                    onClick={handlePlaySample}
-                    disabled={testingVoice}
-                    className="bg-purple-600 hover:bg-purple-700 text-lg py-6 px-10"
-                  >
-                    {testingVoice ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Reproduzindo...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-5 h-5 mr-2" />
-                        Ouvir áudio de exemplo
-                      </>
-                    )}
-                  </Button>
-                  {!agent.voice_sample_url && (
+                  
+                  {agent.voice_sample_url ? (
+                    <div className="flex items-center justify-center gap-4">
+                      <Button
+                        onClick={handlePlaySample}
+                        className="bg-purple-600 hover:bg-purple-700 text-white text-lg py-7 px-7 rounded-2xl shadow-lg hover:shadow-xl transition-all"
+                        size="lg"
+                      >
+                        {testingVoice ? (
+                          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <rect x="6" y="4" width="4" height="16" rx="1" />
+                            <rect x="14" y="4" width="4" height="16" rx="1" />
+                          </svg>
+                        ) : (
+                          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        )}
+                      </Button>
+                      <div className="text-left">
+                        <div className="text-sm font-semibold text-gray-900">
+                          {testingVoice ? "Reproduzindo agora" : "Amostra de voz"}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {testingVoice ? "Clique para pausar" : "Clique para ouvir"}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
                     <p className="text-sm text-gray-500 mt-4">
                       Este agente ainda não possui um áudio de exemplo configurado.
                     </p>
