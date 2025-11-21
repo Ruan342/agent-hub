@@ -467,13 +467,16 @@ export default function AdminDashboard() {
                           <Button 
                             type="button" 
                             variant="outline" 
-                            onClick={() => setShowCreateDialog(false)}
+                            onClick={() => {
+                              setShowCreateDialog(false);
+                              resetForm();
+                            }}
                             className="border-gray-300"
                           >
                             Cancelar
                           </Button>
                           <Button data-testid="submit-agent-button" type="submit" className="bg-purple-600 hover:bg-purple-700">
-                            Criar Agente
+                            {editingAgent ? "Atualizar Agente" : "Criar Agente"}
                           </Button>
                         </div>
                       </form>
