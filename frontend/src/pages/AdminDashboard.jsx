@@ -213,7 +213,36 @@ export default function AdminDashboard() {
     setEditingAgent(null);
   };
 
-  const segments = ["vendas", "suporte", "marketing", "financeiro", "rh"];
+  const segments = [
+    "vendas",
+    "suporte",
+    "marketing",
+    "financeiro",
+    "rh",
+    "atendimento",
+    "agendamento",
+    "cobrança",
+    "consulta",
+    "educação",
+    "saúde",
+    "imobiliário",
+    "jurídico",
+    "tecnologia",
+    "logística",
+    "varejo",
+    "e-commerce",
+    "restaurante",
+    "hotel",
+    "turismo",
+    "fitness",
+    "beleza",
+    "automotivo",
+    "seguros",
+    "contabilidade",
+    "consultoria",
+    "recrutamento",
+    "treinamento"
+  ];
 
   if (loading) {
     return (
