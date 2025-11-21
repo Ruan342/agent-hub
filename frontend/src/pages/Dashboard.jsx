@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Copy, Check, ExternalLink, RefreshCw, AlertCircle, TrendingUp, Activity, Phone, Home, ShoppingBag, LayoutDashboard, FileText, Code2 } from "lucide-react";
+import { Copy, Check, ExternalLink, RefreshCw, AlertCircle, TrendingUp, Activity, Phone, Home, ShoppingBag, LayoutDashboard, FileText, Code2, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import VoiceTest from "@/components/VoiceTest";
 import SidebarLayout from "@/components/SidebarLayout";
