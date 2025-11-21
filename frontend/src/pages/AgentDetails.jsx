@@ -155,7 +155,7 @@ export default function AgentDetails() {
       return (
         <>
           O <span className="font-semibold">{agent.name}</span> atende empresas de logd3stica, transportadoras e
-          e-commerces que desejam confirmar entregas, coletar feedback re1pido sobre o pedido e identificar problemas
+          e-commerces que desejam confirmar entregas, coletar feedback rápido sobre o pedido e identificar problemas
           antes que virem reclamae7f5es mais graves.
         </>
       );
