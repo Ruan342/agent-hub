@@ -145,7 +145,7 @@ export default function AgentDetails() {
       return (
         <>
           O <span className="font-semibold">{agent.name}</span> é ideal para empresas SaaS e times de suporte
-          que precisam atender grandes volumes de solicitações de primeiro nível. Ele responde dfavidas simples,
+          que precisam atender grandes volumes de solicitações de primeiro nível. Ele responde dúvidas simples,
           abre tickets e direciona casos complexos para o time humano.
         </>
       );
