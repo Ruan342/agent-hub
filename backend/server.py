@@ -1253,18 +1253,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Agent Execution Models
-
-# Agent Execution with API Key
-async def verify_api_key(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Verify API Key and return subscription"""
-    api_key = credentials.credentials
-    
-    if not api_key.startswith("vapi_"):
-        raise HTTPException(status_code=401, detail="Invalid API key format")
-    
-    subscription = await db.subscriptions.find_one({"api_key": api_key, "status": "active"})
-    if not subscription:
-        raise HTTPException(status_code=401, detail="Invalid or inactive API key")
     
     return subscription
 
