@@ -547,6 +547,8 @@ class VoiceAIPlatformTester:
         self.test_admin_create_agent()
         self.test_admin_get_requests()
         self.test_admin_upload_image()
+        self.test_admin_duplicate_agent()
+        self.test_admin_duplicate_nonexistent_agent()
         self.test_admin_delete_agent()
         
         # TTS tests
