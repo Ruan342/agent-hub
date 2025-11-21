@@ -122,6 +122,14 @@ export default function AgentChat() {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    if (finalTranscript && subscription && subscription.api_key) {
+      console.log("Processing final transcript:", finalTranscript);
+      handleSendMessage(null, finalTranscript);
+      setFinalTranscript("");
+    }
+  }, [finalTranscript, subscription]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
