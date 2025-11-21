@@ -29,6 +29,7 @@ export default function AgentChat() {
   const [voiceMode, setVoiceMode] = useState(false);
   const [recognition, setRecognition] = useState(null);
   const [interimTranscript, setInterimTranscript] = useState("");
+  const [finalTranscript, setFinalTranscript] = useState("");
   const [customConfig, setCustomConfig] = useState({
     company_name: "",
     brand_name: "",
