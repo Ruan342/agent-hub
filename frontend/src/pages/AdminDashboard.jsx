@@ -510,6 +510,12 @@ export default function AdminDashboard() {
                               <span>•</span>
                               <span>{agent.features.length} recursos</span>
                             </div>
+                            <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                              <span className="font-medium">IA:</span>
+                              <Badge className="bg-purple-50 text-purple-700 border-0 text-xs">
+                                {agent.llm_provider === 'openai' ? 'OpenAI' : agent.llm_provider === 'anthropic' ? 'Claude' : 'Gemini'} - {agent.llm_model}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
