@@ -303,6 +303,130 @@ class VoiceAIPlatformTester:
         )
         return success
 
+    def test_admin_duplicate_agent(self):
+        """Test admin duplicating an agent"""
+        if not self.admin_token:
+            self.log_test("Admin Duplicate Agent", False, "No admin token")
+            return False
+            
+        # First, get list of agents to find one to duplicate
+        headers = {'Authorization': f'Bearer {self.admin_token}'}
+        agents_success, agents_response = self.run_test(
+            "Get Agents for Duplication",
+            "GET",
+            "agents",
+            200
+        )
+        
+        if not agents_success or not agents_response:
+            self.log_test("Admin Duplicate Agent", False, "Could not get agents list")
+            return False
+            
+        # Use the first available agent
+        original_agent = agents_response[0]
+        original_agent_id = original_agent['id']
+        original_name = original_agent['name']
+        
+        # Test duplicating the agent
+        success, response = self.run_test(
+            "Admin Duplicate Agent",
+            "POST",
+            f"admin/duplicate-agent/{original_agent_id}",
+            200,
+            headers=headers
+        )
+        
+        if success:
+            # Verify the duplicated agent has correct properties
+            duplicated_agent = response
+            
+            # Check that ID is different
+            if duplicated_agent['id'] == original_agent_id:
+                self.log_test("Duplicate Agent ID Check", False, "Duplicated agent has same ID as original")
+                return False
+            else:
+                self.log_test("Duplicate Agent ID Check", True, "New unique ID generated")
+            
+            # Check that name has "(Cópia)" prefix
+            expected_name = f"(Cópia) {original_name}"
+            if duplicated_agent['name'] != expected_name:
+                self.log_test("Duplicate Agent Name Check", False, f"Expected '{expected_name}', got '{duplicated_agent['name']}'")
+                return False
+            else:
+                self.log_test("Duplicate Agent Name Check", True, "Name has correct '(Cópia)' prefix")
+            
+            # Check that other properties are copied correctly
+            properties_to_check = ['description', 'segment', 'price', 'features', 'elevenlabs_voice_id', 'llm_provider', 'llm_model']
+            all_properties_match = True
+            
+            for prop in properties_to_check:
+                if duplicated_agent.get(prop) != original_agent.get(prop):
+                    self.log_test(f"Duplicate Agent {prop} Check", False, f"Property {prop} not copied correctly")
+                    all_properties_match = False
+                    break
+            
+            if all_properties_match:
+                self.log_test("Duplicate Agent Properties Check", True, "All properties copied correctly")
+            
+            # Check that created_at is different (newer)
+            if duplicated_agent.get('created_at') == original_agent.get('created_at'):
+                self.log_test("Duplicate Agent Created At Check", False, "Created at timestamp should be different")
+            else:
+                self.log_test("Duplicate Agent Created At Check", True, "New created_at timestamp generated")
+            
+            # Store duplicated agent ID for cleanup
+            self.duplicated_agent_id = duplicated_agent['id']
+            
+            # Verify the duplicated agent appears in agents list
+            verify_success, verify_response = self.run_test(
+                "Verify Duplicated Agent in List",
+                "GET",
+                "agents",
+                200
+            )
+            
+            if verify_success:
+                agent_found = any(agent['id'] == duplicated_agent['id'] for agent in verify_response)
+                if agent_found:
+                    self.log_test("Duplicated Agent in List Check", True, "Duplicated agent found in agents list")
+                else:
+                    self.log_test("Duplicated Agent in List Check", False, "Duplicated agent not found in agents list")
+            
+            return True
+        
+        return False
+
+    def test_admin_duplicate_nonexistent_agent(self):
+        """Test admin duplicating a non-existent agent (error handling)"""
+        if not self.admin_token:
+            self.log_test("Admin Duplicate Nonexistent Agent", False, "No admin token")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.admin_token}'}
+        fake_agent_id = "nonexistent-agent-id-12345"
+        
+        success, response = self.run_test(
+            "Admin Duplicate Nonexistent Agent",
+            "POST",
+            f"admin/duplicate-agent/{fake_agent_id}",
+            404,  # Expecting 404 error
+            headers=headers
+        )
+        
+        return success
+
+    def cleanup_duplicated_agent(self):
+        """Clean up the duplicated agent created during testing"""
+        if hasattr(self, 'duplicated_agent_id') and self.admin_token:
+            headers = {'Authorization': f'Bearer {self.admin_token}'}
+            try:
+                url = f"{self.api_url}/admin/agents/{self.duplicated_agent_id}"
+                response = requests.delete(url, headers=headers)
+                if response.status_code == 200:
+                    print(f"🧹 Cleaned up duplicated agent: {self.duplicated_agent_id}")
+            except Exception as e:
+                print(f"⚠️ Could not clean up duplicated agent: {str(e)}")
+
     def test_tts_test_endpoint(self):
         """Test public TTS test endpoint"""
         # Use a real ElevenLabs voice ID
