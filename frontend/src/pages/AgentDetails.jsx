@@ -151,10 +151,10 @@ export default function AgentDetails() {
       );
     }
 
-    if (segment.includes("logst") || segment.includes("entrega")) {
+    if (segment.includes("logst") || segment.includes("logística") || segment.includes("entrega")) {
       return (
         <>
-          O <span className="font-semibold">{agent.name}</span> atende empresas de logd3stica, transportadoras e
+          O <span className="font-semibold">{agent.name}</span> atende empresas de logística, transportadoras e
           e-commerces que desejam confirmar entregas, coletar feedback rápido sobre o pedido e identificar problemas
           antes que virem reclamações mais graves.
         </>
