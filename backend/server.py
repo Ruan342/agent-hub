@@ -195,6 +195,17 @@ class TTSResponse(BaseModel):
     voice_id: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+
+class AgentExecuteRequest(BaseModel):
+    input_text: Optional[str] = None
+    input_audio_base64: Optional[str] = None
+    session_id: Optional[str] = None
+
+class AgentExecuteResponse(BaseModel):
+    output_text: str
+    output_audio_base64: Optional[str] = None
+    session_id: str
+
 class VoiceCallRequest(BaseModel):
     phone: str
     message: str
