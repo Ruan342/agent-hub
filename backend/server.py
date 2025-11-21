@@ -347,16 +347,17 @@ async def upload_image(file: UploadFile = File(...), current_user: dict = Depend
         os.remove(file_path)
         raise HTTPException(status_code=400, detail="Invalid image file")
     
-    # Build full URL - get base URL from request
+    # Build full URL via /api/uploads to ensure proper CORS
     if request:
         base_url = str(request.base_url).rstrip('/')
-        # Remove /api if present in base_url
-        if base_url.endswith('/api'):
-            base_url = base_url[:-4]
-        image_url = f"{base_url}/uploads/agents/{filename}"
+        # Force HTTPS in production
+        if 'emergentagent.com' in base_url or 'preview' in base_url:
+            base_url = base_url.replace('http://', 'https://')
+        # Use /api/uploads path to go through FastAPI with CORS
+        image_url = f"{base_url}/api/uploads/agents/{filename}"
     else:
         # Fallback to relative URL
-        image_url = f"/uploads/agents/{filename}"
+        image_url = f"/api/uploads/agents/{filename}"
     
     return {"url": image_url}
 
