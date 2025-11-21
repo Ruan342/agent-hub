@@ -169,6 +169,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ POST /api/admin/upload-image working correctly - uploads and processes images with proper admin authentication"
+      - working: true
+        agent: "testing"
+        comment: "✅ Complete image upload flow verified: Upload image → Update agent → Verify persistence. All steps working correctly. Image URLs are properly saved in database and persist after agent updates."
 
   - task: "TTS Test Endpoint"
     implemented: true
