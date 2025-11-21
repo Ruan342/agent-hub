@@ -142,6 +142,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ Admin agent CRUD operations working correctly - POST /api/admin/agents creates agents, DELETE /api/admin/agents/{id} soft deletes agents"
+      - working: true
+        agent: "testing"
+        comment: "✅ PUT /api/admin/agents/{id} update functionality verified - successfully updated agent price from $49.99 to $50.00 and confirmed changes persist"
 
   - task: "Admin Agent Requests Listing"
     implemented: true
