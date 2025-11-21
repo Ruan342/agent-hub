@@ -73,23 +73,38 @@ export default function AgentDetails() {
       return;
     }
 
-    // Se já está tocando, pausa
-    if (testingVoice && audio) {
-      audio.pause();
-      setTestingVoice(false);
-      setAudio(null);
-      return;
+    // Se já está tocando, pausa e para o áudio
+    if (audio) {
+      if (!audio.paused) {
+        audio.pause();
+        audio.currentTime = 0;
+        setTestingVoice(false);
+        return;
+      } else {
+        // Se estava pausado, retoma
+        audio.play();
+        setTestingVoice(true);
+        return;
+      }
     }
 
+    // Cria novo áudio apenas se não existir
     try {
       const audioElement = new Audio(agent.voice_sample_url);
       setAudio(audioElement);
       setTestingVoice(true);
-      audioElement.play();
-      audioElement.onended = () => {
+      
+      audioElement.play().catch(() => {
         setTestingVoice(false);
         setAudio(null);
+        toast.error("Erro ao reproduzir o áudio de exemplo.");
+      });
+      
+      audioElement.onended = () => {
+        setTestingVoice(false);
+        audioElement.currentTime = 0;
       };
+      
       audioElement.onerror = () => {
         setTestingVoice(false);
         setAudio(null);
@@ -97,6 +112,7 @@ export default function AgentDetails() {
       };
     } catch (error) {
       setTestingVoice(false);
+      setAudio(null);
       toast.error("Erro ao reproduzir o áudio de exemplo.");
     }
   };
