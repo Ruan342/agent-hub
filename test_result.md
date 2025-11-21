@@ -230,7 +230,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "All backend endpoints tested successfully"
+    - "All backend endpoints tested successfully including new Duplicate Agent functionality"
   stuck_tasks: []
   test_all: true
   test_priority: "high_first"
