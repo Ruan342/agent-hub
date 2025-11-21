@@ -68,7 +68,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleImageUpload = async (e) => {
+  const handleImageUpload = async (e, fieldName = 'mascot_image_url') => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -86,7 +86,7 @@ export default function AdminDashboard() {
         }
       });
 
-      setNewAgent({ ...newAgent, mascot_image_url: response.data.url });
+      setNewAgent({ ...newAgent, [fieldName]: response.data.url });
       toast.success("Imagem enviada com sucesso!");
     } catch (error) {
       toast.error("Erro ao enviar imagem");
