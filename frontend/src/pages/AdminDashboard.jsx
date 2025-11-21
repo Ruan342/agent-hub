@@ -353,6 +353,64 @@ export default function AdminDashboard() {
                             Áudio curto pré-gravado mostrando como a IA falará para este agente.
                           </p>
                         </div>
+
+                        <div className="border-t border-gray-200 pt-4 mt-4">
+                          <h3 className="text-sm font-semibold text-gray-900 mb-3">🤖 Configuração de IA</h3>
+                          
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-sm font-medium">Provedor de LLM *</Label>
+                              <select
+                                value={newAgent.llm_provider}
+                                onChange={(e) => setNewAgent({ ...newAgent, llm_provider: e.target.value })}
+                                required
+                                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                              >
+                                <option value="openai">OpenAI</option>
+                                <option value="anthropic">Anthropic (Claude)</option>
+                                <option value="gemini">Google (Gemini)</option>
+                              </select>
+                            </div>
+                            
+                            <div>
+                              <Label className="text-sm font-medium">Modelo de LLM *</Label>
+                              <select
+                                value={newAgent.llm_model}
+                                onChange={(e) => setNewAgent({ ...newAgent, llm_model: e.target.value })}
+                                required
+                                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                              >
+                                {newAgent.llm_provider === 'openai' && (
+                                  <>
+                                    <option value="gpt-5">GPT-5 (Mais capaz)</option>
+                                    <option value="gpt-5-mini">GPT-5 Mini (Balanceado)</option>
+                                    <option value="gpt-4o">GPT-4o</option>
+                                    <option value="gpt-4o-mini">GPT-4o Mini</option>
+                                  </>
+                                )}
+                                {newAgent.llm_provider === 'anthropic' && (
+                                  <>
+                                    <option value="claude-4-sonnet-20250514">Claude 4 Sonnet (Premium)</option>
+                                    <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</option>
+                                    <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                                    <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku (Rápido)</option>
+                                  </>
+                                )}
+                                {newAgent.llm_provider === 'gemini' && (
+                                  <>
+                                    <option value="gemini-2.5-pro">Gemini 2.5 Pro (Mais capaz)</option>
+                                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                                    <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                  </>
+                                )}
+                              </select>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-2">
+                            O modelo escolhido impacta a capacidade, velocidade e custo de processamento. O preço definido acima deve refletir o modelo escolhido.
+                          </p>
+                        </div>
                         
                         <div className="flex justify-end gap-2 pt-4">
                           <Button 
