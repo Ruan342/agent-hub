@@ -199,6 +199,21 @@ export default function AdminDashboard() {
     setShowCreateDialog(true);
   };
 
+  const handleDuplicateAgent = async (agent) => {
+    try {
+      const response = await axios.post(
+        `${API}/admin/duplicate-agent/${agent.id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(`Agente "${response.data.name}" duplicado com sucesso!`);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Erro ao duplicar agente");
+    }
+  };
+
+
   const handleUpdateAgent = async (e) => {
     e.preventDefault();
     
