@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { MessageCircle, Settings, Key, Link2, TrendingUp, Send, Loader2, Copy, Check, ArrowLeft } from "lucide-react";
+import { MessageCircle, Settings, Key, Link2, TrendingUp, Send, Loader2, Copy, Check, ArrowLeft, Mic, MicOff, Volume2, Keyboard } from "lucide-react";
 import { toast } from "sonner";
 import SidebarLayout from "@/components/SidebarLayout";
 
