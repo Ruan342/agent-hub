@@ -74,6 +74,19 @@ export default function AgentChat() {
     adjustTextareaHeight();
   }, [inputMessage]);
 
+  // Resume listening after agent finishes speaking
+  useEffect(() => {
+    if (voiceMode && !isSpeaking && !isListening) {
+      // Small delay before resuming to avoid overlap
+      const timer = setTimeout(() => {
+        if (voiceMode && !isSpeaking) {
+          startListening();
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isSpeaking, voiceMode]);
+
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
     if (textarea) {
