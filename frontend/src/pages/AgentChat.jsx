@@ -324,7 +324,6 @@ export default function AgentChat() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{s.title || "Nova Conversa"}</p>
-                        <p className="text-xs text-purple-200">{s.messages?.length || 0} mensagens</p>
                       </div>
                       <button onClick={(e) => deleteSession(s.id, e)} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500 rounded">
                         <Trash2 className="w-3 h-3" />
@@ -342,7 +341,6 @@ export default function AgentChat() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{s.title || "Nova Conversa"}</p>
-                        <p className="text-xs text-purple-200">{s.messages?.length || 0} mensagens</p>
                       </div>
                       <button onClick={(e) => deleteSession(s.id, e)} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500 rounded">
                         <Trash2 className="w-3 h-3" />
@@ -360,7 +358,6 @@ export default function AgentChat() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{s.title || "Nova Conversa"}</p>
-                        <p className="text-xs text-purple-200">{s.messages?.length || 0} mensagens</p>
                       </div>
                       <button onClick={(e) => deleteSession(s.id, e)} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500 rounded">
                         <Trash2 className="w-3 h-3" />
