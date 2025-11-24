@@ -481,13 +481,17 @@ export default function AgentChat() {
                   }`}
                 >
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                  {msg.audioBase64 && voiceMode && (
+                  {msg.audioBase64 && msg.role === 'assistant' && (
                     <button
                       onClick={() => playAudio(msg.audioBase64)}
-                      className="mt-2 text-xs opacity-70 hover:opacity-100 flex items-center gap-1"
+                      className={`mt-2 text-xs flex items-center gap-1 px-2 py-1 rounded transition-all ${
+                        msg.role === 'user'
+                          ? 'bg-purple-700 hover:bg-purple-800 text-white'
+                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                      }`}
                     >
                       <Volume2 className="w-3 h-3" />
-                      Ouvir resposta
+                      🔊 Ouvir resposta
                     </button>
                   )}
                 </div>
