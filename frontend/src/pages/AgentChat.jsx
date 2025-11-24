@@ -292,6 +292,29 @@ export default function AgentChat() {
     }
   };
 
+  const handleSaveConfig = async () => {
+    try {
+      await axios.put(
+        `${API}/subscriptions/${subscriptionId}/config`,
+        {
+          custom_prompt: null,
+          config: customConfig
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Configurações salvas com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao salvar configurações");
+    }
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(true);
+    toast.success("Copiado para área de transferência!");
+    setTimeout(() => setCopiedKey(false), 2000);
+  };
+
   if (loading) {
     return (
       <SidebarLayout>
