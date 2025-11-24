@@ -232,14 +232,29 @@ export default function AgentChat() {
 
   const playAudio = (audioBase64) => {
     try {
-      if (audioPlayerRef.current) {
+      if (audioPlayerRef.current && audioBase64) {
         setIsSpeaking(true);
-        audioPlayerRef.current.src = audioBase64;
-        audioPlayerRef.current.play().catch(err => {
-          console.error("Error playing audio:", err);
-          setIsSpeaking(false);
-        });
+        
+        // Convert base64 to data URI for audio playback
+        const audioDataUri = `data:audio/mpeg;base64,${audioBase64}`;
+        audioPlayerRef.current.src = audioDataUri;
+        
+        audioPlayerRef.current.play()
+          .then(() => {
+            console.log("Audio playing successfully");
+          })
+          .catch(err => {
+            console.error("Error playing audio:", err);
+            setIsSpeaking(false);
+          });
+        
         audioPlayerRef.current.onended = () => {
+          setIsSpeaking(false);
+          console.log("Audio playback ended");
+        };
+        
+        audioPlayerRef.current.onerror = (e) => {
+          console.error("Audio playback error:", e);
           setIsSpeaking(false);
         };
       }
