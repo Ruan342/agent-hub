@@ -1131,6 +1131,10 @@ async def execute_agent(
         # Process with LLM using emergentintegrations
         try:
             from emergentintegrations.llm.chat import LlmChat, UserMessage
+            import litellm
+            
+            # Increase budget limit to $10 (10 USD)
+            litellm.max_budget = 10.0
             
             chat = LlmChat(
                 api_key=emergent_llm_key,
