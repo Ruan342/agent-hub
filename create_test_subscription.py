@@ -85,7 +85,7 @@ async def create_test_subscription():
         "agent_name": agent['name'],
         "status": "active",
         "stripe_subscription_id": "test_sub_" + str(uuid.uuid4())[:8],
-        "api_key": "sk_test_" + str(uuid.uuid4()).replace("-", ""),
+        "api_key": "vapi_" + str(uuid.uuid4()).replace("-", ""),
         "created_at": datetime.now(timezone.utc).isoformat(),
         "current_period_start": datetime.now(timezone.utc).isoformat(),
         "current_period_end": None
