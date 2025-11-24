@@ -281,6 +281,12 @@ export default function AgentChat() {
       return;
     }
 
+    // Don't start listening if agent is speaking
+    if (isSpeaking) {
+      console.log("Agent is speaking, waiting to resume listening...");
+      return;
+    }
+
     try {
       recognition.start();
       setIsListening(true);
