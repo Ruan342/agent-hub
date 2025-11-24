@@ -215,6 +215,18 @@ backend:
         agent: "testing"
         comment: "✅ GET /api/tts/test/remaining/{voice_id} working correctly - returns remaining test count for IP and voice combination"
 
+  - task: "Chat History System"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ CHAT HISTORY SYSTEM FULLY TESTED AND WORKING: Comprehensive testing of recent chat history implementation completed successfully. All 6 test steps passed: 1) Admin login with admin@voiceai.com ✅ 2) Retrieved valid subscription_id and API key ✅ 3) Created new chat session with title=None (not 'Nova Conversa') ✅ 4) Sent first message 'Olá, preciso de ajuda com vendas' via POST /api/agent/execute ✅ 5) Verified session title updated to first user message and 2 messages saved ✅ 6) Confirmed session appears correctly in GET /api/chat-sessions/subscription/{id} listing ✅. The recent fixes are working perfectly: session titles are now the first user message content (truncated to 50 chars if needed), not 'Nova Conversa', and message count UI removal is properly implemented."
+
 frontend:
   - task: "Frontend Testing"
     implemented: true
