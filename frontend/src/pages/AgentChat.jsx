@@ -828,7 +828,6 @@ Content-Type: application/json`}
         {/* Hidden audio player */}
         <audio ref={audioPlayerRef} className="hidden" />
       </div>
-      </div>
     </SidebarLayout>
   );
 }
