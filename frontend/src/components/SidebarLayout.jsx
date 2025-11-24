@@ -85,21 +85,21 @@ export default function SidebarLayout({ children }) {
         {/* User Info */}
         {sidebarOpen && (
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-semibold text-gray-600">
-                    {user.name?.[0]?.toUpperCase()}
-                  </span>
+            {user.name ? (
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-semibold text-gray-600">
+                      {user.name?.[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
+                    {user.email && (
+                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    )}
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{user.name || "Convidado"}</p>
-                  {user.email && (
-                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                  )}
-                </div>
-              </div>
-              {user.name && (
                 <button
                   type="button"
                   onClick={handleLogout}
@@ -108,8 +108,27 @@ export default function SidebarLayout({ children }) {
                   <LogOut className="w-3 h-3" />
                   Sair
                 </button>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Button
+                  onClick={() => navigate("/login")}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  size="sm"
+                >
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Entrar
+                </Button>
+                <Button
+                  onClick={() => navigate("/register")}
+                  variant="outline"
+                  className="w-full border-purple-200 text-purple-700 hover:bg-purple-50"
+                  size="sm"
+                >
+                  Criar conta
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
