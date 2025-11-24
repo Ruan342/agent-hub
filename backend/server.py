@@ -677,10 +677,22 @@ async def create_agent(agent_data: AgentCreate, current_user: dict = Depends(req
 
 @api_router.put("/admin/agents/{agent_id}", response_model=Agent)
 async def update_agent(agent_id: str, agent_data: AgentCreate, current_user: dict = Depends(require_admin)):
-    update_dict = agent_data.model_dump()
+    # Only update fields that are explicitly provided (not None or empty)
+    update_dict = agent_data.model_dump(exclude_unset=True, exclude_none=True)
+    
+    # Remove fields that shouldn't be updated or are empty strings
+    update_dict = {k: v for k, v in update_dict.items() if v != ""}
+    
+    if not update_dict:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    
     result = await db.agents.update_one({"id": agent_id}, {"$set": update_dict})
     if result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="Agent not found")
+        # Check if agent exists
+        existing = await db.agents.find_one({"id": agent_id})
+        if not existing:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        # Agent exists but no changes were made
     
     agent = await db.agents.find_one({"id": agent_id}, {"_id": 0})
     if isinstance(agent.get('created_at'), str):
