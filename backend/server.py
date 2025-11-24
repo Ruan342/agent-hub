@@ -668,7 +668,7 @@ async def create_chat_session(subscription_id: str, current_user: dict = Depends
         "subscription_id": subscription_id,
         "user_id": current_user['user_id'],
         "agent_id": sub['agent_id'],
-        "title": "Nova Conversa",
+        "title": None,
         "messages": [],
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat()
