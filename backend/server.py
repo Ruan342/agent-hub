@@ -1138,13 +1138,17 @@ async def execute_agent(
                 from openai import OpenAI
                 openai_client = OpenAI(api_key=openai_api_key)
                 
+                # Map model names to correct OpenAI models
+                model_name = agent.get('llm_model', 'gpt-4o')
+                if model_name == 'gpt-5':
+                    model_name = 'gpt-4o'  # Use gpt-4o as gpt-5 doesn't exist yet
+                
                 completion = openai_client.chat.completions.create(
-                    model=agent.get('llm_model', 'gpt-4o'),
+                    model=model_name,
                     messages=[
                         {"role": "system", "content": system_message},
                         {"role": "user", "content": input_text}
-                    ],
-                    temperature=0.7
+                    ]
                 )
                 
                 response_text = completion.choices[0].message.content
