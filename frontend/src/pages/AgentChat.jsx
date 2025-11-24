@@ -54,6 +54,20 @@ export default function AgentChat() {
     fetchData();
   }, [subscriptionId]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      // Press Space to stop agent speaking
+      if (e.code === 'Space' && isSpeaking && voiceMode && !e.target.matches('input, textarea')) {
+        e.preventDefault();
+        stopSpeaking();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isSpeaking, voiceMode]);
+
   useEffect(() => {
     setupSpeechRecognition();
   }, []);
