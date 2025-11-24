@@ -405,80 +405,84 @@ export default function AgentChat() {
               <div ref={messagesEndRef} />
             </div>
           </div>
+          {/* Botão flutuante discreto de voz no canto inferior direito */}
+          {!voiceMode && (
+            <button
+              onClick={toggleVoiceMode}
+              className="fixed bottom-28 right-8 z-50 w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
+              title="Ativar modo voz"
+            >
+              <Mic className="w-6 h-6" />
+              <span className="absolute right-16 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                Modo Voz
+              </span>
+            </button>
+          )}
+
+          {/* Status do modo voz - discreto no canto */}
           {voiceMode && (
-            <div className="px-6 py-3">
-              <div className="max-w-3xl mx-auto">
-                <div className={`rounded-xl p-4 transition-all ${isSpeaking ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300' : isListening ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200' : 'bg-gray-50 border-2 border-gray-200'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      {isSpeaking ? (
-                        <>
-                          <Volume2 className="w-5 h-5 text-blue-600 animate-pulse" />
-                          <span className="text-base font-semibold text-blue-900">🔊 Agente falando...</span>
-                        </>
-                      ) : isListening ? (
-                        <>
-                          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                          <span className="text-base font-semibold text-gray-900">🎤 Escutando você...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Mic className="w-5 h-5 text-gray-400" />
-                          <span className="text-sm font-medium text-gray-500">Modo voz ativo</span>
-                        </>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {isSpeaking && (
-                        <Button onClick={stopSpeaking} size="sm" className="bg-red-600 hover:bg-red-700 text-white">
-                          <VolumeX className="w-4 h-4 mr-1" />
-                          Parar
-                        </Button>
-                      )}
-                      <button onClick={toggleVoiceMode} className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-white">
-                        Desativar
-                      </button>
-                    </div>
+            <div className="fixed bottom-28 right-8 z-50">
+              <div className={`rounded-2xl p-4 shadow-2xl transition-all backdrop-blur-sm ${isSpeaking ? 'bg-blue-500/95' : isListening ? 'bg-purple-500/95' : 'bg-gray-800/95'}`}>
+                <div className="flex items-center gap-3 mb-3">
+                  {isSpeaking ? (
+                    <>
+                      <Volume2 className="w-5 h-5 text-white animate-pulse" />
+                      <span className="text-sm font-semibold text-white">Agente falando...</span>
+                    </>
+                  ) : isListening ? (
+                    <>
+                      <div className="w-2.5 h-2.5 bg-red-400 rounded-full animate-pulse"></div>
+                      <span className="text-sm font-semibold text-white">Escutando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="w-5 h-5 text-white" />
+                      <span className="text-sm font-medium text-white">Voz ativa</span>
+                    </>
+                  )}
+                </div>
+                
+                {isSpeaking && (
+                  <div className="flex items-center justify-center gap-1 mb-3">
+                    {[0, 150, 300, 450, 600, 150, 300].map((delay, i) => (
+                      <div key={i} className={`w-1 ${[8, 12, 6, 10, 8, 12, 6][i] === 6 ? 'h-4' : [8, 12, 6, 10, 8, 12, 6][i] === 8 ? 'h-6' : [8, 12, 6, 10, 8, 12, 6][i] === 10 ? 'h-8' : 'h-10'} bg-white rounded-full animate-pulse`} style={{animationDelay: `${delay}ms`}}></div>
+                    ))}
                   </div>
+                )}
+                
+                {(interimTranscript || finalTranscript) && (
+                  <div className="text-xs text-white/90 italic mb-3 p-2 bg-black/20 rounded-lg max-w-[200px]">
+                    "{interimTranscript || finalTranscript}"
+                  </div>
+                )}
+
+                <div className="flex gap-2">
                   {isSpeaking && (
-                    <div className="mt-3 flex items-center justify-center gap-1">
-                      {[0, 150, 300, 450, 600, 150, 300].map((delay, i) => (
-                        <div key={i} className={`w-1 ${[8, 12, 6, 10, 8, 12, 6][i] === 6 ? 'h-6' : [8, 12, 6, 10, 8, 12, 6][i] === 8 ? 'h-8' : [8, 12, 6, 10, 8, 12, 6][i] === 10 ? 'h-10' : 'h-12'} bg-blue-500 rounded-full animate-pulse`} style={{animationDelay: `${delay}ms`}}></div>
-                      ))}
-                    </div>
+                    <button onClick={stopSpeaking} className="flex-1 bg-red-500 hover:bg-red-600 text-white text-xs py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1">
+                      <VolumeX className="w-3.5 h-3.5" />
+                      Parar
+                    </button>
                   )}
-                  {(interimTranscript || finalTranscript) && (
-                    <div className="text-sm text-gray-700 italic mt-2 p-2 bg-white rounded">
-                      💬 "{interimTranscript || finalTranscript}"
-                    </div>
-                  )}
+                  <button onClick={toggleVoiceMode} className="flex-1 bg-white/20 hover:bg-white/30 text-white text-xs py-2 px-3 rounded-lg transition-all">
+                    Desativar
+                  </button>
                 </div>
               </div>
             </div>
           )}
+
           <div className="bg-white border-t border-gray-200 p-6">
             <div className="max-w-3xl mx-auto">
-              <div className="flex items-center gap-2 mb-3">
-                <button onClick={() => !voiceMode && setVoiceMode(false)} className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${!voiceMode ? 'bg-purple-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                  <Send className="w-4 h-4 inline mr-2" />
-                  Texto
-                </button>
-                <button onClick={toggleVoiceMode} className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${voiceMode ? 'bg-purple-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                  {voiceMode ? <><MicOff className="w-4 h-4 inline mr-2" />Voz Ativa</> : <><Mic className="w-4 h-4 inline mr-2" />Voz em Tempo Real</>}
-                </button>
-              </div>
-              {!voiceMode && (
-                <div className="relative">
-                  <textarea ref={textareaRef} value={inputMessage} onChange={(e) => setInputMessage(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())} placeholder="Digite sua mensagem..." disabled={sending} className="w-full px-4 py-4 pr-16 text-base border-2 border-gray-200 rounded-xl resize-none focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all disabled:opacity-50" rows={1} style={{ minHeight: '56px', maxHeight: '200px' }} />
-                  <div className="absolute right-2 bottom-2">
-                    <Button onClick={() => handleSendMessage()} disabled={!inputMessage.trim() || sending} className="h-10 w-10 p-0 bg-purple-600 hover:bg-purple-700 text-white rounded-lg disabled:opacity-50">
-                      {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    </Button>
-                  </div>
+              <div className="relative">
+                <textarea ref={textareaRef} value={inputMessage} onChange={(e) => setInputMessage(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())} placeholder="Digite sua mensagem..." disabled={sending || voiceMode} className="w-full px-4 py-4 pr-16 text-base border-2 border-gray-200 rounded-xl resize-none focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed" rows={1} style={{ minHeight: '56px', maxHeight: '200px' }} />
+                <div className="absolute right-2 bottom-2">
+                  <Button onClick={() => handleSendMessage()} disabled={!inputMessage.trim() || sending || voiceMode} className="h-10 w-10 p-0 bg-purple-600 hover:bg-purple-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                    {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  </Button>
                 </div>
-              )}
+              </div>
               <p className="text-xs text-gray-400 mt-2 text-center">
-                {voiceMode ? "Fale naturalmente" : "Enter para enviar, Shift+Enter para nova linha"}
+                {voiceMode ? "Modo voz ativo - fale naturalmente" : "Enter para enviar, Shift+Enter para nova linha"}
               </p>
             </div>
           </div>
