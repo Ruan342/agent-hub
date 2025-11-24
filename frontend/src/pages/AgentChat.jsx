@@ -283,6 +283,16 @@ export default function AgentChat() {
     }
   };
 
+  const stopSpeaking = () => {
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.pause();
+      audioPlayerRef.current.currentTime = 0;
+      setIsSpeaking(false);
+      console.log("⏹️ Audio playback stopped by user");
+      toast.success("Agente interrompido");
+    }
+  };
+
   const toggleVoiceMode = () => {
     const newVoiceMode = !voiceMode;
     setVoiceMode(newVoiceMode);
