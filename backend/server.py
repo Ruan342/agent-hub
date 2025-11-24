@@ -1330,9 +1330,11 @@ async def execute_agent(
         await db.agent_executions.insert_one(execution_log)
         
         # Save messages to chat session if session_id provided
+        logging.info(f"Session ID received: {session_id}")
         if session_id and session_id.startswith("chat_"):
             # Extract actual session ID (remove "chat_" or "web_" prefix)
             actual_session_id = session_id.split("_", 1)[1] if "_" in session_id else session_id
+            logging.info(f"Saving to session: {actual_session_id}")
             
             # Check if session exists, create if not
             session = await db.chat_sessions.find_one({"id": actual_session_id})
