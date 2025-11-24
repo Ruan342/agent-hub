@@ -469,8 +469,8 @@ export default function AgentChat() {
               </div>
             </div>
 
-        {/* Voice Mode Visual Feedback */}
-        {voiceMode && (
+            {/* Voice Mode Visual Feedback */}
+            {voiceMode && (
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className={`rounded-xl p-4 transition-all duration-300 ${
               isListening 
