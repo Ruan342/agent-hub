@@ -245,6 +245,21 @@ frontend:
       - working: true
         agent: "testing"
         comment: "🎯 CHAT HISTORY SYSTEM FRONTEND TESTING COMPLETED: Comprehensive verification of recent chat history implementation fixes performed successfully. ✅ CRITICAL REQUIREMENTS VERIFIED: 1) Purple sidebar with chat history sections (Hoje, Ontem, Últimos 7 dias) displaying correctly ✅ 2) Conversation titles are first user messages (e.g., 'Olá, preciso de ajuda com vendas') - NO 'Nova Conversa' titles found ✅ 3) Message counts completely removed from sidebar display ✅ 4) Chat navigation between conversations working properly ✅ 5) New conversation creation functional ✅ 6) Empty chat welcome message displays correctly ✅ 7) Backend integration working (agent responses, session management) ✅. All requested critical points verified: titles = first user messages, no message counts, proper sidebar functionality, conversation persistence. Chat history system is fully operational as specified in requirements."
+      - working: true
+        agent: "testing"
+        comment: "🎉 NOVO DESIGN DO CHAT DE VOZ TESTADO COM SUCESSO: Teste visual completo do novo design implementado realizado com êxito. ✅ MELHORIAS VERIFICADAS: 1) Botão de voz flutuante discreto no canto inferior direito (posição x=1832, y=912) ✅ 2) Botão 'Texto' removido corretamente (não encontrado) ✅ 3) Campo de texto habilitado no modo texto e desabilitado no modo voz ✅ 4) Tooltip 'Modo Voz' aparece no hover ✅ 5) Card flutuante com status aparece quando modo voz é ativado ✅ 6) Card mostra status 'Escutando...' corretamente ✅ 7) Botão 'Desativar' presente no card ✅ 8) Elementos de animação detectados (3 elementos) ✅ 9) Transição entre modos funcionando perfeitamente ✅ 10) Interface mais limpa e intuitiva ✅. Todas as melhorias solicitadas foram implementadas corretamente e estão funcionando como esperado."
+
+  - task: "Voice Chat Design Testing"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/AgentChat.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎯 TESTE VISUAL DO NOVO DESIGN DO CHAT DE VOZ CONCLUÍDO: Verificação completa das melhorias implementadas no chat de voz. ✅ ESTADO INICIAL VERIFICADO: Campo de texto visível e habilitado, botão 'Texto' removido corretamente, botão flutuante roxo com ícone de microfone posicionado no canto inferior direito (x=1832, y=912) ✅ HOVER TESTADO: Tooltip 'Modo Voz' aparece corretamente no hover ✅ ATIVAÇÃO DO MODO VOZ: Botão flutuante desaparece, card de status aparece com texto 'Escutando...', campo de texto fica desabilitado, botão 'Desativar' presente ✅ VISUAL DO CARD: Card com fundo semi-transparente, elementos de animação detectados, posicionamento correto no canto ✅ DESATIVAÇÃO: Funcionalidade de desativação testada e funcionando. Screenshots capturadas: estado inicial, hover, modo voz ativo, modo voz desativado. Novo design implementado com sucesso e totalmente funcional."
 
   - task: "Chat History System Frontend"
     implemented: true
