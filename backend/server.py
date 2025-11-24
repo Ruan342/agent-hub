@@ -1367,12 +1367,19 @@ async def execute_agent(
                 "audio_base64": output_audio_base64
             }
             
+            # Update data to push messages
+            update_data = {
+                "$push": {"messages": {"$each": [user_message, assistant_message]}},
+                "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+            }
+            
+            # If this is the first message (title is None or empty), set the title
+            if not session.get('messages') and (session.get('title') is None or session.get('title') == ''):
+                update_data["$set"]["title"] = input_text[:50] + ("..." if len(input_text) > 50 else "")
+            
             await db.chat_sessions.update_one(
                 {"id": actual_session_id},
-                {
-                    "$push": {"messages": {"$each": [user_message, assistant_message]}},
-                    "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
-                }
+                update_data
             )
         
         return AgentExecuteResponse(
