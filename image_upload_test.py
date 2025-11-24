@@ -6,7 +6,7 @@ from PIL import Image
 from datetime import datetime
 
 class ImageUploadFlowTester:
-    def __init__(self, base_url="https://agent-dashboard-81.preview.emergentagent.com"):
+    def __init__(self, base_url="https://voice-chat-ai-13.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.admin_token = None
