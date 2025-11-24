@@ -1329,6 +1329,50 @@ async def execute_agent(
         }
         await db.agent_executions.insert_one(execution_log)
         
+        # Save messages to chat session if session_id provided
+        if session_id and session_id.startswith("chat_"):
+            # Extract actual session ID (remove "chat_" or "web_" prefix)
+            actual_session_id = session_id.split("_", 1)[1] if "_" in session_id else session_id
+            
+            # Check if session exists, create if not
+            session = await db.chat_sessions.find_one({"id": actual_session_id})
+            if not session:
+                # Create new session
+                session = {
+                    "id": actual_session_id,
+                    "subscription_id": subscription['id'],
+                    "user_id": subscription['user_id'],
+                    "agent_id": agent['id'],
+                    "title": input_text[:50] + ("..." if len(input_text) > 50 else ""),
+                    "messages": [],
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db.chat_sessions.insert_one(session)
+            
+            # Add messages to session
+            user_message = {
+                "role": "user",
+                "content": input_text,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "audio_base64": None
+            }
+            
+            assistant_message = {
+                "role": "assistant",
+                "content": response_text,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "audio_base64": output_audio_base64
+            }
+            
+            await db.chat_sessions.update_one(
+                {"id": actual_session_id},
+                {
+                    "$push": {"messages": {"$each": [user_message, assistant_message]}},
+                    "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+                }
+            )
+        
         return AgentExecuteResponse(
             output_text=response_text,
             output_audio_base64=output_audio_base64,
