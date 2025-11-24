@@ -3,7 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Send, Loader2, Mic, MicOff, Volume2, VolumeX, ArrowLeft, Sparkles, Paperclip, Settings, Key } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Send, Loader2, Mic, MicOff, Volume2, VolumeX, ArrowLeft, Sparkles, Paperclip, Settings, Key, Copy, Check, Link2, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import SidebarLayout from "@/components/SidebarLayout";
 
