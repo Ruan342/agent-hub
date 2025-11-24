@@ -227,6 +227,7 @@ metadata:
   version: "1.0"
   test_sequence: 1
   run_ui: false
+  last_update: "2025-11-24 - Database agents updated from document"
 
 test_plan:
   current_focus:
