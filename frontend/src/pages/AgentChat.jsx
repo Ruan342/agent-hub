@@ -600,7 +600,8 @@ export default function AgentChat() {
                   : "Pressione Enter para enviar, Shift+Enter para nova linha"
                 }
               </p>
-              </div>
+            </div>
+          </div>
             </div>
           </>
         )}
