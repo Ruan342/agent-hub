@@ -664,7 +664,126 @@ export default function AgentChat() {
           </div>
         </div>
         <audio ref={audioPlayerRef} className="hidden" />
+        <audio ref={voiceCallAudioRef} className="hidden" />
       </div>
+
+      {/* Interface de Chamada de Voz em Tempo Real - Estilo ElevenLabs */}
+      {isVoiceCallActive && (
+        <div className="fixed inset-0 z-[100] bg-gradient-to-br from-purple-900 via-purple-800 to-pink-900 flex items-center justify-center">
+          {/* Background com padrão decorativo */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-20 left-20 w-64 h-64 bg-purple-500 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-20 right-20 w-64 h-64 bg-pink-500 rounded-full blur-3xl"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500 rounded-full blur-3xl"></div>
+          </div>
+
+          <div className="relative z-10 flex flex-col items-center justify-center">
+            {/* Informações do agente */}
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-bold text-white mb-2">{agent?.name}</h2>
+              <p className="text-xl text-purple-200">{agent?.segment}</p>
+              <div className="mt-4">
+                <Badge className={`text-sm px-4 py-1.5 ${
+                  callState === 'connecting' ? 'bg-yellow-500' : 
+                  callState === 'listening' ? 'bg-green-500' : 
+                  callState === 'speaking' ? 'bg-blue-500' : 
+                  'bg-gray-500'
+                } border-0`}>
+                  {callState === 'connecting' && '🔄 Conectando...'}
+                  {callState === 'listening' && '🎤 Escutando você...'}
+                  {callState === 'speaking' && '🔊 Agente falando...'}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Círculo central com foto do mascote e animação */}
+            <div className="relative mb-12">
+              {/* Ondas de animação quando está falando */}
+              {callState === 'speaking' && (
+                <>
+                  <div className="absolute inset-0 animate-ping">
+                    <div className="w-80 h-80 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 opacity-30"></div>
+                  </div>
+                  <div className="absolute inset-0 animate-pulse" style={{animationDelay: '0.3s'}}>
+                    <div className="w-80 h-80 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 opacity-20"></div>
+                  </div>
+                </>
+              )}
+
+              {/* Borda animada piscando */}
+              <div className={`absolute inset-0 rounded-full ${
+                callState === 'speaking' 
+                  ? 'animate-pulse bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500' 
+                  : callState === 'listening'
+                  ? 'animate-pulse bg-gradient-to-r from-green-400 to-emerald-500'
+                  : 'bg-gradient-to-r from-purple-400 to-pink-400'
+              }`} style={{padding: '8px'}}>
+                <div className="w-full h-full rounded-full bg-purple-900"></div>
+              </div>
+
+              {/* Círculo interno com imagem do mascote */}
+              <div className="relative w-80 h-80 rounded-full overflow-hidden shadow-2xl" style={{margin: '8px'}}>
+                {agent?.mascot_image_url ? (
+                  <img 
+                    src={agent.mascot_image_url} 
+                    alt={agent.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                    <Sparkles className="w-32 h-32 text-white" />
+                  </div>
+                )}
+              </div>
+
+              {/* Barras de áudio quando falando */}
+              {callState === 'speaking' && (
+                <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 flex items-center justify-center gap-2">
+                  {[0, 150, 300, 450, 600, 750, 900].map((delay, i) => (
+                    <div 
+                      key={i} 
+                      className={`w-2 bg-white rounded-full animate-pulse`}
+                      style={{
+                        height: `${[20, 40, 30, 50, 35, 45, 25][i]}px`,
+                        animationDelay: `${delay}ms`
+                      }}
+                    ></div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Transcrição em tempo real */}
+            {voiceCallTranscript && (
+              <div className="mb-8 max-w-2xl">
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl px-8 py-4 border border-white/20">
+                  <p className="text-white text-lg italic text-center">
+                    "{voiceCallTranscript}"
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Instruções */}
+            <div className="mb-8 text-center">
+              <p className="text-white/80 text-lg">
+                {callState === 'connecting' && 'Preparando conexão com o agente...'}
+                {callState === 'listening' && 'Fale naturalmente, como uma ligação telefônica'}
+                {callState === 'speaking' && 'Aguarde o agente terminar de falar...'}
+              </p>
+            </div>
+
+            {/* Botão de encerrar chamada */}
+            <button
+              onClick={endVoiceCall}
+              className="group bg-red-500 hover:bg-red-600 text-white rounded-full p-6 shadow-2xl transition-all duration-300 hover:scale-110"
+            >
+              <PhoneOff className="w-8 h-8" />
+            </button>
+            <p className="text-white/60 text-sm mt-3">Encerrar chamada</p>
+          </div>
+        </div>
+      )}
     </SidebarLayout>
   );
 }
