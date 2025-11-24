@@ -105,6 +105,22 @@ class AgentCreate(BaseModel):
     llm_provider: str = "openai"
     llm_model: str = "gpt-5"
 
+class AgentUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    segment: Optional[str] = None
+    price: Optional[float] = None
+    features: Optional[List[str]] = None
+    mascot_image_url: Optional[str] = None
+    mascot_image_hero_url: Optional[str] = None
+    mascot_image_feature_url: Optional[str] = None
+    mascot_image_cta_url: Optional[str] = None
+    elevenlabs_voice_id: Optional[str] = None
+    base_prompt: Optional[str] = None
+    voice_sample_url: Optional[str] = None
+    llm_provider: Optional[str] = None
+    llm_model: Optional[str] = None
+
 class Subscription(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
