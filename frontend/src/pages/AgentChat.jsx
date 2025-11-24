@@ -507,41 +507,49 @@ export default function AgentChat() {
             {voiceMode && (
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className={`rounded-xl p-4 transition-all duration-300 ${
-              isListening 
+              isSpeaking
+                ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300'
+                : isListening 
                 ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200' 
                 : 'bg-gray-50 border-2 border-gray-200'
             }`}>
               <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  {isListening ? (
+                <div className="flex items-center gap-3">
+                  {isSpeaking ? (
                     <>
-                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                      <span className="text-sm font-medium text-gray-900">Escutando...</span>
+                      <div className="relative flex items-center justify-center">
+                        <Volume2 className="w-5 h-5 text-blue-600 animate-pulse" />
+                        <div className="absolute w-8 h-8 bg-blue-400 rounded-full animate-ping opacity-20"></div>
+                      </div>
+                      <span className="text-base font-semibold text-blue-900">🔊 Agente falando...</span>
                     </>
-                  ) : isSpeaking ? (
+                  ) : isListening ? (
                     <>
-                      <Volume2 className="w-4 h-4 text-purple-600 animate-pulse" />
-                      <span className="text-sm font-medium text-gray-900">Falando...</span>
+                      <div className="relative flex items-center justify-center">
+                        <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                        <div className="absolute w-6 h-6 bg-red-400 rounded-full animate-ping opacity-20"></div>
+                      </div>
+                      <span className="text-base font-semibold text-gray-900">🎤 Escutando você...</span>
                     </>
                   ) : (
                     <>
-                      <Mic className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-500">Modo voz ativo</span>
+                      <Mic className="w-5 h-5 text-gray-400" />
+                      <span className="text-sm font-medium text-gray-500">Modo voz ativo - Aguardando...</span>
                     </>
                   )}
                 </div>
                 
                 <button
                   onClick={toggleVoiceMode}
-                  className="text-xs text-gray-500 hover:text-gray-700"
+                  className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-white"
                 >
                   Desativar
                 </button>
               </div>
               
               {(interimTranscript || finalTranscript) && (
-                <div className="text-sm text-gray-700 italic">
-                  "{interimTranscript || finalTranscript}"
+                <div className="text-sm text-gray-700 italic mt-2 p-2 bg-white rounded">
+                  💬 "{interimTranscript || finalTranscript}"
                 </div>
               )}
             </div>
