@@ -806,12 +806,22 @@ export default function AgentChat() {
             )}
 
             {/* Instruções */}
-            <div className="mb-8 text-center">
-              <p className="text-white/80 text-lg">
+            <div className="mb-8 text-center max-w-2xl">
+              <p className="text-white text-xl font-medium mb-2">
                 {callState === 'connecting' && 'Preparando conexão com o agente...'}
                 {callState === 'listening' && 'Fale naturalmente, como uma ligação telefônica'}
-                {callState === 'speaking' && 'Aguarde o agente terminar de falar...'}
+                {callState === 'speaking' && 'Pode interromper a qualquer momento!'}
               </p>
+              {callState === 'speaking' && (
+                <p className="text-white/60 text-sm">
+                  Apenas comece a falar e o agente vai parar de falar
+                </p>
+              )}
+              {callState === 'listening' && (
+                <p className="text-white/60 text-sm">
+                  O agente está sempre escutando você
+                </p>
+              )}
             </div>
 
             {/* Botão de encerrar chamada */}
