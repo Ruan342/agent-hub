@@ -216,8 +216,8 @@ export default function AgentChat() {
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Auto-play audio response if in voice mode
-      if (voiceMode && response.data.output_audio_base64) {
+      // Auto-play audio response ALWAYS (both text and voice mode)
+      if (response.data.output_audio_base64) {
         playAudio(response.data.output_audio_base64);
       }
     } catch (error) {
