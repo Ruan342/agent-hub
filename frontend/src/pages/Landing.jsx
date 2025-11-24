@@ -10,6 +10,22 @@ export default function Landing() {
 
   const mainContent = (
     <div className="min-h-screen bg-white">
+      {/* Header com botão de login - visível apenas quando não logado */}
+      {!isLoggedIn && (
+        <div className="border-b border-gray-100 bg-white/80 backdrop-blur sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-end">
+            <Button
+              onClick={() => navigate("/login")}
+              variant="outline"
+              size="sm"
+              className="border-purple-200 text-purple-700 hover:bg-purple-50"
+            >
+              Entrar
+            </Button>
+          </div>
+        </div>
+      )}
+      
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-6 pt-20 pb-24">
         <div className="grid md:grid-cols-2 gap-10 items-center">
