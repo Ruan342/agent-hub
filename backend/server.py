@@ -692,7 +692,7 @@ async def create_agent(agent_data: AgentCreate, current_user: dict = Depends(req
     return agent
 
 @api_router.put("/admin/agents/{agent_id}", response_model=Agent)
-async def update_agent(agent_id: str, agent_data: AgentCreate, current_user: dict = Depends(require_admin)):
+async def update_agent(agent_id: str, agent_data: AgentUpdate, current_user: dict = Depends(require_admin)):
     # Only update fields that are explicitly provided (not None or empty)
     update_dict = agent_data.model_dump(exclude_unset=True, exclude_none=True)
     
