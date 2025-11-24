@@ -593,6 +593,18 @@ export default function AgentChat() {
                 </div>
               </div>
               
+              {isSpeaking && (
+                <div className="mt-3 flex items-center justify-center gap-1">
+                  <div className="w-1 h-8 bg-blue-500 rounded-full animate-pulse" style={{animationDelay: '0ms'}}></div>
+                  <div className="w-1 h-12 bg-blue-500 rounded-full animate-pulse" style={{animationDelay: '150ms'}}></div>
+                  <div className="w-1 h-6 bg-blue-500 rounded-full animate-pulse" style={{animationDelay: '300ms'}}></div>
+                  <div className="w-1 h-10 bg-blue-500 rounded-full animate-pulse" style={{animationDelay: '450ms'}}></div>
+                  <div className="w-1 h-8 bg-blue-500 rounded-full animate-pulse" style={{animationDelay: '600ms'}}></div>
+                  <div className="w-1 h-12 bg-blue-500 rounded-full animate-pulse" style={{animationDelay: '150ms'}}></div>
+                  <div className="w-1 h-6 bg-blue-500 rounded-full animate-pulse" style={{animationDelay: '300ms'}}></div>
+                </div>
+              )}
+              
               {(interimTranscript || finalTranscript) && (
                 <div className="text-sm text-gray-700 italic mt-2 p-2 bg-white rounded">
                   💬 "{interimTranscript || finalTranscript}"
