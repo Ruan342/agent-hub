@@ -27,9 +27,15 @@ export default function AgentChat() {
   const [recognition, setRecognition] = useState(null);
   const [interimTranscript, setInterimTranscript] = useState("");
   const [finalTranscript, setFinalTranscript] = useState("");
+  // Estados para chamada de voz em tempo real
+  const [isVoiceCallActive, setIsVoiceCallActive] = useState(false);
+  const [callState, setCallState] = useState("idle"); // idle, connecting, listening, speaking
+  const [voiceCallTranscript, setVoiceCallTranscript] = useState("");
   const messagesEndRef = useRef(null);
   const audioPlayerRef = useRef(null);
+  const voiceCallAudioRef = useRef(null);
   const textareaRef = useRef(null);
+  const voiceCallRecognitionRef = useRef(null);
   const token = localStorage.getItem("token");
 
   useEffect(() => {
