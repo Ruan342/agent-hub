@@ -511,11 +511,11 @@ export default function AgentChat() {
                 </div>
               )}
             </div>
-          </div>
-        )}
+              </div>
+            )}
 
-        {/* Input Area - Sintra Style */}
-        <div className="bg-white border-t border-gray-200 sticky bottom-0">
+            {/* Input Area - Sintra Style */}
+            <div className="bg-white border-t border-gray-200 sticky bottom-0">
           <div className="max-w-4xl mx-auto px-4 py-4">
             <div className="relative">
               {/* Mode Toggle Buttons */}
