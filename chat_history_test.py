@@ -72,7 +72,7 @@ class ChatHistoryTester:
             "POST",
             "auth/login",
             200,
-            data={"email": "admin@voiceai.com", "password": "123456"}
+            data={"email": "admin@voiceai.com", "password": "admin123"}
         )
         if success and 'token' in response:
             self.admin_token = response['token']
