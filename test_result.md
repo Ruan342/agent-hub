@@ -234,8 +234,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "All backend endpoints tested successfully including new Duplicate Agent functionality"
-  stuck_tasks: []
+    - "Database migration validation completed - 23 agents confirmed"
+    - "Admin update base_prompt preservation bug needs fixing"
+  stuck_tasks:
+    - "Admin Agents CRUD - base_prompt overwrite bug"
   test_all: true
   test_priority: "high_first"
 
