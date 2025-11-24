@@ -600,12 +600,234 @@ export default function AgentChat() {
                   : "Pressione Enter para enviar, Shift+Enter para nova linha"
                 }
               </p>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Configuration Tab */}
+        {activeTab === "config" && (
+          <div className="flex-1 overflow-y-auto bg-gray-50">
+            <div className="max-w-3xl mx-auto px-6 py-8">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Configurações do Agente</h2>
+                <p className="text-gray-600">Personalize o comportamento do seu agente de IA</p>
+              </div>
+
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Informações da Empresa</CardTitle>
+                  <CardDescription>Configure o contexto do seu negócio para respostas mais precisas</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="company_name">Nome da Empresa</Label>
+                    <Input
+                      id="company_name"
+                      placeholder="Ex: TechCorp Solutions"
+                      value={customConfig.company_name}
+                      onChange={(e) => setCustomConfig({...customConfig, company_name: e.target.value})}
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="product_service">Produto ou Serviço</Label>
+                    <Input
+                      id="product_service"
+                      placeholder="Ex: Software de gestão empresarial"
+                      value={customConfig.product_service}
+                      onChange={(e) => setCustomConfig({...customConfig, product_service: e.target.value})}
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="target_audience">Público-Alvo</Label>
+                    <Input
+                      id="target_audience"
+                      placeholder="Ex: Pequenas e médias empresas"
+                      value={customConfig.target_audience}
+                      onChange={(e) => setCustomConfig({...customConfig, target_audience: e.target.value})}
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="tone">Tom de Voz</Label>
+                    <Input
+                      id="tone"
+                      placeholder="Ex: Profissional e amigável"
+                      value={customConfig.tone}
+                      onChange={(e) => setCustomConfig({...customConfig, tone: e.target.value})}
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="extra_context">Contexto Adicional</Label>
+                    <Textarea
+                      id="extra_context"
+                      placeholder="Adicione informações extras que o agente deve saber..."
+                      value={customConfig.extra_context}
+                      onChange={(e) => setCustomConfig({...customConfig, extra_context: e.target.value})}
+                      className="mt-1"
+                      rows={4}
+                    />
+                  </div>
+
+                  <Button onClick={handleSaveConfig} className="w-full bg-purple-600 hover:bg-purple-700">
+                    Salvar Configurações
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* API Tab */}
+        {activeTab === "api" && (
+          <div className="flex-1 overflow-y-auto bg-gray-50">
+            <div className="max-w-3xl mx-auto px-6 py-8">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Chave de API</h2>
+                <p className="text-gray-600">Use esta chave para integrar o agente em suas aplicações</p>
+              </div>
+
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Sua API Key</CardTitle>
+                  <CardDescription>Mantenha esta chave em segredo. Ela permite acesso total ao seu agente.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={subscription?.api_key || ""}
+                      readOnly
+                      className="font-mono text-sm"
+                    />
+                    <Button
+                      onClick={() => copyToClipboard(subscription?.api_key)}
+                      variant="outline"
+                      size="icon"
+                    >
+                      {copiedKey ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Documentação da API</CardTitle>
+                  <CardDescription>Como usar o agente via API</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-sm mb-2">Endpoint</h4>
+                    <code className="block bg-gray-100 p-3 rounded text-sm">
+                      POST {BACKEND_URL}/api/agent/execute
+                    </code>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-sm mb-2">Headers</h4>
+                    <code className="block bg-gray-100 p-3 rounded text-sm whitespace-pre">
+{`Authorization: Bearer YOUR_API_KEY
+Content-Type: application/json`}
+                    </code>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-sm mb-2">Request Body</h4>
+                    <code className="block bg-gray-100 p-3 rounded text-sm whitespace-pre">
+{`{
+  "input_text": "Olá, como você pode me ajudar?",
+  "session_id": "unique_session_id"
+}`}
+                    </code>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-sm mb-2">Response</h4>
+                    <code className="block bg-gray-100 p-3 rounded text-sm whitespace-pre">
+{`{
+  "output_text": "Resposta do agente...",
+  "output_audio_base64": "..."
+}`}
+                    </code>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* Integrations Tab */}
+        {activeTab === "integrations" && (
+          <div className="flex-1 overflow-y-auto bg-gray-50">
+            <div className="max-w-3xl mx-auto px-6 py-8">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Integrações</h2>
+                <p className="text-gray-600">Conecte seu agente com outras ferramentas</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="hover:shadow-lg transition-shadow cursor-pointer opacity-50">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <span className="text-xl">💬</span>
+                      </div>
+                      <h3 className="font-semibold">WhatsApp</h3>
+                    </div>
+                    <p className="text-sm text-gray-600">Em breve</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow cursor-pointer opacity-50">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <span className="text-xl">📧</span>
+                      </div>
+                      <h3 className="font-semibold">Email</h3>
+                    </div>
+                    <p className="text-sm text-gray-600">Em breve</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow cursor-pointer opacity-50">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <span className="text-xl">🔗</span>
+                      </div>
+                      <h3 className="font-semibold">Webhooks</h3>
+                    </div>
+                    <p className="text-sm text-gray-600">Em breve</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow cursor-pointer opacity-50">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <span className="text-xl">📊</span>
+                      </div>
+                      <h3 className="font-semibold">CRM</h3>
+                    </div>
+                    <p className="text-sm text-gray-600">Em breve</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Hidden audio player */}
         <audio ref={audioPlayerRef} className="hidden" />
+      </div>
       </div>
     </SidebarLayout>
   );
