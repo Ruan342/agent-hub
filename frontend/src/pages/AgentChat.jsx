@@ -23,6 +23,15 @@ export default function AgentChat() {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [activeTab, setActiveTab] = useState("chat");
+  const [copiedKey, setCopiedKey] = useState(false);
+  const [customConfig, setCustomConfig] = useState({
+    company_name: "",
+    product_service: "",
+    target_audience: "",
+    tone: "",
+    extra_context: ""
+  });
   
   // Voice mode states
   const [voiceMode, setVoiceMode] = useState(false);
