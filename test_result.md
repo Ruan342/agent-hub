@@ -133,9 +133,9 @@ backend:
 
   - task: "Admin Agents CRUD"
     implemented: true
-    working: true
+    working: false
     file: "backend/server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: false
     status_history:
@@ -145,6 +145,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ PUT /api/admin/agents/{id} update functionality verified - successfully updated agent price from $49.99 to $50.00 and confirmed changes persist"
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL BUG FOUND: PUT /api/admin/agents/{id} overwrites base_prompt to None when base_prompt is not included in update request. This happens because AgentCreate model is used for updates and missing fields get set to None/default values. Need to fix update logic to preserve existing base_prompt values."
 
   - task: "Admin Agent Requests Listing"
     implemented: true
