@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Send, Loader2, Mic, MicOff, Volume2, VolumeX, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Send, Loader2, Mic, MicOff, Volume2, VolumeX, Plus, Sparkles, Trash2, Phone, PhoneOff } from "lucide-react";
 import { toast } from "sonner";
 import SidebarLayout from "@/components/SidebarLayout";
 
