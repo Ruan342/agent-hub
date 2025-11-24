@@ -1128,30 +1128,57 @@ async def execute_agent(
         # Generate session_id if not provided
         session_id = request.session_id or str(uuid.uuid4())
         
-        # Process with LLM using emergentintegrations
-        try:
-            from emergentintegrations.llm.chat import LlmChat, UserMessage
-            import litellm
-            
-            # Disable budget limits entirely
-            litellm.max_budget = float('inf')  # Infinite budget
-            litellm._current_cost = 0
-            
-            chat = LlmChat(
-                api_key=emergent_llm_key,
-                session_id=session_id,
-                system_message=system_message
-            )
-            
-            # Set the model based on agent configuration
-            chat.with_model(agent.get('llm_provider', 'openai'), agent.get('llm_model', 'gpt-5'))
-            
-            user_message = UserMessage(text=input_text)
-            response_text = await chat.send_message(user_message)
-            
-        except Exception as e:
-            logging.error(f"Error processing with LLM: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Error processing with LLM: {str(e)}")
+        # Process with LLM - Try with custom OpenAI key first, fallback to Emergent LLM
+        response_text = None
+        openai_api_key = os.environ.get('OPENAI_API_KEY')
+        
+        # Try with direct OpenAI if key is provided
+        if openai_api_key and openai_api_key.strip():
+            try:
+                from openai import OpenAI
+                openai_client = OpenAI(api_key=openai_api_key)
+                
+                completion = openai_client.chat.completions.create(
+                    model=agent.get('llm_model', 'gpt-4o'),
+                    messages=[
+                        {"role": "system", "content": system_message},
+                        {"role": "user", "content": input_text}
+                    ],
+                    temperature=0.7
+                )
+                
+                response_text = completion.choices[0].message.content
+                logging.info("Used direct OpenAI API successfully")
+                
+            except Exception as e:
+                logging.warning(f"OpenAI direct API failed: {str(e)}, trying Emergent LLM...")
+        
+        # Fallback to Emergent LLM if OpenAI didn't work
+        if not response_text:
+            try:
+                from emergentintegrations.llm.chat import LlmChat, UserMessage
+                import litellm
+                
+                # Disable budget limits entirely
+                litellm.max_budget = float('inf')  # Infinite budget
+                litellm._current_cost = 0
+                
+                chat = LlmChat(
+                    api_key=emergent_llm_key,
+                    session_id=session_id,
+                    system_message=system_message
+                )
+                
+                # Set the model based on agent configuration
+                chat.with_model(agent.get('llm_provider', 'openai'), agent.get('llm_model', 'gpt-5'))
+                
+                user_message = UserMessage(text=input_text)
+                response_text = await chat.send_message(user_message)
+                logging.info("Used Emergent LLM successfully")
+                
+            except Exception as e:
+                logging.error(f"Error processing with LLM: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Error processing with LLM: {str(e)}")
         
         # Generate audio response with ElevenLabs
         output_audio_base64 = None
