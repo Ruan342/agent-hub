@@ -246,6 +246,12 @@ export default function AgentChat() {
   const playAudio = (audioBase64) => {
     try {
       if (audioPlayerRef.current && audioBase64) {
+        // Stop listening when agent starts speaking to avoid feedback
+        if (isListening && recognition) {
+          recognition.stop();
+          setIsListening(false);
+        }
+        
         setIsSpeaking(true);
         
         // Convert base64 to data URI for audio playback
@@ -254,7 +260,7 @@ export default function AgentChat() {
         
         audioPlayerRef.current.play()
           .then(() => {
-            console.log("Audio playing successfully");
+            console.log("🔊 Audio playing successfully");
           })
           .catch(err => {
             console.error("Error playing audio:", err);
@@ -263,7 +269,7 @@ export default function AgentChat() {
         
         audioPlayerRef.current.onended = () => {
           setIsSpeaking(false);
-          console.log("Audio playback ended");
+          console.log("✅ Audio playback ended");
         };
         
         audioPlayerRef.current.onerror = (e) => {
