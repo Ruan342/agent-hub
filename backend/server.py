@@ -143,6 +143,23 @@ class SubscriptionConfigUpdate(BaseModel):
     custom_prompt: Optional[str] = None
     config: Optional[Dict] = None
 
+class ChatMessage(BaseModel):
+    role: str  # "user" or "assistant"
+    content: str
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    audio_base64: Optional[str] = None
+
+class ChatSession(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    subscription_id: str
+    user_id: str
+    agent_id: str
+    title: Optional[str] = None  # Auto-generated from first message
+    messages: List[ChatMessage] = []
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class AgentRequest(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
