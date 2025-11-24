@@ -330,40 +330,97 @@ export default function AgentChat() {
 
   return (
     <SidebarLayout>
-      <div className="h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white">
-        {/* Header */}
-        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
-          <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/dashboard")}
-                className="hover:bg-gray-100"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Voltar
-              </Button>
-              
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-purple-50 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                  <h1 className="text-lg font-semibold text-gray-900">{agent?.name}</h1>
-                  <p className="text-xs text-gray-500">{agent?.segment}</p>
-                </div>
+      <div className="h-screen flex bg-gradient-to-b from-gray-50 to-white">
+        {/* Sidebar Navigation */}
+        <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
+          {/* Header */}
+          <div className="p-4 border-b border-gray-200">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/dashboard")}
+              className="mb-3 hover:bg-gray-100 w-full justify-start"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+            
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-purple-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-6 h-6 text-purple-600" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-sm font-semibold text-gray-900 truncate">{agent?.name}</h2>
+                <p className="text-xs text-gray-500 truncate">{agent?.segment}</p>
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 mt-1 text-xs">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1 animate-pulse"></div>
+                  Ativo
+                </Badge>
               </div>
             </div>
+          </div>
 
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                Ativo
-              </Badge>
-            </div>
+          {/* Navigation Tabs */}
+          <nav className="flex-1 p-2">
+            <button
+              onClick={() => setActiveTab("chat")}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-colors ${
+                activeTab === "chat"
+                  ? "bg-purple-600 text-white shadow-sm"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <MessageCircle className="w-5 h-5" />
+              <span className="text-sm font-medium">Chat</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("config")}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-colors ${
+                activeTab === "config"
+                  ? "bg-purple-600 text-white shadow-sm"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <Settings className="w-5 h-5" />
+              <span className="text-sm font-medium">Configurações</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("api")}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-colors ${
+                activeTab === "api"
+                  ? "bg-purple-600 text-white shadow-sm"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <Key className="w-5 h-5" />
+              <span className="text-sm font-medium">API</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("integrations")}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-colors ${
+                activeTab === "integrations"
+                  ? "bg-purple-600 text-white shadow-sm"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <Link2 className="w-5 h-5" />
+              <span className="text-sm font-medium">Integrações</span>
+            </button>
+          </nav>
+
+          {/* Footer Info */}
+          <div className="p-4 border-t border-gray-200">
+            <p className="text-xs text-gray-500">
+              Preço: <span className="font-semibold text-gray-900">R$ {agent?.price}/mês</span>
+            </p>
           </div>
         </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col">
 
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto">
