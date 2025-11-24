@@ -654,6 +654,90 @@ async def update_webhook(subscription_id: str, update: SubscriptionUpdate, curre
         raise HTTPException(status_code=404, detail="Subscription not found")
     return {"success": True}
 
+# Chat Sessions endpoints
+@api_router.post("/chat-sessions")
+async def create_chat_session(subscription_id: str, current_user: dict = Depends(get_current_user)):
+    """Create a new chat session"""
+    # Verify subscription belongs to user
+    sub = await db.subscriptions.find_one({"id": subscription_id, "user_id": current_user['user_id']})
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+    
+    session = {
+        "id": str(uuid.uuid4()),
+        "subscription_id": subscription_id,
+        "user_id": current_user['user_id'],
+        "agent_id": sub['agent_id'],
+        "title": "Nova Conversa",
+        "messages": [],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.chat_sessions.insert_one(session)
+    return {"id": session['id'], "title": session['title'], "created_at": session['created_at']}
+
+@api_router.get("/chat-sessions/subscription/{subscription_id}")
+async def get_chat_sessions(subscription_id: str, current_user: dict = Depends(get_current_user)):
+    """Get all chat sessions for a subscription"""
+    # Verify subscription belongs to user
+    sub = await db.subscriptions.find_one({"id": subscription_id, "user_id": current_user['user_id']})
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+    
+    sessions = await db.chat_sessions.find(
+        {"subscription_id": subscription_id, "user_id": current_user['user_id']},
+        {"_id": 0}
+    ).sort("updated_at", -1).to_list(100)
+    
+    return sessions
+
+@api_router.get("/chat-sessions/{session_id}")
+async def get_chat_session(session_id: str, current_user: dict = Depends(get_current_user)):
+    """Get a specific chat session with all messages"""
+    session = await db.chat_sessions.find_one(
+        {"id": session_id, "user_id": current_user['user_id']},
+        {"_id": 0}
+    )
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    return session
+
+@api_router.post("/chat-sessions/{session_id}/messages")
+async def add_message_to_session(session_id: str, message: ChatMessage, current_user: dict = Depends(get_current_user)):
+    """Add a message to a chat session"""
+    session = await db.chat_sessions.find_one({"id": session_id, "user_id": current_user['user_id']})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    # Auto-generate title from first user message
+    update_data = {
+        "$push": {"messages": message.dict()},
+        "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+    }
+    
+    if not session.get('messages') and message.role == "user":
+        # Generate title from first 50 chars of first message
+        title = message.content[:50] + ("..." if len(message.content) > 50 else "")
+        update_data["$set"]["title"] = title
+    
+    await db.chat_sessions.update_one(
+        {"id": session_id},
+        update_data
+    )
+    
+    return {"success": True}
+
+@api_router.delete("/chat-sessions/{session_id}")
+async def delete_chat_session(session_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a chat session"""
+    result = await db.chat_sessions.delete_one({"id": session_id, "user_id": current_user['user_id']})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    return {"success": True}
+
 # Billing endpoints
 @api_router.get("/billing/invoices", response_model=List[Invoice])
 async def get_invoices(current_user: dict = Depends(get_current_user)):
