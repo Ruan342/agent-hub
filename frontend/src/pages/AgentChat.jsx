@@ -272,7 +272,7 @@ export default function AgentChat() {
     }
   };
 
-  // Funções para chamada de voz em tempo real
+  // Funções para chamada de voz em tempo real - VERSÃO MELHORADA
   const startVoiceCall = async () => {
     if (!subscription) return;
     
@@ -303,8 +303,33 @@ export default function AgentChat() {
     rec.continuous = true;
     rec.interimResults = true;
     rec.lang = 'pt-BR';
+    rec.maxAlternatives = 1;
+    
+    let isProcessing = false;
+    let restartTimeout = null;
     
     rec.onresult = (event) => {
+      // Se agente está falando, permitir interrupção
+      if (callState === 'speaking' && voiceCallAudioRef.current && !voiceCallAudioRef.current.paused) {
+        // Detectar se usuário está tentando falar (interromper)
+        let hasNewFinal = false;
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            hasNewFinal = true;
+            break;
+          }
+        }
+        
+        if (hasNewFinal) {
+          // Usuário está interrompendo - parar áudio
+          try {
+            voiceCallAudioRef.current.pause();
+            voiceCallAudioRef.current.currentTime = 0;
+            console.log("🛑 Usuário interrompeu o agente");
+          } catch (e) {}
+        }
+      }
+      
       let interim = '', final = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
@@ -319,24 +344,57 @@ export default function AgentChat() {
         setVoiceCallTranscript(interim);
       }
       
-      if (final && final.trim()) {
+      if (final && final.trim() && !isProcessing) {
+        console.log("🎤 Mensagem final detectada:", final);
         setVoiceCallTranscript('');
-        handleVoiceCallMessage(final.trim());
+        isProcessing = true;
+        handleVoiceCallMessage(final.trim()).finally(() => {
+          isProcessing = false;
+        });
       }
     };
     
     rec.onerror = (e) => {
-      if (e.error !== 'no-speech' && e.error !== 'aborted') {
-        console.error("Speech recognition error:", e.error);
+      console.error("Speech recognition error:", e.error);
+      if (e.error === 'no-speech') {
+        // Silêncio detectado - continuar escutando
+        return;
+      }
+      if (e.error !== 'aborted') {
+        // Tentar reiniciar após erro
+        if (restartTimeout) clearTimeout(restartTimeout);
+        restartTimeout = setTimeout(() => {
+          if (isVoiceCallActive) {
+            console.log("🔄 Tentando reiniciar após erro...");
+            startRecognition();
+          }
+        }, 1000);
       }
     };
     
     rec.onend = () => {
-      if (isVoiceCallActive && callState !== 'speaking') {
-        try {
+      console.log("👂 Reconhecimento terminou, verificando se deve reiniciar...");
+      if (isVoiceCallActive) {
+        // Sempre tentar reiniciar se a chamada ainda está ativa
+        if (restartTimeout) clearTimeout(restartTimeout);
+        restartTimeout = setTimeout(() => {
+          if (isVoiceCallActive) {
+            console.log("🔄 Reiniciando reconhecimento...");
+            startRecognition();
+          }
+        }, 100);
+      }
+    };
+    
+    const startRecognition = () => {
+      try {
+        if (rec && isVoiceCallActive) {
           rec.start();
-        } catch (error) {
-          console.error("Error restarting recognition:", error);
+          console.log("✅ Reconhecimento iniciado");
+        }
+      } catch (error) {
+        if (error.name !== 'InvalidStateError') {
+          console.error("Erro ao iniciar reconhecimento:", error);
         }
       }
     };
@@ -345,29 +403,18 @@ export default function AgentChat() {
     
     setTimeout(() => {
       setCallState("listening");
-      try {
-        rec.start();
-        toast.success("Chamada iniciada! Pode falar...");
-      } catch (error) {
-        console.error("Error starting recognition:", error);
-        toast.error("Erro ao iniciar reconhecimento de voz");
-      }
+      startRecognition();
+      toast.success("Chamada iniciada! Pode falar...");
     }, 1000);
   };
 
   const handleVoiceCallMessage = async (messageText) => {
     if (!subscription || !currentSessionId) return;
     
+    console.log("📨 Processando mensagem:", messageText);
     setCallState("speaking");
     
     try {
-      // Parar reconhecimento temporariamente
-      if (voiceCallRecognitionRef.current) {
-        try {
-          voiceCallRecognitionRef.current.stop();
-        } catch (e) {}
-      }
-      
       const res = await axios.post(
         `${API}/agent/execute`,
         { 
@@ -377,40 +424,34 @@ export default function AgentChat() {
         { headers: { Authorization: `Bearer ${subscription.api_key}` } }
       );
       
+      console.log("✅ Resposta recebida do agente");
+      
       // Reproduzir resposta de áudio
       if (res.data.output_audio_base64 && voiceCallAudioRef.current) {
         voiceCallAudioRef.current.src = `data:audio/mpeg;base64,${res.data.output_audio_base64}`;
         
         voiceCallAudioRef.current.onended = () => {
+          console.log("🔊 Áudio terminou de tocar");
           setCallState("listening");
-          // Reiniciar reconhecimento
-          if (voiceCallRecognitionRef.current && isVoiceCallActive) {
-            try {
-              voiceCallRecognitionRef.current.start();
-            } catch (e) {}
-          }
+          setVoiceCallTranscript('');
+          // Não precisa reiniciar manualmente, o onend do recognition faz isso
+        };
+        
+        voiceCallAudioRef.current.onerror = () => {
+          console.error("❌ Erro ao reproduzir áudio");
+          setCallState("listening");
         };
         
         await voiceCallAudioRef.current.play();
+        console.log("🔊 Reproduzindo resposta do agente...");
       } else {
-        // Se não tiver áudio, voltar para escuta imediatamente
+        console.log("⚠️ Sem áudio na resposta, voltando para escuta");
         setCallState("listening");
-        if (voiceCallRecognitionRef.current && isVoiceCallActive) {
-          try {
-            voiceCallRecognitionRef.current.start();
-          } catch (e) {}
-        }
       }
     } catch (error) {
-      console.error("Error in voice call:", error);
+      console.error("❌ Erro ao processar mensagem:", error);
       toast.error("Erro ao processar mensagem");
       setCallState("listening");
-      // Tentar reiniciar reconhecimento
-      if (voiceCallRecognitionRef.current && isVoiceCallActive) {
-        try {
-          voiceCallRecognitionRef.current.start();
-        } catch (e) {}
-      }
     }
   };
 
