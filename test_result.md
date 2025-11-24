@@ -238,9 +238,8 @@ metadata:
 test_plan:
   current_focus:
     - "Database migration validation completed - 23 agents confirmed"
-    - "Admin update base_prompt preservation bug needs fixing"
-  stuck_tasks:
-    - "Admin Agents CRUD - base_prompt overwrite bug"
+    - "Admin update base_prompt preservation bug FIXED and verified"
+  stuck_tasks: []
   test_all: true
   test_priority: "high_first"
 
