@@ -482,9 +482,13 @@ export default function AgentChat() {
                 Ativo
               </Badge>
             </div>
-            <Button onClick={createNewSession} className="w-full bg-white text-purple-700 hover:bg-purple-50 font-semibold">
+            <Button onClick={createNewSession} className="w-full bg-white text-purple-700 hover:bg-purple-50 font-semibold mb-2">
               <Plus className="w-4 h-4 mr-2" />
               Nova Conversa
+            </Button>
+            <Button onClick={startVoiceCall} className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 font-semibold shadow-lg">
+              <Phone className="w-4 h-4 mr-2" />
+              Nova Conversa por Voz
             </Button>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
