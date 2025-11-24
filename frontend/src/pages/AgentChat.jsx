@@ -272,6 +272,172 @@ export default function AgentChat() {
     }
   };
 
+  // Funções para chamada de voz em tempo real
+  const startVoiceCall = async () => {
+    if (!subscription) return;
+    
+    // Criar nova sessão para a chamada
+    try {
+      const res = await axios.post(
+        `${API}/chat-sessions?subscription_id=${subscriptionId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setCurrentSessionId(res.data.id);
+      setMessages([]);
+    } catch (error) {
+      console.error("Error creating session:", error);
+    }
+
+    setIsVoiceCallActive(true);
+    setCallState("connecting");
+    
+    // Setup speech recognition para chamada
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      toast.error("Reconhecimento de voz não suportado neste navegador");
+      return;
+    }
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SpeechRecognition();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = 'pt-BR';
+    
+    rec.onresult = (event) => {
+      let interim = '', final = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          final += transcript;
+        } else {
+          interim += transcript;
+        }
+      }
+      
+      if (interim) {
+        setVoiceCallTranscript(interim);
+      }
+      
+      if (final && final.trim()) {
+        setVoiceCallTranscript('');
+        handleVoiceCallMessage(final.trim());
+      }
+    };
+    
+    rec.onerror = (e) => {
+      if (e.error !== 'no-speech' && e.error !== 'aborted') {
+        console.error("Speech recognition error:", e.error);
+      }
+    };
+    
+    rec.onend = () => {
+      if (isVoiceCallActive && callState !== 'speaking') {
+        try {
+          rec.start();
+        } catch (error) {
+          console.error("Error restarting recognition:", error);
+        }
+      }
+    };
+    
+    voiceCallRecognitionRef.current = rec;
+    
+    setTimeout(() => {
+      setCallState("listening");
+      try {
+        rec.start();
+        toast.success("Chamada iniciada! Pode falar...");
+      } catch (error) {
+        console.error("Error starting recognition:", error);
+        toast.error("Erro ao iniciar reconhecimento de voz");
+      }
+    }, 1000);
+  };
+
+  const handleVoiceCallMessage = async (messageText) => {
+    if (!subscription || !currentSessionId) return;
+    
+    setCallState("speaking");
+    
+    try {
+      // Parar reconhecimento temporariamente
+      if (voiceCallRecognitionRef.current) {
+        try {
+          voiceCallRecognitionRef.current.stop();
+        } catch (e) {}
+      }
+      
+      const res = await axios.post(
+        `${API}/agent/execute`,
+        { 
+          input_text: messageText, 
+          session_id: `chat_${currentSessionId}` 
+        },
+        { headers: { Authorization: `Bearer ${subscription.api_key}` } }
+      );
+      
+      // Reproduzir resposta de áudio
+      if (res.data.output_audio_base64 && voiceCallAudioRef.current) {
+        voiceCallAudioRef.current.src = `data:audio/mpeg;base64,${res.data.output_audio_base64}`;
+        
+        voiceCallAudioRef.current.onended = () => {
+          setCallState("listening");
+          // Reiniciar reconhecimento
+          if (voiceCallRecognitionRef.current && isVoiceCallActive) {
+            try {
+              voiceCallRecognitionRef.current.start();
+            } catch (e) {}
+          }
+        };
+        
+        await voiceCallAudioRef.current.play();
+      } else {
+        // Se não tiver áudio, voltar para escuta imediatamente
+        setCallState("listening");
+        if (voiceCallRecognitionRef.current && isVoiceCallActive) {
+          try {
+            voiceCallRecognitionRef.current.start();
+          } catch (e) {}
+        }
+      }
+    } catch (error) {
+      console.error("Error in voice call:", error);
+      toast.error("Erro ao processar mensagem");
+      setCallState("listening");
+      // Tentar reiniciar reconhecimento
+      if (voiceCallRecognitionRef.current && isVoiceCallActive) {
+        try {
+          voiceCallRecognitionRef.current.start();
+        } catch (e) {}
+      }
+    }
+  };
+
+  const endVoiceCall = () => {
+    setIsVoiceCallActive(false);
+    setCallState("idle");
+    setVoiceCallTranscript("");
+    
+    // Parar reconhecimento
+    if (voiceCallRecognitionRef.current) {
+      try {
+        voiceCallRecognitionRef.current.stop();
+      } catch (e) {}
+      voiceCallRecognitionRef.current = null;
+    }
+    
+    // Parar áudio
+    if (voiceCallAudioRef.current) {
+      try {
+        voiceCallAudioRef.current.pause();
+        voiceCallAudioRef.current.currentTime = 0;
+      } catch (e) {}
+    }
+    
+    toast.success("Chamada encerrada");
+  };
+
   const groupSessionsByDate = () => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
