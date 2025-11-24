@@ -466,8 +466,8 @@ export default function AgentChat() {
             )}
             
             <div ref={messagesEndRef} />
-          </div>
-        </div>
+              </div>
+            </div>
 
         {/* Voice Mode Visual Feedback */}
         {voiceMode && (
