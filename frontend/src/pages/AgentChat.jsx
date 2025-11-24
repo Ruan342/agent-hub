@@ -422,9 +422,12 @@ export default function AgentChat() {
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col">
 
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+        {/* Content Based on Active Tab */}
+        {activeTab === "chat" && (
+          <>
+            {/* Messages Area */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
             {messages.map((msg, idx) => (
               <div
                 key={idx}
