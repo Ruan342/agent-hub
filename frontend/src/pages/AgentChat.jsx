@@ -559,12 +559,24 @@ export default function AgentChat() {
                   )}
                 </div>
                 
-                <button
-                  onClick={toggleVoiceMode}
-                  className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-white"
-                >
-                  Desativar
-                </button>
+                <div className="flex items-center gap-2">
+                  {isSpeaking && (
+                    <Button
+                      onClick={stopSpeaking}
+                      size="sm"
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      <VolumeX className="w-4 h-4 mr-1" />
+                      Parar
+                    </Button>
+                  )}
+                  <button
+                    onClick={toggleVoiceMode}
+                    className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-white"
+                  >
+                    Desativar
+                  </button>
+                </div>
               </div>
               
               {(interimTranscript || finalTranscript) && (
