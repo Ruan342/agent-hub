@@ -149,6 +149,91 @@ class ChatMessage(BaseModel):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     audio_base64: Optional[str] = None
 
+# Integration Models
+class Integration(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    subscription_id: str  # qual agente usar
+    type: str  # "email", "whatsapp", "crm", "webhook", "widget"
+    name: str
+    config: Dict
+    status: str = "active"  # active, inactive, error
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class IntegrationCreate(BaseModel):
+    subscription_id: str
+    type: str
+    name: str
+    config: Dict
+
+class IntegrationUpdate(BaseModel):
+    name: Optional[str] = None
+    config: Optional[Dict] = None
+    status: Optional[str] = None
+
+# Email Integration
+class EmailConfig(BaseModel):
+    sendgrid_api_key: str
+    from_email: str
+    from_name: str
+    reply_to: Optional[str] = None
+    # Para ler emails (IMAP) - Fase 2
+    imap_enabled: bool = False
+    imap_server: Optional[str] = None
+    imap_email: Optional[str] = None
+    imap_password: Optional[str] = None
+
+class SendEmailRequest(BaseModel):
+    integration_id: str
+    to_email: str
+    subject: str
+    template: Optional[str] = "default"
+    variables: Optional[Dict] = None
+
+# WhatsApp Integration
+class WhatsAppConfig(BaseModel):
+    business_account_id: str
+    phone_number_id: str
+    access_token: str
+    webhook_verify_token: str
+
+class SendWhatsAppRequest(BaseModel):
+    integration_id: str
+    to_phone: str
+    message: str
+    message_type: str = "text"  # text, template, media
+
+# CRM Integration
+class CRMConfig(BaseModel):
+    crm_type: str  # salesforce, hubspot, pipedrive, custom
+    api_key: Optional[str] = None
+    api_url: Optional[str] = None
+    webhook_url: Optional[str] = None
+    custom_fields_mapping: Optional[Dict] = None
+
+class CRMSyncRequest(BaseModel):
+    integration_id: str
+    action: str  # create, update, upsert
+    contact_data: Dict
+
+# Webhook Integration
+class WebhookConfig(BaseModel):
+    webhook_url: str
+    secret: Optional[str] = None
+    events: List[str] = ["message_received", "message_sent"]
+    headers: Optional[Dict] = None
+
+# Widget Integration
+class WidgetConfig(BaseModel):
+    domain_whitelist: List[str]
+    theme_color: str = "#7C3AED"
+    position: str = "bottom-right"  # bottom-right, bottom-left
+    greeting_message: str = "Olá! Como posso ajudar?"
+    voice_enabled: bool = True
+    text_enabled: bool = True
+
 class ChatSession(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
