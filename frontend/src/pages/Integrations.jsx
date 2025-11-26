@@ -141,6 +141,9 @@ export default function Integrations() {
         );
         
         toast.success("Mensagem de teste enviada! Verifique seu WhatsApp.");
+      } else if (integration.type === "widget") {
+        // Show widget snippet
+        showWidgetSnippet(integration);
       } else {
         toast.info("Teste não disponível para este tipo de integração ainda.");
       }
@@ -149,6 +152,32 @@ export default function Integrations() {
       toast.error(error.response?.data?.detail || "Erro ao testar integração");
     } finally {
       setTesting(false);
+    }
+  };
+
+  const showWidgetSnippet = async (integration) => {
+    try {
+      const res = await axios.get(
+        `${API}/integrations/widget/snippet`,
+        {
+          params: { integration_id: integration.id },
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      // Show snippet in modal
+      const snippet = res.data.snippet;
+      const modal = window.confirm(
+        `Copie e cole este código no seu site:\n\n${snippet}\n\nClique OK para copiar para a área de transferência.`
+      );
+      
+      if (modal) {
+        navigator.clipboard.writeText(snippet);
+        toast.success("Snippet copiado para a área de transferência!");
+      }
+    } catch (error) {
+      console.error("Error getting snippet:", error);
+      toast.error("Erro ao obter snippet");
     }
   };
 
