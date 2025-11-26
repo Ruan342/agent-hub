@@ -1483,6 +1483,308 @@ async def execute_agent(
         logging.error(f"Unexpected error in execute_agent: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# ==================== INTEGRATION ENDPOINTS ====================
+
+@api_router.post("/integrations", response_model=Integration)
+async def create_integration(
+    integration: IntegrationCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new integration"""
+    try:
+        # Verify subscription belongs to user
+        subscription = await db.subscriptions.find_one({
+            "id": integration.subscription_id,
+            "user_id": current_user['user_id']
+        })
+        
+        if not subscription:
+            raise HTTPException(status_code=404, detail="Subscription not found")
+        
+        # Validate config based on type
+        if integration.type == "email":
+            EmailConfig(**integration.config)
+        elif integration.type == "whatsapp":
+            WhatsAppConfig(**integration.config)
+        elif integration.type == "crm":
+            CRMConfig(**integration.config)
+        elif integration.type == "webhook":
+            WebhookConfig(**integration.config)
+        elif integration.type == "widget":
+            WidgetConfig(**integration.config)
+        else:
+            raise HTTPException(status_code=400, detail="Invalid integration type")
+        
+        new_integration = Integration(
+            user_id=current_user['user_id'],
+            subscription_id=integration.subscription_id,
+            type=integration.type,
+            name=integration.name,
+            config=integration.config
+        )
+        
+        await db.integrations.insert_one(new_integration.model_dump())
+        
+        logging.info(f"Integration created: {new_integration.id} for user {current_user['user_id']}")
+        
+        return new_integration
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error creating integration: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/integrations")
+async def list_integrations(
+    current_user: dict = Depends(get_current_user)
+):
+    """List all integrations for current user"""
+    try:
+        integrations = await db.integrations.find(
+            {"user_id": current_user['user_id']},
+            {"_id": 0}
+        ).to_list(1000)
+        
+        return {"integrations": integrations}
+        
+    except Exception as e:
+        logging.error(f"Error listing integrations: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/integrations/{integration_id}", response_model=Integration)
+async def get_integration(
+    integration_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get specific integration"""
+    try:
+        integration = await db.integrations.find_one({
+            "id": integration_id,
+            "user_id": current_user['user_id']
+        }, {"_id": 0})
+        
+        if not integration:
+            raise HTTPException(status_code=404, detail="Integration not found")
+        
+        return Integration(**integration)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error getting integration: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.put("/integrations/{integration_id}", response_model=Integration)
+async def update_integration(
+    integration_id: str,
+    update: IntegrationUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update integration"""
+    try:
+        integration = await db.integrations.find_one({
+            "id": integration_id,
+            "user_id": current_user['user_id']
+        })
+        
+        if not integration:
+            raise HTTPException(status_code=404, detail="Integration not found")
+        
+        update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        
+        await db.integrations.update_one(
+            {"id": integration_id},
+            {"$set": update_data}
+        )
+        
+        updated_integration = await db.integrations.find_one(
+            {"id": integration_id},
+            {"_id": 0}
+        )
+        
+        return Integration(**updated_integration)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error updating integration: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/integrations/{integration_id}")
+async def delete_integration(
+    integration_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete integration"""
+    try:
+        result = await db.integrations.delete_one({
+            "id": integration_id,
+            "user_id": current_user['user_id']
+        })
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Integration not found")
+        
+        return {"message": "Integration deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error deleting integration: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Email Integration Endpoints
+async def send_email_via_sendgrid(
+    from_email: str,
+    from_name: str,
+    to_email: str,
+    subject: str,
+    html_content: str,
+    api_key: str,
+    reply_to: Optional[str] = None
+):
+    """Send email using SendGrid"""
+    try:
+        message = Mail(
+            from_email=Email(from_email, from_name),
+            to_emails=To(to_email),
+            subject=subject,
+            html_content=Content("text/html", html_content)
+        )
+        
+        if reply_to:
+            message.reply_to = Email(reply_to)
+        
+        sg = SendGridAPIClient(api_key)
+        response = sg.send(message)
+        
+        logging.info(f"Email sent to {to_email}, status: {response.status_code}")
+        
+        return {
+            "success": True,
+            "status_code": response.status_code,
+            "message_id": response.headers.get('X-Message-Id')
+        }
+        
+    except Exception as e:
+        logging.error(f"SendGrid error: {str(e)}")
+        raise
+
+@api_router.post("/integrations/email/send")
+async def send_email(
+    request: SendEmailRequest,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send email via integration"""
+    try:
+        # Get integration
+        integration = await db.integrations.find_one({
+            "id": request.integration_id,
+            "user_id": current_user['user_id'],
+            "type": "email"
+        })
+        
+        if not integration:
+            raise HTTPException(status_code=404, detail="Email integration not found")
+        
+        if integration.get('status') != 'active':
+            raise HTTPException(status_code=400, detail="Integration is not active")
+        
+        config = EmailConfig(**integration['config'])
+        
+        # Build email content
+        if request.template and request.variables:
+            # Simple template replacement
+            html_content = f"""
+            <html>
+                <body>
+                    <h1>{request.variables.get('title', 'Mensagem')}</h1>
+                    <p>{request.variables.get('message', '')}</p>
+                </body>
+            </html>
+            """
+        else:
+            html_content = f"""
+            <html>
+                <body>
+                    <p>{request.subject}</p>
+                </body>
+            </html>
+            """
+        
+        # Send email in background
+        async def send_email_task():
+            try:
+                await send_email_via_sendgrid(
+                    from_email=config.from_email,
+                    from_name=config.from_name,
+                    to_email=request.to_email,
+                    subject=request.subject,
+                    html_content=html_content,
+                    api_key=config.sendgrid_api_key,
+                    reply_to=config.reply_to
+                )
+            except Exception as e:
+                logging.error(f"Background email task failed: {str(e)}")
+        
+        background_tasks.add_task(send_email_task)
+        
+        return {
+            "status": "queued",
+            "message": "Email queued for sending",
+            "to_email": request.to_email
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error sending email: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/integrations/email/test")
+async def test_email_integration(
+    integration_id: str,
+    test_email: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Test email integration"""
+    try:
+        integration = await db.integrations.find_one({
+            "id": integration_id,
+            "user_id": current_user['user_id'],
+            "type": "email"
+        })
+        
+        if not integration:
+            raise HTTPException(status_code=404, detail="Email integration not found")
+        
+        config = EmailConfig(**integration['config'])
+        
+        result = await send_email_via_sendgrid(
+            from_email=config.from_email,
+            from_name=config.from_name,
+            to_email=test_email,
+            subject="Teste de Integração - VoiceAI Hub",
+            html_content="<html><body><h1>Sucesso!</h1><p>Sua integração de email está funcionando corretamente.</p></body></html>",
+            api_key=config.sendgrid_api_key,
+            reply_to=config.reply_to
+        )
+        
+        return {
+            "success": True,
+            "message": "Email de teste enviado com sucesso",
+            "details": result
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error testing email: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro ao testar email: {str(e)}")
+
 app.include_router(api_router)
 
 # Serve uploaded images via /api/uploads with proper CORS
