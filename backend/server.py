@@ -1936,10 +1936,18 @@ async def send_whatsapp(
         })
         
         if not integration:
+            await log_monitoring_event("error", "whatsapp", "WhatsApp integration not found", {"integration_id": request.integration_id})
             raise HTTPException(status_code=404, detail="WhatsApp integration not found")
         
         if integration.get('status') != 'active':
+            await log_monitoring_event("warning", "whatsapp", "WhatsApp integration not active", {"integration_id": request.integration_id})
             raise HTTPException(status_code=400, detail="Integration is not active")
+        
+        # Check rate limit
+        subscription_id = integration['subscription_id']
+        if not await check_rate_limit(subscription_id):
+            await log_monitoring_event("warning", "whatsapp", "Rate limit exceeded", {"subscription_id": subscription_id})
+            raise HTTPException(status_code=429, detail="Rate limit exceeded")
         
         config = WhatsAppConfig(**integration['config'])
         
@@ -1952,8 +1960,27 @@ async def send_whatsapp(
                     to_phone=request.to_phone,
                     message_text=request.message
                 )
+                # Log analytics success
+                await log_analytics_event(
+                    user_id=current_user['user_id'],
+                    subscription_id=subscription_id,
+                    agent_id=integration['subscription_id'],
+                    integration_type="whatsapp",
+                    event_type="message_sent",
+                    metadata={"to": request.to_phone}
+                )
+                await log_monitoring_event("info", "whatsapp", f"WhatsApp sent to {request.to_phone}", {"integration_id": request.integration_id})
             except Exception as e:
                 logging.error(f"Background WhatsApp task failed: {str(e)}")
+                await log_analytics_event(
+                    user_id=current_user['user_id'],
+                    subscription_id=subscription_id,
+                    agent_id=integration['subscription_id'],
+                    integration_type="whatsapp",
+                    event_type="error",
+                    metadata={"error": str(e), "to": request.to_phone}
+                )
+                await log_monitoring_event("error", "whatsapp", f"Failed to send WhatsApp: {str(e)}", {"integration_id": request.integration_id})
         
         background_tasks.add_task(send_whatsapp_task)
         
@@ -1967,6 +1994,7 @@ async def send_whatsapp(
         raise
     except Exception as e:
         logging.error(f"Error sending WhatsApp: {str(e)}")
+        await log_monitoring_event("error", "whatsapp", f"Error in WhatsApp endpoint: {str(e)}", {})
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/integrations/whatsapp/webhook")
