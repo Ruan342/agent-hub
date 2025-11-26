@@ -262,6 +262,46 @@ export default function Integrations() {
           </p>
         </div>
 
+        {/* Help Banner */}
+        <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 p-6">
+          <div className="flex items-start gap-4">
+            <div className="bg-blue-500 p-3 rounded-lg flex-shrink-0">
+              <BookOpen className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                📚 Guia Completo de Configuração
+              </h3>
+              <p className="text-gray-700 mb-3">
+                Precisa de ajuda para configurar suas integrações? Criamos um guia detalhado com instruções passo a passo para cada canal.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <a
+                  href="/GUIA_INTEGRAÇÕES.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Abrir Guia Completo
+                </a>
+                <button
+                  onClick={() => window.open('https://developers.facebook.com/docs/whatsapp', '_blank')}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-200 rounded-lg font-medium transition-colors"
+                >
+                  Docs WhatsApp
+                </button>
+                <button
+                  onClick={() => window.open('https://docs.sendgrid.com/', '_blank')}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-200 rounded-lg font-medium transition-colors"
+                >
+                  Docs SendGrid
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Integration Types Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {integrationTypes.map((type) => {
