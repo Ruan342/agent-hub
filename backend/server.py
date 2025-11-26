@@ -2690,11 +2690,11 @@ async def get_widget_snippet(
         
         # Generate snippet
         snippet = f"""<!-- VoiceAI Widget -->
-<script src="{os.environ.get('REACT_APP_BACKEND_URL', 'https://voicechatai-1.preview.emergentagent.com')}/voiceai-widget.js"></script>
+<script src="{os.environ.get('REACT_APP_BACKEND_URL', 'https://voiceai-hub-9.preview.emergentagent.com')}/voiceai-widget.js"></script>
 <script>
   VoiceAIWidget.init({{
     apiKey: '{subscription['api_key']}',
-    apiUrl: '{os.environ.get('REACT_APP_BACKEND_URL', 'https://voicechatai-1.preview.emergentagent.com')}/api',
+    apiUrl: '{os.environ.get('REACT_APP_BACKEND_URL', 'https://voiceai-hub-9.preview.emergentagent.com')}/api',
     themeColor: '{config.theme_color}',
     position: '{config.position}',
     greetingMessage: '{config.greeting_message}',
