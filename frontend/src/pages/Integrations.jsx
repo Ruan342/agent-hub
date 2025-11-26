@@ -283,7 +283,7 @@ export default function Integrations() {
                       size="sm"
                       disabled={testing}
                     >
-                      Testar
+                      {type.type === "widget" ? "Código" : "Testar"}
                     </Button>
                   </div>
                 ) : (
