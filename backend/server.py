@@ -229,11 +229,22 @@ class CRMConfig(BaseModel):
     api_url: Optional[str] = None
     webhook_url: Optional[str] = None
     custom_fields_mapping: Optional[Dict] = None
+    # Headers customizados para autenticação
+    custom_headers: Optional[Dict] = None
+    # Ativar sync automático quando conversa acontece
+    auto_sync: bool = True
 
 class CRMSyncRequest(BaseModel):
     integration_id: str
     action: str  # create, update, upsert
     contact_data: Dict
+
+class CRMContactData(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    company: Optional[str] = None
+    custom_fields: Optional[Dict] = None
 
 # Webhook Integration
 class WebhookConfig(BaseModel):
