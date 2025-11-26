@@ -2536,11 +2536,27 @@ async def widget_message(
         api_key = req.headers.get('X-API-Key')
         subscription = await verify_widget_api_key(api_key)
         
+        # Check rate limit
+        if not await check_rate_limit(subscription['id']):
+            await log_monitoring_event("warning", "widget", "Rate limit exceeded", {"subscription_id": subscription['id']})
+            raise HTTPException(status_code=429, detail="Rate limit exceeded")
+        
         # Get agent
         agent = await db.agents.find_one({"id": subscription['agent_id']})
         
         if not agent:
+            await log_monitoring_event("error", "widget", "Agent not found", {"agent_id": subscription['agent_id']})
             raise HTTPException(status_code=404, detail="Agent not found")
+        
+        # Log analytics - message received
+        await log_analytics_event(
+            user_id=subscription['user_id'],
+            subscription_id=subscription['id'],
+            agent_id=agent['id'],
+            integration_type="widget",
+            event_type="message_received",
+            metadata={"message_length": len(request.message)}
+        )
         
         # Get or create session
         session_id = request.session_id
