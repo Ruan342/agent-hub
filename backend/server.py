@@ -2930,10 +2930,18 @@ async def trigger_webhook(
         })
         
         if not integration:
+            await log_monitoring_event("error", "webhook", "Webhook integration not found", {"integration_id": integration_id})
             raise HTTPException(status_code=404, detail="Webhook integration not found")
         
         if integration.get('status') != 'active':
+            await log_monitoring_event("warning", "webhook", "Webhook integration not active", {"integration_id": integration_id})
             raise HTTPException(status_code=400, detail="Integration is not active")
+        
+        # Check rate limit
+        subscription_id = integration['subscription_id']
+        if not await check_rate_limit(subscription_id):
+            await log_monitoring_event("warning", "webhook", "Rate limit exceeded", {"subscription_id": subscription_id})
+            raise HTTPException(status_code=429, detail="Rate limit exceeded")
         
         config = WebhookConfig(**integration['config'])
         
@@ -2969,11 +2977,30 @@ async def trigger_webhook(
                         timeout=30.0
                     )
                     response.raise_for_status()
-                    
+                
+                # Log analytics success
+                await log_analytics_event(
+                    user_id=current_user['user_id'],
+                    subscription_id=subscription_id,
+                    agent_id=integration['subscription_id'],
+                    integration_type="webhook",
+                    event_type="integration_used",
+                    metadata={"event": event_type, "url": config.webhook_url}
+                )
+                await log_monitoring_event("info", "webhook", f"Webhook sent: {event_type}", {"integration_id": integration_id})
                 logging.info(f"Webhook sent: {event_type} to {config.webhook_url}")
                 
             except Exception as e:
                 logging.error(f"Webhook send error: {str(e)}")
+                await log_analytics_event(
+                    user_id=current_user['user_id'],
+                    subscription_id=subscription_id,
+                    agent_id=integration['subscription_id'],
+                    integration_type="webhook",
+                    event_type="error",
+                    metadata={"error": str(e), "event": event_type}
+                )
+                await log_monitoring_event("error", "webhook", f"Webhook failed: {str(e)}", {"integration_id": integration_id})
         
         background_tasks.add_task(send_webhook_task)
         
@@ -2986,6 +3013,7 @@ async def trigger_webhook(
         raise
     except Exception as e:
         logging.error(f"Error triggering webhook: {str(e)}")
+        await log_monitoring_event("error", "webhook", f"Error in webhook endpoint: {str(e)}", {})
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/integrations/webhook/test")
