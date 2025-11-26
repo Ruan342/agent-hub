@@ -2576,11 +2576,24 @@ async def widget_message(
             session_id = session['id']
         
         # Process message with LLM (reuse existing logic)
-        response_text = await process_message_with_llm(
-            message_text=request.message,
-            agent=agent,
-            subscription=subscription
-        )
+        try:
+            response_text = await process_message_with_llm(
+                message_text=request.message,
+                agent=agent,
+                subscription=subscription
+            )
+        except Exception as e:
+            logging.error(f"LLM processing error: {str(e)}")
+            await log_analytics_event(
+                user_id=subscription['user_id'],
+                subscription_id=subscription['id'],
+                agent_id=agent['id'],
+                integration_type="widget",
+                event_type="error",
+                metadata={"error": str(e)}
+            )
+            await log_monitoring_event("error", "widget", f"LLM processing failed: {str(e)}", {"agent_id": agent['id']})
+            raise HTTPException(status_code=500, detail="Error processing message")
         
         # Generate audio response if ElevenLabs is configured
         output_audio_base64 = None
@@ -2602,6 +2615,7 @@ async def widget_message(
                 output_audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
             except Exception as e:
                 logging.error(f"ElevenLabs error in widget: {str(e)}")
+                await log_monitoring_event("warning", "widget", f"TTS failed: {str(e)}", {"agent_id": agent['id']})
         
         # Save messages to session
         user_message = {
