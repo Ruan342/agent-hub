@@ -2884,6 +2884,448 @@ async def test_webhook_integration(
         logging.error(f"Error testing webhook: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Erro ao testar webhook: {str(e)}")
 
+# ==================== ANALYTICS ENDPOINTS ====================
+
+async def log_analytics_event(
+    user_id: str,
+    subscription_id: str,
+    agent_id: str,
+    integration_type: str,
+    event_type: str,
+    metadata: Optional[Dict] = None
+):
+    """Log analytics event to database"""
+    try:
+        event = AnalyticsEvent(
+            user_id=user_id,
+            subscription_id=subscription_id,
+            agent_id=agent_id,
+            integration_type=integration_type,
+            event_type=event_type,
+            metadata=metadata or {}
+        )
+        
+        await db.analytics_events.insert_one(event.model_dump())
+        logging.info(f"Analytics event logged: {event_type} for {integration_type}")
+        
+    except Exception as e:
+        logging.error(f"Error logging analytics: {str(e)}")
+
+@api_router.get("/analytics/dashboard")
+async def get_analytics_dashboard(
+    subscription_id: Optional[str] = None,
+    days: int = 7,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get analytics dashboard data"""
+    try:
+        # Build query filter
+        query = {"user_id": current_user['user_id']}
+        if subscription_id:
+            query["subscription_id"] = subscription_id
+        
+        # Date range
+        start_date = datetime.now(timezone.utc) - timedelta(days=days)
+        query["timestamp"] = {"$gte": start_date.isoformat()}
+        
+        # Get all events
+        events = await db.analytics_events.find(query, {"_id": 0}).to_list(10000)
+        
+        if not events:
+            return AnalyticsMetrics(
+                total_messages=0,
+                messages_by_channel={},
+                messages_by_day=[],
+                avg_response_time=0,
+                top_agents=[],
+                error_rate=0,
+                active_integrations=0
+            )
+        
+        # Calculate metrics
+        total_messages = len([e for e in events if e['event_type'] in ['message_sent', 'message_received']])
+        
+        # Messages by channel
+        messages_by_channel = {}
+        for event in events:
+            if event['event_type'] in ['message_sent', 'message_received']:
+                channel = event['integration_type']
+                messages_by_channel[channel] = messages_by_channel.get(channel, 0) + 1
+        
+        # Messages by day
+        messages_by_day = {}
+        for event in events:
+            if event['event_type'] in ['message_sent', 'message_received']:
+                # Parse timestamp
+                if isinstance(event['timestamp'], str):
+                    event_date = datetime.fromisoformat(event['timestamp'].replace('Z', '+00:00'))
+                else:
+                    event_date = event['timestamp']
+                
+                day_key = event_date.strftime('%Y-%m-%d')
+                messages_by_day[day_key] = messages_by_day.get(day_key, 0) + 1
+        
+        messages_by_day_list = [{"date": k, "count": v} for k, v in sorted(messages_by_day.items())]
+        
+        # Average response time (mock for now - would need to track actual times)
+        avg_response_time = 2.5  # seconds
+        
+        # Top agents
+        agent_counts = {}
+        for event in events:
+            if event['event_type'] in ['message_sent', 'message_received']:
+                agent_id = event['agent_id']
+                agent_counts[agent_id] = agent_counts.get(agent_id, 0) + 1
+        
+        # Get agent names
+        top_agents = []
+        for agent_id, count in sorted(agent_counts.items(), key=lambda x: x[1], reverse=True)[:5]:
+            agent = await db.agents.find_one({"id": agent_id}, {"_id": 0, "name": 1})
+            if agent:
+                top_agents.append({"agent_id": agent_id, "name": agent['name'], "count": count})
+        
+        # Error rate
+        error_events = len([e for e in events if e['event_type'] == 'error'])
+        error_rate = (error_events / len(events) * 100) if events else 0
+        
+        # Active integrations
+        active_integrations = await db.integrations.count_documents({
+            "user_id": current_user['user_id'],
+            "status": "active"
+        })
+        
+        return AnalyticsMetrics(
+            total_messages=total_messages,
+            messages_by_channel=messages_by_channel,
+            messages_by_day=messages_by_day_list,
+            avg_response_time=avg_response_time,
+            top_agents=top_agents,
+            error_rate=error_rate,
+            active_integrations=active_integrations
+        )
+        
+    except Exception as e:
+        logging.error(f"Error getting analytics: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/analytics/realtime")
+async def get_realtime_analytics(
+    current_user: dict = Depends(get_current_user)
+):
+    """Get real-time analytics (last hour)"""
+    try:
+        # Get events from last hour
+        start_time = datetime.now(timezone.utc) - timedelta(hours=1)
+        
+        events = await db.analytics_events.find({
+            "user_id": current_user['user_id'],
+            "timestamp": {"$gte": start_time.isoformat()}
+        }, {"_id": 0}).to_list(1000)
+        
+        # Calculate real-time metrics
+        messages_last_hour = len([e for e in events if e['event_type'] in ['message_sent', 'message_received']])
+        errors_last_hour = len([e for e in events if e['event_type'] == 'error'])
+        
+        # Messages per minute
+        messages_per_minute = []
+        for i in range(60):
+            minute_start = start_time + timedelta(minutes=i)
+            minute_end = minute_start + timedelta(minutes=1)
+            
+            count = len([
+                e for e in events 
+                if e['event_type'] in ['message_sent', 'message_received'] 
+                and minute_start.isoformat() <= e['timestamp'] < minute_end.isoformat()
+            ])
+            
+            messages_per_minute.append({
+                "minute": minute_start.strftime('%H:%M'),
+                "count": count
+            })
+        
+        return {
+            "messages_last_hour": messages_last_hour,
+            "errors_last_hour": errors_last_hour,
+            "messages_per_minute": messages_per_minute[-10:],  # Last 10 minutes
+            "current_time": datetime.now(timezone.utc).isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error getting realtime analytics: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== RATE LIMITING ====================
+
+async def check_rate_limit(subscription_id: str) -> bool:
+    """Check if subscription has exceeded rate limits"""
+    try:
+        # Get or create rate limit document
+        rate_limit = await db.rate_limits.find_one({"subscription_id": subscription_id})
+        
+        now = datetime.now(timezone.utc)
+        
+        if not rate_limit:
+            # Create new rate limit
+            rate_limit = RateLimit(subscription_id=subscription_id).model_dump()
+            rate_limit["reset_minute"] = now.isoformat()
+            rate_limit["reset_hour"] = now.isoformat()
+            rate_limit["reset_day"] = now.isoformat()
+            await db.rate_limits.insert_one(rate_limit)
+            return True
+        
+        # Parse reset times
+        reset_minute = datetime.fromisoformat(rate_limit['reset_minute'].replace('Z', '+00:00'))
+        reset_hour = datetime.fromisoformat(rate_limit['reset_hour'].replace('Z', '+00:00'))
+        reset_day = datetime.fromisoformat(rate_limit['reset_day'].replace('Z', '+00:00'))
+        
+        # Reset counters if time has passed
+        updates = {}
+        
+        if now > reset_minute + timedelta(minutes=1):
+            updates["current_minute_count"] = 0
+            updates["reset_minute"] = now.isoformat()
+        
+        if now > reset_hour + timedelta(hours=1):
+            updates["current_hour_count"] = 0
+            updates["reset_hour"] = now.isoformat()
+        
+        if now > reset_day + timedelta(days=1):
+            updates["current_day_count"] = 0
+            updates["reset_day"] = now.isoformat()
+        
+        if updates:
+            await db.rate_limits.update_one(
+                {"subscription_id": subscription_id},
+                {"$set": updates}
+            )
+            # Refresh rate_limit
+            rate_limit = await db.rate_limits.find_one({"subscription_id": subscription_id})
+        
+        # Check limits
+        if (rate_limit['current_minute_count'] >= rate_limit['limit_per_minute'] or
+            rate_limit['current_hour_count'] >= rate_limit['limit_per_hour'] or
+            rate_limit['current_day_count'] >= rate_limit['limit_per_day']):
+            return False
+        
+        # Increment counters
+        await db.rate_limits.update_one(
+            {"subscription_id": subscription_id},
+            {
+                "$inc": {
+                    "current_minute_count": 1,
+                    "current_hour_count": 1,
+                    "current_day_count": 1
+                }
+            }
+        )
+        
+        return True
+        
+    except Exception as e:
+        logging.error(f"Rate limit check error: {str(e)}")
+        return True  # Allow on error
+
+@api_router.get("/rate-limits/status")
+async def get_rate_limit_status(
+    subscription_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get current rate limit status"""
+    try:
+        # Verify subscription belongs to user
+        subscription = await db.subscriptions.find_one({
+            "id": subscription_id,
+            "user_id": current_user['user_id']
+        })
+        
+        if not subscription:
+            raise HTTPException(status_code=404, detail="Subscription not found")
+        
+        # Get rate limit
+        rate_limit = await db.rate_limits.find_one({"subscription_id": subscription_id}, {"_id": 0})
+        
+        if not rate_limit:
+            # Return default limits
+            return {
+                "subscription_id": subscription_id,
+                "limits": {
+                    "per_minute": 60,
+                    "per_hour": 1000,
+                    "per_day": 10000
+                },
+                "usage": {
+                    "minute": 0,
+                    "hour": 0,
+                    "day": 0
+                },
+                "remaining": {
+                    "minute": 60,
+                    "hour": 1000,
+                    "day": 10000
+                }
+            }
+        
+        return {
+            "subscription_id": subscription_id,
+            "limits": {
+                "per_minute": rate_limit['limit_per_minute'],
+                "per_hour": rate_limit['limit_per_hour'],
+                "per_day": rate_limit['limit_per_day']
+            },
+            "usage": {
+                "minute": rate_limit['current_minute_count'],
+                "hour": rate_limit['current_hour_count'],
+                "day": rate_limit['current_day_count']
+            },
+            "remaining": {
+                "minute": rate_limit['limit_per_minute'] - rate_limit['current_minute_count'],
+                "hour": rate_limit['limit_per_hour'] - rate_limit['current_hour_count'],
+                "day": rate_limit['limit_per_day'] - rate_limit['current_day_count']
+            },
+            "reset_times": {
+                "minute": rate_limit['reset_minute'],
+                "hour": rate_limit['reset_hour'],
+                "day": rate_limit['reset_day']
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error getting rate limit status: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== MONITORING & LOGS ====================
+
+async def log_monitoring_event(
+    level: str,
+    source: str,
+    message: str,
+    metadata: Optional[Dict] = None
+):
+    """Log monitoring event"""
+    try:
+        log = MonitoringLog(
+            level=level,
+            source=source,
+            message=message,
+            metadata=metadata or {}
+        )
+        
+        await db.monitoring_logs.insert_one(log.model_dump())
+        
+        # Also log to Python logger
+        if level == "critical":
+            logging.critical(f"[{source}] {message}")
+        elif level == "error":
+            logging.error(f"[{source}] {message}")
+        elif level == "warning":
+            logging.warning(f"[{source}] {message}")
+        else:
+            logging.info(f"[{source}] {message}")
+            
+    except Exception as e:
+        logging.error(f"Error logging monitoring event: {str(e)}")
+
+@api_router.get("/monitoring/logs")
+async def get_monitoring_logs(
+    level: Optional[str] = None,
+    source: Optional[str] = None,
+    limit: int = 100,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get monitoring logs"""
+    try:
+        query = {}
+        
+        if level:
+            query["level"] = level
+        
+        if source:
+            query["source"] = source
+        
+        logs = await db.monitoring_logs.find(
+            query,
+            {"_id": 0}
+        ).sort("timestamp", -1).limit(limit).to_list(limit)
+        
+        return {"logs": logs, "total": len(logs)}
+        
+    except Exception as e:
+        logging.error(f"Error getting monitoring logs: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/monitoring/health")
+async def get_system_health():
+    """Get system health status"""
+    try:
+        # Check database connection
+        db_healthy = True
+        try:
+            await db.command("ping")
+        except:
+            db_healthy = False
+        
+        # Get error count from last hour
+        start_time = datetime.now(timezone.utc) - timedelta(hours=1)
+        error_logs = await db.monitoring_logs.count_documents({
+            "level": {"$in": ["error", "critical"]},
+            "timestamp": {"$gte": start_time.isoformat()}
+        })
+        
+        # Get active integrations count
+        active_integrations = await db.integrations.count_documents({"status": "active"})
+        
+        # Determine overall health
+        overall_status = "healthy"
+        if not db_healthy or error_logs > 10:
+            overall_status = "unhealthy"
+        elif error_logs > 5:
+            overall_status = "degraded"
+        
+        return {
+            "status": overall_status,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "components": {
+                "database": "healthy" if db_healthy else "unhealthy",
+                "api": "healthy"
+            },
+            "metrics": {
+                "errors_last_hour": error_logs,
+                "active_integrations": active_integrations
+            }
+        }
+        
+    except Exception as e:
+        logging.error(f"Error getting system health: {str(e)}")
+        return {
+            "status": "unhealthy",
+            "error": str(e)
+        }
+
+@api_router.post("/monitoring/logs/{log_id}/resolve")
+async def resolve_monitoring_log(
+    log_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Mark monitoring log as resolved"""
+    try:
+        result = await db.monitoring_logs.update_one(
+            {"id": log_id},
+            {"$set": {"resolved": True}}
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Log not found")
+        
+        return {"message": "Log marked as resolved"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error resolving log: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 app.include_router(api_router)
 
 # Serve uploaded images via /api/uploads with proper CORS
