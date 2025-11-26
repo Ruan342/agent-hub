@@ -433,8 +433,105 @@ function IntegrationModal({ type, data, onClose, onSave }) {
             </>
           )}
 
+          {/* WhatsApp Configuration */}
+          {type === "whatsapp" && (
+            <>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-blue-800 mb-2">
+                  📱 Para configurar WhatsApp Business API:
+                </p>
+                <ol className="text-xs text-blue-700 space-y-1 list-decimal list-inside">
+                  <li>Acesse <a href="https://business.facebook.com" target="_blank" rel="noopener noreferrer" className="underline">Meta Business Suite</a></li>
+                  <li>Configure WhatsApp Business API</li>
+                  <li>Obtenha as credenciais abaixo</li>
+                </ol>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Business Account ID
+                </label>
+                <input
+                  type="text"
+                  value={formData.config.business_account_id || ""}
+                  onChange={(e) => updateConfig("business_account_id", e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="123456789012345"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number ID
+                </label>
+                <input
+                  type="text"
+                  value={formData.config.phone_number_id || ""}
+                  onChange={(e) => updateConfig("phone_number_id", e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="109876543210987"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Access Token
+                </label>
+                <input
+                  type="password"
+                  value={formData.config.access_token || ""}
+                  onChange={(e) => updateConfig("access_token", e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="EAAxxxxxxxx"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Webhook Verify Token
+                </label>
+                <input
+                  type="text"
+                  value={formData.config.webhook_verify_token || ""}
+                  onChange={(e) => updateConfig("webhook_verify_token", e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="seu_token_secreto_123"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Crie um token secreto único para validar webhooks
+                </p>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.config.process_images !== false}
+                    onChange={(e) => updateConfig("process_images", e.target.checked)}
+                    className="rounded text-purple-600 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-gray-700">Processar Imagens</span>
+                </label>
+                
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.config.process_audio !== false}
+                    onChange={(e) => updateConfig("process_audio", e.target.checked)}
+                    className="rounded text-purple-600 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-gray-700">Processar Áudios</span>
+                </label>
+              </div>
+            </>
+          )}
+
           {/* Placeholder for other integration types */}
-          {type !== "email" && (
+          {type !== "email" && type !== "whatsapp" && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <p className="text-sm text-yellow-800">
                 ⚠️ Configuração de <strong>{type}</strong> será implementada em breve.
