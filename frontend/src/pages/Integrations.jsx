@@ -127,6 +127,22 @@ export default function Integrations() {
         );
         
         toast.success("Email de teste enviado! Verifique sua caixa de entrada.");
+      } else if (integration.type === "whatsapp") {
+        const testPhone = prompt("Digite o número WhatsApp (com código do país, ex: 5511999999999):");
+        if (!testPhone) return;
+        
+        await axios.post(
+          `${API}/integrations/whatsapp/test`,
+          null,
+          {
+            params: { integration_id: integration.id, test_phone: testPhone },
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+        
+        toast.success("Mensagem de teste enviada! Verifique seu WhatsApp.");
+      } else {
+        toast.info("Teste não disponível para este tipo de integração ainda.");
       }
     } catch (error) {
       console.error("Test error:", error);
