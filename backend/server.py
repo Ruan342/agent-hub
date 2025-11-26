@@ -1755,16 +1755,23 @@ async def send_email(
         })
         
         if not integration:
+            await log_monitoring_event("error", "email", "Email integration not found", {"integration_id": request.integration_id})
             raise HTTPException(status_code=404, detail="Email integration not found")
         
         if integration.get('status') != 'active':
+            await log_monitoring_event("warning", "email", "Email integration is not active", {"integration_id": request.integration_id})
             raise HTTPException(status_code=400, detail="Integration is not active")
+        
+        # Check rate limit
+        subscription_id = integration['subscription_id']
+        if not await check_rate_limit(subscription_id):
+            await log_monitoring_event("warning", "email", "Rate limit exceeded", {"subscription_id": subscription_id})
+            raise HTTPException(status_code=429, detail="Rate limit exceeded")
         
         config = EmailConfig(**integration['config'])
         
         # Build email content
         if request.template and request.variables:
-            # Simple template replacement
             html_content = f"""
             <html>
                 <body>
@@ -1794,8 +1801,27 @@ async def send_email(
                     api_key=config.sendgrid_api_key,
                     reply_to=config.reply_to
                 )
+                # Log analytics success
+                await log_analytics_event(
+                    user_id=current_user['user_id'],
+                    subscription_id=subscription_id,
+                    agent_id=integration['subscription_id'],
+                    integration_type="email",
+                    event_type="message_sent",
+                    metadata={"to": request.to_email, "subject": request.subject}
+                )
+                await log_monitoring_event("info", "email", f"Email sent to {request.to_email}", {"integration_id": request.integration_id})
             except Exception as e:
                 logging.error(f"Background email task failed: {str(e)}")
+                await log_analytics_event(
+                    user_id=current_user['user_id'],
+                    subscription_id=subscription_id,
+                    agent_id=integration['subscription_id'],
+                    integration_type="email",
+                    event_type="error",
+                    metadata={"error": str(e), "to": request.to_email}
+                )
+                await log_monitoring_event("error", "email", f"Failed to send email: {str(e)}", {"integration_id": request.integration_id})
         
         background_tasks.add_task(send_email_task)
         
@@ -1809,6 +1835,7 @@ async def send_email(
         raise
     except Exception as e:
         logging.error(f"Error sending email: {str(e)}")
+        await log_monitoring_event("error", "email", f"Error in email endpoint: {str(e)}", {})
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/integrations/email/test")
