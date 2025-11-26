@@ -262,6 +262,49 @@ class WidgetConfig(BaseModel):
     voice_enabled: bool = True
     text_enabled: bool = True
 
+# Analytics Models
+class AnalyticsEvent(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    subscription_id: str
+    agent_id: str
+    integration_type: str  # email, whatsapp, widget, crm, webhook
+    event_type: str  # message_sent, message_received, integration_used, error
+    metadata: Optional[Dict] = None
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AnalyticsMetrics(BaseModel):
+    total_messages: int
+    messages_by_channel: Dict[str, int]
+    messages_by_day: List[Dict]
+    avg_response_time: float
+    top_agents: List[Dict]
+    error_rate: float
+    active_integrations: int
+
+# Rate Limiting Models
+class RateLimit(BaseModel):
+    subscription_id: str
+    limit_per_minute: int = 60
+    limit_per_hour: int = 1000
+    limit_per_day: int = 10000
+    current_minute_count: int = 0
+    current_hour_count: int = 0
+    current_day_count: int = 0
+    reset_minute: Optional[datetime] = None
+    reset_hour: Optional[datetime] = None
+    reset_day: Optional[datetime] = None
+
+# Monitoring Models
+class MonitoringLog(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    level: str  # info, warning, error, critical
+    source: str  # integration_type or system
+    message: str
+    metadata: Optional[Dict] = None
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    resolved: bool = False
+
 class ChatSession(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
