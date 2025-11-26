@@ -546,8 +546,110 @@ function IntegrationModal({ type, data, onClose, onSave }) {
             </>
           )}
 
+          {/* Widget Configuration */}
+          {type === "widget" && (
+            <>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-blue-800 mb-2">
+                  🌐 Widget de Chat Embarcável
+                </p>
+                <p className="text-xs text-blue-700">
+                  Adicione um chat com IA (voz + texto) em qualquer site!
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Domínios Permitidos (separados por vírgula)
+                </label>
+                <input
+                  type="text"
+                  value={formData.config.domain_whitelist?.join(', ') || ""}
+                  onChange={(e) => updateConfig("domain_whitelist", e.target.value.split(',').map(d => d.trim()))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="seusite.com, www.seusite.com"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Deixe vazio para permitir qualquer domínio
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Cor do Tema
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="color"
+                    value={formData.config.theme_color || "#7C3AED"}
+                    onChange={(e) => updateConfig("theme_color", e.target.value)}
+                    className="h-10 w-20 border border-gray-300 rounded cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={formData.config.theme_color || "#7C3AED"}
+                    onChange={(e) => updateConfig("theme_color", e.target.value)}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    placeholder="#7C3AED"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Posição na Tela
+                </label>
+                <select
+                  value={formData.config.position || "bottom-right"}
+                  onChange={(e) => updateConfig("position", e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="bottom-right">Inferior Direita</option>
+                  <option value="bottom-left">Inferior Esquerda</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Mensagem de Saudação
+                </label>
+                <textarea
+                  value={formData.config.greeting_message || ""}
+                  onChange={(e) => updateConfig("greeting_message", e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="Olá! Como posso ajudar?"
+                  rows={2}
+                  required
+                />
+              </div>
+
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.config.voice_enabled !== false}
+                    onChange={(e) => updateConfig("voice_enabled", e.target.checked)}
+                    className="rounded text-purple-600 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-gray-700">Habilitar Voz</span>
+                </label>
+                
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.config.text_enabled !== false}
+                    onChange={(e) => updateConfig("text_enabled", e.target.checked)}
+                    className="rounded text-purple-600 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-gray-700">Habilitar Texto</span>
+                </label>
+              </div>
+            </>
+          )}
+
           {/* Placeholder for other integration types */}
-          {type !== "email" && type !== "whatsapp" && (
+          {type !== "email" && type !== "whatsapp" && type !== "widget" && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <p className="text-sm text-yellow-800">
                 ⚠️ Configuração de <strong>{type}</strong> será implementada em breve.
