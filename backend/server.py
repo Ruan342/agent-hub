@@ -2813,10 +2813,18 @@ async def crm_sync(
         })
         
         if not integration:
+            await log_monitoring_event("error", "crm", "CRM integration not found", {"integration_id": request.integration_id})
             raise HTTPException(status_code=404, detail="CRM integration not found")
         
         if integration.get('status') != 'active':
+            await log_monitoring_event("warning", "crm", "CRM integration not active", {"integration_id": request.integration_id})
             raise HTTPException(status_code=400, detail="Integration is not active")
+        
+        # Check rate limit
+        subscription_id = integration['subscription_id']
+        if not await check_rate_limit(subscription_id):
+            await log_monitoring_event("warning", "crm", "Rate limit exceeded", {"subscription_id": subscription_id})
+            raise HTTPException(status_code=429, detail="Rate limit exceeded")
         
         config = CRMConfig(**integration['config'])
         contact_data = CRMContactData(**request.contact_data)
@@ -2825,8 +2833,27 @@ async def crm_sync(
         async def sync_task():
             try:
                 await sync_to_crm(config, contact_data, request.action)
+                # Log analytics success
+                await log_analytics_event(
+                    user_id=current_user['user_id'],
+                    subscription_id=subscription_id,
+                    agent_id=integration['subscription_id'],
+                    integration_type="crm",
+                    event_type="integration_used",
+                    metadata={"action": request.action, "crm_type": config.crm_type}
+                )
+                await log_monitoring_event("info", "crm", f"Contact synced to {config.crm_type}", {"integration_id": request.integration_id})
             except Exception as e:
                 logging.error(f"Background CRM sync failed: {str(e)}")
+                await log_analytics_event(
+                    user_id=current_user['user_id'],
+                    subscription_id=subscription_id,
+                    agent_id=integration['subscription_id'],
+                    integration_type="crm",
+                    event_type="error",
+                    metadata={"error": str(e), "action": request.action}
+                )
+                await log_monitoring_event("error", "crm", f"CRM sync failed: {str(e)}", {"integration_id": request.integration_id})
         
         background_tasks.add_task(sync_task)
         
@@ -2839,6 +2866,7 @@ async def crm_sync(
         raise
     except Exception as e:
         logging.error(f"Error syncing to CRM: {str(e)}")
+        await log_monitoring_event("error", "crm", f"Error in CRM endpoint: {str(e)}", {})
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/integrations/crm/test")
