@@ -153,17 +153,30 @@ export default function Dashboard() {
                       <div className="text-right">
                         <div className="text-2xl font-bold text-purple-700">${agent.price}</div>
                         <div className="text-sm text-gray-500">por mês</div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-2"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/agent-chat/${subscription.id}`);
-                          }}
-                        >
-                          Abrir
-                        </Button>
+                        <div className="flex gap-2 mt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/agent-chat/${subscription.id}`);
+                            }}
+                          >
+                            Abrir
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/integrations/${subscription.id}`);
+                            }}
+                          >
+                            Integrações
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardHeader>
