@@ -202,12 +202,23 @@ class WhatsAppConfig(BaseModel):
     phone_number_id: str
     access_token: str
     webhook_verify_token: str
+    # Para processamento de mídia
+    process_images: bool = True
+    process_audio: bool = True
 
 class SendWhatsAppRequest(BaseModel):
     integration_id: str
     to_phone: str
     message: str
     message_type: str = "text"  # text, template, media
+
+class WhatsAppIncomingMessage(BaseModel):
+    from_phone: str
+    message_text: Optional[str] = None
+    message_type: str  # text, image, audio, video
+    media_url: Optional[str] = None
+    media_id: Optional[str] = None
+    timestamp: str
 
 # CRM Integration
 class CRMConfig(BaseModel):
