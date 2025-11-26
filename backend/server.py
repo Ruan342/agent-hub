@@ -2106,6 +2106,30 @@ async def process_incoming_whatsapp_message(message: dict, value: dict):
         
         if not agent:
             logging.error(f"Agent not found: {subscription['agent_id']}")
+            await log_monitoring_event("error", "whatsapp", f"Agent not found: {subscription['agent_id']}", {})
+            return
+        
+        # Log analytics - message received
+        await log_analytics_event(
+            user_id=integration['user_id'],
+            subscription_id=subscription['id'],
+            agent_id=agent['id'],
+            integration_type="whatsapp",
+            event_type="message_received",
+            metadata={"from": from_phone, "type": message_type}
+        )
+        
+        # Check rate limit
+        if not await check_rate_limit(subscription['id']):
+            logging.warning(f"Rate limit exceeded for subscription {subscription['id']}")
+            await log_monitoring_event("warning", "whatsapp", "Rate limit exceeded in webhook", {"subscription_id": subscription['id']})
+            config = WhatsAppConfig(**integration['config'])
+            await send_whatsapp_message(
+                phone_number_id=config.phone_number_id,
+                access_token=config.access_token,
+                to_phone=from_phone,
+                message_text="Você atingiu o limite de mensagens. Por favor, aguarde alguns minutos."
+            )
             return
         
         # Processar mensagem com o agente (via LLM)
@@ -2127,10 +2151,31 @@ async def process_incoming_whatsapp_message(message: dict, value: dict):
                 message_text=llm_response
             )
             
+            # Log analytics - message sent
+            await log_analytics_event(
+                user_id=integration['user_id'],
+                subscription_id=subscription['id'],
+                agent_id=agent['id'],
+                integration_type="whatsapp",
+                event_type="message_sent",
+                metadata={"to": from_phone}
+            )
+            
+            await log_monitoring_event("info", "whatsapp", f"Agent response sent to {from_phone}", {"agent_id": agent['id']})
             logging.info(f"Agent response sent to {from_phone}")
             
         except Exception as e:
             logging.error(f"Error processing message with agent: {str(e)}")
+            await log_analytics_event(
+                user_id=integration['user_id'],
+                subscription_id=subscription['id'],
+                agent_id=agent['id'],
+                integration_type="whatsapp",
+                event_type="error",
+                metadata={"error": str(e), "from": from_phone}
+            )
+            await log_monitoring_event("error", "whatsapp", f"Agent processing failed: {str(e)}", {"agent_id": agent['id']})
+            
             # Enviar mensagem de erro ao usuário
             config = WhatsAppConfig(**integration['config'])
             await send_whatsapp_message(
