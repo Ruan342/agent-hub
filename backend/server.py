@@ -2026,15 +2026,193 @@ async def process_incoming_whatsapp_message(message: dict, value: dict):
     except Exception as e:
         logging.error(f"Error processing incoming WhatsApp message: {str(e)}")
 
-async def process_whatsapp_audio(audio_id: str, phone_number_id: str) -> str:
-    """Process audio message using Whisper (Fase 2)"""
-    # TODO: Implementar processamento de áudio
-    return "[Áudio recebido - processamento em desenvolvimento]"
+async def download_whatsapp_media(media_id: str, access_token: str) -> bytes:
+    """Download media from WhatsApp Media API"""
+    try:
+        # Get media URL
+        url = f"https://graph.facebook.com/v18.0/{media_id}"
+        headers = {"Authorization": f"Bearer {access_token}"}
+        
+        async with httpx.AsyncClient() as client:
+            # Get media URL
+            response = await client.get(url, headers=headers, timeout=30.0)
+            response.raise_for_status()
+            media_data = response.json()
+            
+            media_url = media_data.get('url')
+            if not media_url:
+                raise Exception("Media URL not found")
+            
+            # Download media content
+            media_response = await client.get(media_url, headers=headers, timeout=60.0)
+            media_response.raise_for_status()
+            
+            return media_response.content
+            
+    except Exception as e:
+        logging.error(f"Error downloading WhatsApp media: {str(e)}")
+        raise
 
-async def process_whatsapp_image(image_id: str, caption: str, phone_number_id: str) -> str:
-    """Process image message using Vision AI (Fase 2)"""
-    # TODO: Implementar processamento de imagem
-    return f"[Imagem recebida: {caption}]" if caption else "[Imagem recebida]"
+async def process_whatsapp_audio(audio_id: str, access_token: str) -> str:
+    """Process audio message using Whisper"""
+    try:
+        logging.info(f"Processing WhatsApp audio: {audio_id}")
+        
+        # Download audio
+        audio_content = await download_whatsapp_media(audio_id, access_token)
+        
+        # Save temporarily
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.ogg') as temp_audio:
+            temp_audio.write(audio_content)
+            temp_audio_path = temp_audio.name
+        
+        try:
+            # Transcribe with Whisper (OpenAI)
+            openai_key = os.environ.get('OPENAI_API_KEY')
+            
+            if openai_key:
+                import openai
+                openai.api_key = openai_key
+                
+                with open(temp_audio_path, 'rb') as audio_file:
+                    transcript = openai.audio.transcriptions.create(
+                        model="whisper-1",
+                        file=audio_file,
+                        language="pt"
+                    )
+                
+                transcribed_text = transcript.text
+                logging.info(f"Audio transcribed: {transcribed_text}")
+                
+                return transcribed_text
+            else:
+                # Fallback: Try with Emergent integration if available
+                try:
+                    from emergentintegrations import OpenAI as EmergentOpenAI
+                    emergent_key = os.environ.get('EMERGENT_LLM_KEY')
+                    
+                    if emergent_key:
+                        client = EmergentOpenAI(api_key=emergent_key)
+                        
+                        with open(temp_audio_path, 'rb') as audio_file:
+                            transcript = client.audio.transcriptions.create(
+                                model="whisper-1",
+                                file=audio_file,
+                                language="pt"
+                            )
+                        
+                        return transcript.text
+                except Exception as e:
+                    logging.error(f"Emergent Whisper error: {str(e)}")
+                
+                return "[Áudio recebido - configure OPENAI_API_KEY para transcrição]"
+                
+        finally:
+            # Cleanup temp file
+            import os as os_module
+            try:
+                os_module.unlink(temp_audio_path)
+            except:
+                pass
+                
+    except Exception as e:
+        logging.error(f"Error processing WhatsApp audio: {str(e)}")
+        return f"[Erro ao processar áudio: {str(e)}]"
+
+async def process_whatsapp_image(image_id: str, caption: str, access_token: str) -> str:
+    """Process image message using GPT-4 Vision"""
+    try:
+        logging.info(f"Processing WhatsApp image: {image_id}")
+        
+        # Download image
+        image_content = await download_whatsapp_media(image_id, access_token)
+        
+        # Convert to base64
+        image_base64 = base64.b64encode(image_content).decode('utf-8')
+        
+        # Analyze with GPT-4 Vision
+        openai_key = os.environ.get('OPENAI_API_KEY')
+        
+        if openai_key:
+            import openai
+            openai.api_key = openai_key
+            
+            prompt = "Descreva esta imagem em detalhes."
+            if caption:
+                prompt = f"O usuário enviou esta imagem com a legenda: '{caption}'. Descreva a imagem e responda de acordo com a legenda."
+            
+            response = openai.chat.completions.create(
+                model="gpt-4-vision-preview",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{image_base64}"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens=500
+            )
+            
+            image_description = response.choices[0].message.content
+            logging.info(f"Image analyzed: {image_description}")
+            
+            # Return description as user message for agent to respond to
+            if caption:
+                return f"[Usuário enviou imagem: {image_description}]\nLegenda: {caption}"
+            else:
+                return f"[Usuário enviou imagem: {image_description}]"
+        else:
+            # Fallback: Try with Emergent integration
+            try:
+                from emergentintegrations import OpenAI as EmergentOpenAI
+                emergent_key = os.environ.get('EMERGENT_LLM_KEY')
+                
+                if emergent_key:
+                    client = EmergentOpenAI(api_key=emergent_key)
+                    
+                    prompt = "Descreva esta imagem em detalhes."
+                    if caption:
+                        prompt = f"O usuário enviou esta imagem com a legenda: '{caption}'. Descreva a imagem e responda de acordo."
+                    
+                    response = client.chat.completions.create(
+                        model="gpt-4-vision-preview",
+                        messages=[
+                            {
+                                "role": "user",
+                                "content": [
+                                    {"type": "text", "text": prompt},
+                                    {
+                                        "type": "image_url",
+                                        "image_url": {
+                                            "url": f"data:image/jpeg;base64,{image_base64}"
+                                        }
+                                    }
+                                ]
+                            }
+                        ],
+                        max_tokens=500
+                    )
+                    
+                    return f"[Imagem: {response.choices[0].message.content}]" + (f"\nLegenda: {caption}" if caption else "")
+            except Exception as e:
+                logging.error(f"Emergent Vision error: {str(e)}")
+            
+            if caption:
+                return f"[Imagem recebida com legenda: {caption}]"
+            else:
+                return "[Imagem recebida - configure OPENAI_API_KEY para análise]"
+                
+    except Exception as e:
+        logging.error(f"Error processing WhatsApp image: {str(e)}")
+        return f"[Erro ao processar imagem: {str(e)}]"
 
 async def process_message_with_llm(message_text: str, agent: dict, subscription: dict) -> str:
     """Process message with LLM (reuse logic from agent/execute)"""
