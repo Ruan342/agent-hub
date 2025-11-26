@@ -378,14 +378,14 @@ class IntegrationTester:
             if response.status_code == 200:
                 data = response.json()
                 
-                if data.get('success') == True:
+                if data.get('message') == "Integration deleted successfully":
                     self.log_test("Delete Integration", True, f"Successfully deleted integration {self.integration_id}", {
                         "deleted_integration_id": self.integration_id,
                         "response": data
                     })
                     return True
                 else:
-                    self.log_test("Delete Integration", False, f"Delete response indicates failure", data)
+                    self.log_test("Delete Integration", False, f"Unexpected delete response", data)
                     return False
             else:
                 self.log_test("Delete Integration", False, f"HTTP {response.status_code}: {response.text}")
