@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mail, MessageSquare, Users, Webhook, Globe, Plus, Settings, Trash2, Check, X, Loader2 } from "lucide-react";
+import { Mail, MessageSquare, Users, Webhook, Globe, Plus, Settings, Trash2, Check, X, Loader2, BookOpen, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import SidebarLayout from "@/components/SidebarLayout";
 
