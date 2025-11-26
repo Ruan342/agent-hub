@@ -29,6 +29,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/agent-chat/:subscriptionId" element={<AgentChat />} />
           <Route path="/integrations/:subscriptionId" element={<Integrations />} />
+          <Route path="/analytics/:subscriptionId?" element={<Analytics />} />
           <Route path="/request-agent" element={<RequestAgent />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
