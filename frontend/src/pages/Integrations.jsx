@@ -677,8 +677,221 @@ function IntegrationModal({ type, data, onClose, onSave }) {
             </>
           )}
 
+          {/* CRM Configuration */}
+          {type === "crm" && (
+            <>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-blue-800 mb-2">
+                  📊 Integração Universal de CRM
+                </p>
+                <p className="text-xs text-blue-700">
+                  Sincronize contatos automaticamente com Salesforce, HubSpot, Pipedrive ou qualquer CRM customizado!
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tipo de CRM
+                </label>
+                <select
+                  value={formData.config.crm_type || "custom"}
+                  onChange={(e) => updateConfig("crm_type", e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  required
+                >
+                  <option value="salesforce">Salesforce</option>
+                  <option value="hubspot">HubSpot</option>
+                  <option value="pipedrive">Pipedrive</option>
+                  <option value="custom">CRM Customizado (Webhook/API)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  API Key / Access Token
+                </label>
+                <input
+                  type="password"
+                  value={formData.config.api_key || ""}
+                  onChange={(e) => updateConfig("api_key", e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="Bearer token ou API key"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  API URL {formData.config.crm_type === "custom" && "(obrigatório)"}
+                </label>
+                <input
+                  type="url"
+                  value={formData.config.api_url || ""}
+                  onChange={(e) => updateConfig("api_url", e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder={
+                    formData.config.crm_type === "salesforce" ? "https://yourinstance.salesforce.com" :
+                    formData.config.crm_type === "hubspot" ? "https://api.hubapi.com (opcional)" :
+                    formData.config.crm_type === "pipedrive" ? "https://api.pipedrive.com/v1 (opcional)" :
+                    "https://seu-crm.com/api/contacts"
+                  }
+                  required={formData.config.crm_type === "custom"}
+                />
+              </div>
+
+              {formData.config.crm_type === "custom" && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Headers Customizados (JSON)
+                    </label>
+                    <textarea
+                      value={formData.config.custom_headers ? JSON.stringify(formData.config.custom_headers, null, 2) : ""}
+                      onChange={(e) => {
+                        try {
+                          const parsed = JSON.parse(e.target.value);
+                          updateConfig("custom_headers", parsed);
+                        } catch (err) {
+                          // Ignore invalid JSON while typing
+                        }
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 font-mono text-xs"
+                      placeholder='{"X-Custom-Header": "value"}'
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Mapeamento de Campos (JSON)
+                    </label>
+                    <textarea
+                      value={formData.config.custom_fields_mapping ? JSON.stringify(formData.config.custom_fields_mapping, null, 2) : ""}
+                      onChange={(e) => {
+                        try {
+                          const parsed = JSON.parse(e.target.value);
+                          updateConfig("custom_fields_mapping", parsed);
+                        } catch (err) {
+                          // Ignore invalid JSON while typing
+                        }
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 font-mono text-xs"
+                      placeholder='{"name": "full_name", "email": "email_address"}'
+                      rows={3}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Mapeia campos padrão para campos do seu CRM
+                    </p>
+                  </div>
+                </>
+              )}
+
+              <div>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.config.auto_sync !== false}
+                    onChange={(e) => updateConfig("auto_sync", e.target.checked)}
+                    className="rounded text-purple-600 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-gray-700">Sincronizar automaticamente durante conversas</span>
+                </label>
+              </div>
+            </>
+          )}
+
+          {/* Webhook Configuration */}
+          {type === "webhook" && (
+            <>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-blue-800 mb-2">
+                  🔗 Webhooks Customizados
+                </p>
+                <p className="text-xs text-blue-700">
+                  Receba notificações em tempo real de eventos da plataforma no seu sistema!
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  URL do Webhook
+                </label>
+                <input
+                  type="url"
+                  value={formData.config.webhook_url || ""}
+                  onChange={(e) => updateConfig("webhook_url", e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="https://seu-sistema.com/webhooks/voiceai"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Secret (para validação HMAC)
+                </label>
+                <input
+                  type="password"
+                  value={formData.config.secret || ""}
+                  onChange={(e) => updateConfig("secret", e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="seu_secret_token_123"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Token secreto para gerar assinatura HMAC-SHA256
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Eventos para Notificar
+                </label>
+                <div className="space-y-2">
+                  {["message_received", "message_sent", "conversation_started", "conversation_ended"].map(event => (
+                    <label key={event} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.config.events?.includes(event) || false}
+                        onChange={(e) => {
+                          const currentEvents = formData.config.events || [];
+                          if (e.target.checked) {
+                            updateConfig("events", [...currentEvents, event]);
+                          } else {
+                            updateConfig("events", currentEvents.filter(ev => ev !== event));
+                          }
+                        }}
+                        className="rounded text-purple-600 focus:ring-purple-500"
+                      />
+                      <span className="text-sm text-gray-700">{event.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Headers Customizados (JSON)
+                </label>
+                <textarea
+                  value={formData.config.headers ? JSON.stringify(formData.config.headers, null, 2) : ""}
+                  onChange={(e) => {
+                    try {
+                      const parsed = JSON.parse(e.target.value);
+                      updateConfig("headers", parsed);
+                    } catch (err) {
+                      // Ignore invalid JSON while typing
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 font-mono text-xs"
+                  placeholder='{"Authorization": "Bearer token", "X-Custom": "value"}'
+                  rows={3}
+                />
+              </div>
+            </>
+          )}
+
           {/* Placeholder for other integration types */}
-          {type !== "email" && type !== "whatsapp" && type !== "widget" && (
+          {type !== "email" && type !== "whatsapp" && type !== "widget" && type !== "crm" && type !== "webhook" && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <p className="text-sm text-yellow-800">
                 ⚠️ Configuração de <strong>{type}</strong> será implementada em breve.
