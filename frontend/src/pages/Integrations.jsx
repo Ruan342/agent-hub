@@ -144,6 +144,28 @@ export default function Integrations() {
       } else if (integration.type === "widget") {
         // Show widget snippet
         showWidgetSnippet(integration);
+      } else if (integration.type === "crm") {
+        // Test CRM integration
+        await axios.post(
+          `${API}/integrations/crm/test`,
+          null,
+          {
+            params: { integration_id: integration.id },
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+        toast.success("Contato de teste criado no CRM com sucesso!");
+      } else if (integration.type === "webhook") {
+        // Test webhook integration
+        await axios.post(
+          `${API}/integrations/webhook/test`,
+          null,
+          {
+            params: { integration_id: integration.id },
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+        toast.success("Webhook de teste enviado com sucesso!");
       } else {
         toast.info("Teste não disponível para este tipo de integração ainda.");
       }
