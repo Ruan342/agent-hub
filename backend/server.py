@@ -2528,6 +2528,319 @@ async def get_widget_snippet(
         logging.error(f"Error generating widget snippet: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# ==================== CRM INTEGRATION ENDPOINTS ====================
+
+async def sync_to_crm(
+    crm_config: CRMConfig,
+    contact_data: CRMContactData,
+    action: str = "upsert"
+):
+    """Universal CRM sync function"""
+    try:
+        # Prepare data based on CRM type
+        if crm_config.crm_type == "salesforce":
+            # Salesforce format
+            payload = {
+                "FirstName": contact_data.name.split()[0] if contact_data.name else "",
+                "LastName": " ".join(contact_data.name.split()[1:]) if contact_data.name and len(contact_data.name.split()) > 1 else "Unknown",
+                "Email": contact_data.email,
+                "Phone": contact_data.phone,
+                "Company": contact_data.company
+            }
+            endpoint = f"{crm_config.api_url}/services/data/v58.0/sobjects/Contact"
+            headers = {
+                "Authorization": f"Bearer {crm_config.api_key}",
+                "Content-Type": "application/json"
+            }
+        elif crm_config.crm_type == "hubspot":
+            # HubSpot format
+            payload = {
+                "properties": {
+                    "firstname": contact_data.name.split()[0] if contact_data.name else "",
+                    "lastname": " ".join(contact_data.name.split()[1:]) if contact_data.name and len(contact_data.name.split()) > 1 else "",
+                    "email": contact_data.email,
+                    "phone": contact_data.phone,
+                    "company": contact_data.company
+                }
+            }
+            endpoint = f"{crm_config.api_url or 'https://api.hubapi.com'}/crm/v3/objects/contacts"
+            headers = {
+                "Authorization": f"Bearer {crm_config.api_key}",
+                "Content-Type": "application/json"
+            }
+        elif crm_config.crm_type == "pipedrive":
+            # Pipedrive format
+            payload = {
+                "name": contact_data.name,
+                "email": [{"value": contact_data.email, "primary": True}] if contact_data.email else [],
+                "phone": [{"value": contact_data.phone, "primary": True}] if contact_data.phone else [],
+                "org_id": contact_data.company
+            }
+            endpoint = f"{crm_config.api_url or 'https://api.pipedrive.com/v1'}/persons?api_token={crm_config.api_key}"
+            headers = {"Content-Type": "application/json"}
+        elif crm_config.crm_type == "custom":
+            # Custom webhook/API
+            payload = contact_data.model_dump()
+            if contact_data.custom_fields:
+                payload.update(contact_data.custom_fields)
+            
+            # Apply field mapping if configured
+            if crm_config.custom_fields_mapping:
+                mapped_payload = {}
+                for key, value in payload.items():
+                    mapped_key = crm_config.custom_fields_mapping.get(key, key)
+                    mapped_payload[mapped_key] = value
+                payload = mapped_payload
+            
+            endpoint = crm_config.webhook_url or crm_config.api_url
+            headers = crm_config.custom_headers or {"Content-Type": "application/json"}
+            
+            if crm_config.api_key and "Authorization" not in headers:
+                headers["Authorization"] = f"Bearer {crm_config.api_key}"
+        else:
+            raise Exception(f"Unsupported CRM type: {crm_config.crm_type}")
+        
+        # Send to CRM
+        async with httpx.AsyncClient() as client:
+            response = await client.post(endpoint, headers=headers, json=payload, timeout=30.0)
+            response.raise_for_status()
+            
+        logging.info(f"Contact synced to {crm_config.crm_type} CRM")
+        return response.json()
+        
+    except Exception as e:
+        logging.error(f"CRM sync error: {str(e)}")
+        raise
+
+@api_router.post("/integrations/crm/sync")
+async def crm_sync(
+    request: CRMSyncRequest,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user)
+):
+    """Sync contact to CRM"""
+    try:
+        # Get integration
+        integration = await db.integrations.find_one({
+            "id": request.integration_id,
+            "user_id": current_user['user_id'],
+            "type": "crm"
+        })
+        
+        if not integration:
+            raise HTTPException(status_code=404, detail="CRM integration not found")
+        
+        if integration.get('status') != 'active':
+            raise HTTPException(status_code=400, detail="Integration is not active")
+        
+        config = CRMConfig(**integration['config'])
+        contact_data = CRMContactData(**request.contact_data)
+        
+        # Sync in background
+        async def sync_task():
+            try:
+                await sync_to_crm(config, contact_data, request.action)
+            except Exception as e:
+                logging.error(f"Background CRM sync failed: {str(e)}")
+        
+        background_tasks.add_task(sync_task)
+        
+        return {
+            "status": "queued",
+            "message": "Contact queued for CRM sync"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error syncing to CRM: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/integrations/crm/test")
+async def test_crm_integration(
+    integration_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Test CRM integration"""
+    try:
+        integration = await db.integrations.find_one({
+            "id": integration_id,
+            "user_id": current_user['user_id'],
+            "type": "crm"
+        })
+        
+        if not integration:
+            raise HTTPException(status_code=404, detail="CRM integration not found")
+        
+        config = CRMConfig(**integration['config'])
+        
+        # Test with dummy contact
+        test_contact = CRMContactData(
+            name="Teste VoiceAI",
+            email="teste@voiceaihub.com",
+            phone="+5511999999999",
+            company="VoiceAI Hub",
+            custom_fields={"source": "VoiceAI Test"}
+        )
+        
+        result = await sync_to_crm(config, test_contact, "create")
+        
+        return {
+            "success": True,
+            "message": "Contato de teste criado com sucesso no CRM",
+            "details": result
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error testing CRM: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro ao testar CRM: {str(e)}")
+
+# ==================== WEBHOOK CUSTOMIZADO ENDPOINTS ====================
+
+@api_router.post("/integrations/webhook/trigger")
+async def trigger_webhook(
+    integration_id: str,
+    event_type: str,
+    payload: Dict,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user)
+):
+    """Trigger custom webhook"""
+    try:
+        # Get integration
+        integration = await db.integrations.find_one({
+            "id": integration_id,
+            "user_id": current_user['user_id'],
+            "type": "webhook"
+        })
+        
+        if not integration:
+            raise HTTPException(status_code=404, detail="Webhook integration not found")
+        
+        if integration.get('status') != 'active':
+            raise HTTPException(status_code=400, detail="Integration is not active")
+        
+        config = WebhookConfig(**integration['config'])
+        
+        # Check if event is subscribed
+        if event_type not in config.events:
+            return {"status": "skipped", "message": f"Event {event_type} not subscribed"}
+        
+        # Send webhook in background
+        async def send_webhook_task():
+            try:
+                headers = config.headers or {}
+                headers["Content-Type"] = "application/json"
+                headers["X-Event-Type"] = event_type
+                
+                # Add HMAC signature if secret is configured
+                if config.secret:
+                    import hmac
+                    import hashlib
+                    
+                    payload_json = json.dumps(payload)
+                    signature = hmac.new(
+                        config.secret.encode(),
+                        payload_json.encode(),
+                        hashlib.sha256
+                    ).hexdigest()
+                    headers["X-Webhook-Signature"] = f"sha256={signature}"
+                
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        config.webhook_url,
+                        headers=headers,
+                        json=payload,
+                        timeout=30.0
+                    )
+                    response.raise_for_status()
+                    
+                logging.info(f"Webhook sent: {event_type} to {config.webhook_url}")
+                
+            except Exception as e:
+                logging.error(f"Webhook send error: {str(e)}")
+        
+        background_tasks.add_task(send_webhook_task)
+        
+        return {
+            "status": "queued",
+            "message": "Webhook queued for delivery"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error triggering webhook: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/integrations/webhook/test")
+async def test_webhook_integration(
+    integration_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Test webhook integration"""
+    try:
+        integration = await db.integrations.find_one({
+            "id": integration_id,
+            "user_id": current_user['user_id'],
+            "type": "webhook"
+        })
+        
+        if not integration:
+            raise HTTPException(status_code=404, detail="Webhook integration not found")
+        
+        config = WebhookConfig(**integration['config'])
+        
+        # Send test webhook
+        test_payload = {
+            "event": "test",
+            "message": "Teste de integração VoiceAI Hub",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "data": {
+                "test": True,
+                "source": "VoiceAI Hub"
+            }
+        }
+        
+        headers = config.headers or {}
+        headers["Content-Type"] = "application/json"
+        headers["X-Event-Type"] = "test"
+        
+        if config.secret:
+            import hmac
+            import hashlib
+            
+            payload_json = json.dumps(test_payload)
+            signature = hmac.new(
+                config.secret.encode(),
+                payload_json.encode(),
+                hashlib.sha256
+            ).hexdigest()
+            headers["X-Webhook-Signature"] = f"sha256={signature}"
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                config.webhook_url,
+                headers=headers,
+                json=test_payload,
+                timeout=30.0
+            )
+            response.raise_for_status()
+        
+        return {
+            "success": True,
+            "message": "Webhook de teste enviado com sucesso",
+            "status_code": response.status_code
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error testing webhook: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro ao testar webhook: {str(e)}")
+
 app.include_router(api_router)
 
 # Serve uploaded images via /api/uploads with proper CORS
