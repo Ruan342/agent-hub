@@ -2640,6 +2640,18 @@ async def widget_message(
             }
         )
         
+        # Log analytics - message sent
+        await log_analytics_event(
+            user_id=subscription['user_id'],
+            subscription_id=subscription['id'],
+            agent_id=agent['id'],
+            integration_type="widget",
+            event_type="message_sent",
+            metadata={"response_length": len(response_text), "has_audio": output_audio_base64 is not None}
+        )
+        
+        await log_monitoring_event("info", "widget", "Widget message processed successfully", {"agent_id": agent['id'], "session_id": session_id})
+        
         return WidgetMessageResponse(
             response=response_text,
             audio_base64=output_audio_base64,
