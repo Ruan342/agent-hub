@@ -1946,19 +1946,40 @@ async def process_incoming_whatsapp_message(message: dict, value: dict):
         message_id = message.get("id")
         timestamp = message.get("timestamp")
         
+        # Encontrar integração para obter access_token
+        phone_number_id = value.get("metadata", {}).get("phone_number_id")
+        
+        integration = await db.integrations.find_one({
+            "type": "whatsapp",
+            "config.phone_number_id": phone_number_id,
+            "status": "active"
+        })
+        
+        if not integration:
+            logging.warning(f"No active WhatsApp integration found for phone_number_id: {phone_number_id}")
+            return
+        
+        config = WhatsAppConfig(**integration['config'])
+        
         # Extrair texto da mensagem
         message_text = None
         if message_type == "text":
             message_text = message.get("text", {}).get("body")
         elif message_type == "audio":
-            # Áudio será processado via Whisper
+            # Processar áudio via Whisper
             audio_id = message.get("audio", {}).get("id")
-            message_text = await process_whatsapp_audio(audio_id, value.get("metadata", {}).get("phone_number_id"))
+            if config.process_audio:
+                message_text = await process_whatsapp_audio(audio_id, config.access_token)
+            else:
+                message_text = "[Áudio recebido - processamento desabilitado]"
         elif message_type == "image":
-            # Imagem será processada via Vision AI
+            # Processar imagem via Vision AI
             image_id = message.get("image", {}).get("id")
             image_caption = message.get("image", {}).get("caption", "")
-            message_text = await process_whatsapp_image(image_id, image_caption, value.get("metadata", {}).get("phone_number_id"))
+            if config.process_images:
+                message_text = await process_whatsapp_image(image_id, image_caption, config.access_token)
+            else:
+                message_text = f"[Imagem recebida{': ' + image_caption if image_caption else ''}]"
         
         if not message_text:
             logging.warning(f"Could not extract text from message type: {message_type}")
