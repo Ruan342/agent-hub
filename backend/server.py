@@ -1985,19 +1985,6 @@ async def process_incoming_whatsapp_message(message: dict, value: dict):
             logging.warning(f"Could not extract text from message type: {message_type}")
             return
         
-        # Encontrar integração ativa para este número
-        phone_number_id = value.get("metadata", {}).get("phone_number_id")
-        
-        integration = await db.integrations.find_one({
-            "type": "whatsapp",
-            "config.phone_number_id": phone_number_id,
-            "status": "active"
-        })
-        
-        if not integration:
-            logging.warning(f"No active WhatsApp integration found for phone_number_id: {phone_number_id}")
-            return
-        
         # Obter subscription (agente)
         subscription = await db.subscriptions.find_one({"id": integration['subscription_id']})
         
