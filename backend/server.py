@@ -19,10 +19,12 @@ from emergentintegrations.payments.stripe.checkout import StripeCheckout, Checko
 from elevenlabs import ElevenLabs, VoiceSettings
 import base64
 import io
+import json
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, Email, To, Content
 import asyncio
 from fastapi import BackgroundTasks
+import httpx
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
