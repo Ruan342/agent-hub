@@ -8,6 +8,7 @@ import Marketplace from "@/pages/Marketplace";
 import AgentDetails from "@/pages/AgentDetails";
 import Dashboard from "@/pages/Dashboard";
 import AgentChat from "@/pages/AgentChat";
+import Integrations from "@/pages/Integrations";
 import RequestAgent from "@/pages/RequestAgent";
 import AdminDashboard from "@/pages/AdminDashboard";
 import PaymentSuccess from "@/pages/PaymentSuccess";
