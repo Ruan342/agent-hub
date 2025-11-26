@@ -2311,6 +2311,212 @@ async def test_whatsapp_integration(
         logging.error(f"Error testing WhatsApp: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Erro ao testar WhatsApp: {str(e)}")
 
+# ==================== WIDGET ENDPOINTS ====================
+
+# Widget API Key validation
+async def verify_widget_api_key(api_key: str = None):
+    """Verify API key for widget requests"""
+    if not api_key:
+        raise HTTPException(status_code=401, detail="API key required")
+    
+    # Check if API key belongs to an active subscription
+    subscription = await db.subscriptions.find_one({"api_key": api_key, "status": "active"})
+    
+    if not subscription:
+        raise HTTPException(status_code=401, detail="Invalid or inactive API key")
+    
+    return subscription
+
+class WidgetSessionRequest(BaseModel):
+    pass
+
+class WidgetMessageRequest(BaseModel):
+    message: str
+    session_id: Optional[str] = None
+
+class WidgetMessageResponse(BaseModel):
+    response: str
+    audio_base64: Optional[str] = None
+    session_id: str
+
+@api_router.post("/integrations/widget/session")
+async def create_widget_session(
+    request: Request
+):
+    """Create a new widget session"""
+    try:
+        # Get API key from header
+        api_key = request.headers.get('X-API-Key')
+        subscription = await verify_widget_api_key(api_key)
+        
+        # Create new chat session
+        session = {
+            "id": str(uuid.uuid4()),
+            "subscription_id": subscription['id'],
+            "user_id": subscription['user_id'],
+            "agent_id": subscription['agent_id'],
+            "title": "Widget Chat",
+            "messages": [],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db.chat_sessions.insert_one(session)
+        
+        return {"session_id": session['id']}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error creating widget session: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/integrations/widget/message", response_model=WidgetMessageResponse)
+async def widget_message(
+    request: WidgetMessageRequest,
+    req: Request
+):
+    """Process widget message and return agent response"""
+    try:
+        # Get API key from header
+        api_key = req.headers.get('X-API-Key')
+        subscription = await verify_widget_api_key(api_key)
+        
+        # Get agent
+        agent = await db.agents.find_one({"id": subscription['agent_id']})
+        
+        if not agent:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        
+        # Get or create session
+        session_id = request.session_id
+        if not session_id:
+            # Create new session
+            session = {
+                "id": str(uuid.uuid4()),
+                "subscription_id": subscription['id'],
+                "user_id": subscription['user_id'],
+                "agent_id": subscription['agent_id'],
+                "title": request.message[:50],
+                "messages": [],
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.chat_sessions.insert_one(session)
+            session_id = session['id']
+        
+        # Process message with LLM (reuse existing logic)
+        response_text = await process_message_with_llm(
+            message_text=request.message,
+            agent=agent,
+            subscription=subscription
+        )
+        
+        # Generate audio response if ElevenLabs is configured
+        output_audio_base64 = None
+        if agent.get('elevenlabs_voice_id') and eleven_client:
+            try:
+                audio_stream = eleven_client.text_to_speech.convert(
+                    voice_id=agent['elevenlabs_voice_id'],
+                    text=response_text,
+                    model_id="eleven_multilingual_v2",
+                    voice_settings=VoiceSettings(
+                        stability=0.5,
+                        similarity_boost=0.75,
+                        style=0.0,
+                        use_speaker_boost=True
+                    )
+                )
+                
+                audio_bytes = b"".join(audio_stream)
+                output_audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+            except Exception as e:
+                logging.error(f"ElevenLabs error in widget: {str(e)}")
+        
+        # Save messages to session
+        user_message = {
+            "role": "user",
+            "content": request.message,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "audio_base64": None
+        }
+        
+        assistant_message = {
+            "role": "assistant",
+            "content": response_text,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "audio_base64": output_audio_base64
+        }
+        
+        await db.chat_sessions.update_one(
+            {"id": session_id},
+            {
+                "$push": {"messages": {"$each": [user_message, assistant_message]}},
+                "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+            }
+        )
+        
+        return WidgetMessageResponse(
+            response=response_text,
+            audio_base64=output_audio_base64,
+            session_id=session_id
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error processing widget message: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/integrations/widget/snippet")
+async def get_widget_snippet(
+    integration_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get widget installation snippet"""
+    try:
+        integration = await db.integrations.find_one({
+            "id": integration_id,
+            "user_id": current_user['user_id'],
+            "type": "widget"
+        })
+        
+        if not integration:
+            raise HTTPException(status_code=404, detail="Widget integration not found")
+        
+        # Get subscription to get API key
+        subscription = await db.subscriptions.find_one({"id": integration['subscription_id']})
+        
+        if not subscription:
+            raise HTTPException(status_code=404, detail="Subscription not found")
+        
+        config = WidgetConfig(**integration['config'])
+        
+        # Generate snippet
+        snippet = f"""<!-- VoiceAI Widget -->
+<script src="{os.environ.get('REACT_APP_BACKEND_URL', 'https://voicechatai-1.preview.emergentagent.com')}/voiceai-widget.js"></script>
+<script>
+  VoiceAIWidget.init({{
+    apiKey: '{subscription['api_key']}',
+    apiUrl: '{os.environ.get('REACT_APP_BACKEND_URL', 'https://voicechatai-1.preview.emergentagent.com')}/api',
+    themeColor: '{config.theme_color}',
+    position: '{config.position}',
+    greetingMessage: '{config.greeting_message}',
+    voiceEnabled: {str(config.voice_enabled).lower()},
+    textEnabled: {str(config.text_enabled).lower()},
+    agentName: '{integration['name']}'
+  }});
+</script>
+<!-- End VoiceAI Widget -->"""
+        
+        return {"snippet": snippet}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error generating widget snippet: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 app.include_router(api_router)
 
 # Serve uploaded images via /api/uploads with proper CORS
