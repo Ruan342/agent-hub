@@ -1796,6 +1796,333 @@ async def test_email_integration(
         logging.error(f"Error testing email: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Erro ao testar email: {str(e)}")
 
+# ==================== WHATSAPP INTEGRATION ENDPOINTS ====================
+
+async def send_whatsapp_message(
+    phone_number_id: str,
+    access_token: str,
+    to_phone: str,
+    message_text: str
+):
+    """Send WhatsApp message via Business Cloud API"""
+    try:
+        url = f"https://graph.facebook.com/v18.0/{phone_number_id}/messages"
+        
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+        
+        # Remove caracteres especiais do número
+        clean_phone = to_phone.replace("+", "").replace(" ", "").replace("-", "")
+        
+        payload = {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": clean_phone,
+            "type": "text",
+            "text": {
+                "body": message_text
+            }
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, headers=headers, json=payload, timeout=30.0)
+            response.raise_for_status()
+            
+        logging.info(f"WhatsApp message sent to {to_phone}")
+        return response.json()
+        
+    except Exception as e:
+        logging.error(f"WhatsApp send error: {str(e)}")
+        raise
+
+@api_router.post("/integrations/whatsapp/send")
+async def send_whatsapp(
+    request: SendWhatsAppRequest,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send WhatsApp message via integration"""
+    try:
+        # Get integration
+        integration = await db.integrations.find_one({
+            "id": request.integration_id,
+            "user_id": current_user['user_id'],
+            "type": "whatsapp"
+        })
+        
+        if not integration:
+            raise HTTPException(status_code=404, detail="WhatsApp integration not found")
+        
+        if integration.get('status') != 'active':
+            raise HTTPException(status_code=400, detail="Integration is not active")
+        
+        config = WhatsAppConfig(**integration['config'])
+        
+        # Send message in background
+        async def send_whatsapp_task():
+            try:
+                await send_whatsapp_message(
+                    phone_number_id=config.phone_number_id,
+                    access_token=config.access_token,
+                    to_phone=request.to_phone,
+                    message_text=request.message
+                )
+            except Exception as e:
+                logging.error(f"Background WhatsApp task failed: {str(e)}")
+        
+        background_tasks.add_task(send_whatsapp_task)
+        
+        return {
+            "status": "queued",
+            "message": "WhatsApp message queued for sending",
+            "to_phone": request.to_phone
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error sending WhatsApp: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/integrations/whatsapp/webhook")
+async def whatsapp_webhook(request: Request):
+    """
+    Webhook receiver for WhatsApp messages
+    Meta will send messages here when users reply
+    """
+    try:
+        body = await request.json()
+        
+        logging.info(f"WhatsApp webhook received: {json.dumps(body)}")
+        
+        # Verificar se é uma mensagem
+        if body.get("object") == "whatsapp_business_account":
+            entries = body.get("entry", [])
+            
+            for entry in entries:
+                changes = entry.get("changes", [])
+                
+                for change in changes:
+                    if change.get("field") == "messages":
+                        value = change.get("value", {})
+                        messages = value.get("messages", [])
+                        
+                        for message in messages:
+                            # Processar mensagem recebida
+                            await process_incoming_whatsapp_message(message, value)
+        
+        return {"status": "received"}
+        
+    except Exception as e:
+        logging.error(f"WhatsApp webhook error: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+@api_router.get("/integrations/whatsapp/webhook")
+async def whatsapp_webhook_verify(
+    hub_mode: str = None,
+    hub_verify_token: str = None,
+    hub_challenge: str = None
+):
+    """
+    Webhook verification endpoint for Meta
+    """
+    # Meta envia uma verificação quando você configura o webhook
+    if hub_mode == "subscribe" and hub_verify_token:
+        # Verificar token com o token configurado na integração
+        # Por simplicidade, vamos aceitar qualquer token por agora
+        return int(hub_challenge) if hub_challenge else {"status": "ok"}
+    
+    return {"status": "error"}
+
+async def process_incoming_whatsapp_message(message: dict, value: dict):
+    """Process incoming WhatsApp message and trigger agent response"""
+    try:
+        message_type = message.get("type")
+        from_phone = message.get("from")
+        message_id = message.get("id")
+        timestamp = message.get("timestamp")
+        
+        # Extrair texto da mensagem
+        message_text = None
+        if message_type == "text":
+            message_text = message.get("text", {}).get("body")
+        elif message_type == "audio":
+            # Áudio será processado via Whisper
+            audio_id = message.get("audio", {}).get("id")
+            message_text = await process_whatsapp_audio(audio_id, value.get("metadata", {}).get("phone_number_id"))
+        elif message_type == "image":
+            # Imagem será processada via Vision AI
+            image_id = message.get("image", {}).get("id")
+            image_caption = message.get("image", {}).get("caption", "")
+            message_text = await process_whatsapp_image(image_id, image_caption, value.get("metadata", {}).get("phone_number_id"))
+        
+        if not message_text:
+            logging.warning(f"Could not extract text from message type: {message_type}")
+            return
+        
+        # Encontrar integração ativa para este número
+        phone_number_id = value.get("metadata", {}).get("phone_number_id")
+        
+        integration = await db.integrations.find_one({
+            "type": "whatsapp",
+            "config.phone_number_id": phone_number_id,
+            "status": "active"
+        })
+        
+        if not integration:
+            logging.warning(f"No active WhatsApp integration found for phone_number_id: {phone_number_id}")
+            return
+        
+        # Obter subscription (agente)
+        subscription = await db.subscriptions.find_one({"id": integration['subscription_id']})
+        
+        if not subscription:
+            logging.error(f"Subscription not found for integration: {integration['id']}")
+            return
+        
+        # Obter agente
+        agent = await db.agents.find_one({"id": subscription['agent_id']})
+        
+        if not agent:
+            logging.error(f"Agent not found: {subscription['agent_id']}")
+            return
+        
+        # Processar mensagem com o agente (via LLM)
+        try:
+            # Usar emergentintegrations ou OpenAI
+            llm_response = await process_message_with_llm(
+                message_text=message_text,
+                agent=agent,
+                subscription=subscription
+            )
+            
+            # Enviar resposta de volta via WhatsApp
+            config = WhatsAppConfig(**integration['config'])
+            
+            await send_whatsapp_message(
+                phone_number_id=config.phone_number_id,
+                access_token=config.access_token,
+                to_phone=from_phone,
+                message_text=llm_response
+            )
+            
+            logging.info(f"Agent response sent to {from_phone}")
+            
+        except Exception as e:
+            logging.error(f"Error processing message with agent: {str(e)}")
+            # Enviar mensagem de erro ao usuário
+            config = WhatsAppConfig(**integration['config'])
+            await send_whatsapp_message(
+                phone_number_id=config.phone_number_id,
+                access_token=config.access_token,
+                to_phone=from_phone,
+                message_text="Desculpe, ocorreu um erro ao processar sua mensagem. Por favor, tente novamente."
+            )
+        
+    except Exception as e:
+        logging.error(f"Error processing incoming WhatsApp message: {str(e)}")
+
+async def process_whatsapp_audio(audio_id: str, phone_number_id: str) -> str:
+    """Process audio message using Whisper (Fase 2)"""
+    # TODO: Implementar processamento de áudio
+    return "[Áudio recebido - processamento em desenvolvimento]"
+
+async def process_whatsapp_image(image_id: str, caption: str, phone_number_id: str) -> str:
+    """Process image message using Vision AI (Fase 2)"""
+    # TODO: Implementar processamento de imagem
+    return f"[Imagem recebida: {caption}]" if caption else "[Imagem recebida]"
+
+async def process_message_with_llm(message_text: str, agent: dict, subscription: dict) -> str:
+    """Process message with LLM (reuse logic from agent/execute)"""
+    try:
+        from emergentintegrations import (
+            Anthropic as EmergentAnthropic,
+            OpenAI as EmergentOpenAI,
+            Google as EmergentGoogle
+        )
+        
+        # Usar Emergent LLM Key
+        emergent_key = os.environ.get('EMERGENT_LLM_KEY')
+        
+        system_prompt = agent.get('base_prompt', '')
+        if subscription.get('custom_prompt'):
+            system_prompt += f"\n\n{subscription['custom_prompt']}"
+        
+        # Processar com LLM
+        llm_provider = agent.get('llm_provider', 'openai')
+        llm_model = agent.get('llm_model', 'gpt-5')
+        
+        if llm_provider == 'openai' and emergent_key:
+            client = EmergentOpenAI(api_key=emergent_key)
+            response = client.chat.completions.create(
+                model=llm_model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": message_text}
+                ]
+            )
+            return response.choices[0].message.content
+        
+        # Fallback para OpenAI direto
+        openai_key = os.environ.get('OPENAI_API_KEY')
+        if openai_key:
+            import openai
+            openai.api_key = openai_key
+            response = openai.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": message_text}
+                ]
+            )
+            return response.choices[0].message.content
+        
+        return "Desculpe, não foi possível processar sua mensagem no momento."
+        
+    except Exception as e:
+        logging.error(f"LLM processing error: {str(e)}")
+        raise
+
+@api_router.post("/integrations/whatsapp/test")
+async def test_whatsapp_integration(
+    integration_id: str,
+    test_phone: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Test WhatsApp integration"""
+    try:
+        integration = await db.integrations.find_one({
+            "id": integration_id,
+            "user_id": current_user['user_id'],
+            "type": "whatsapp"
+        })
+        
+        if not integration:
+            raise HTTPException(status_code=404, detail="WhatsApp integration not found")
+        
+        config = WhatsAppConfig(**integration['config'])
+        
+        result = await send_whatsapp_message(
+            phone_number_id=config.phone_number_id,
+            access_token=config.access_token,
+            to_phone=test_phone,
+            message_text="🎉 Teste de Integração - VoiceAI Hub\n\nSua integração WhatsApp está funcionando corretamente!"
+        )
+        
+        return {
+            "success": True,
+            "message": "Mensagem de teste enviada com sucesso",
+            "details": result
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error testing WhatsApp: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro ao testar WhatsApp: {str(e)}")
+
 app.include_router(api_router)
 
 # Serve uploaded images via /api/uploads with proper CORS
