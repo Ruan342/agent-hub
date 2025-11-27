@@ -71,7 +71,7 @@ export default function Analytics() {
       // Fetch all data in parallel
       const [metricsRes, realtimeRes, healthRes, logsRes] = await Promise.all([
         axios.get(`${API}/analytics/dashboard`, {
-          params: { subscription_id: subscriptionId, days: timeRange },
+          params: { subscription_id: selectedSubscription.id, days: timeRange },
           headers: { Authorization: `Bearer ${token}` }
         }),
         axios.get(`${API}/analytics/realtime`, {
