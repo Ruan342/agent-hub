@@ -647,9 +647,9 @@ export default function AgentChat() {
         <audio ref={voiceCallAudioRef} className="hidden" />
       </div>
 
-      {/* Interface de Chamada de Voz em Tempo Real - Fundo Branco */}
+      {/* Interface de Chamada de Voz em Tempo Real - Fundo Branco Suave */}
       {isVoiceCallActive && (
-        <div className="fixed inset-0 z-[100] bg-white flex items-center justify-center">
+        <div className="fixed inset-0 z-[100] bg-gray-50 flex items-center justify-center">
           {/* Background com padrão decorativo sutil */}
           <div className="absolute inset-0 opacity-5">
             <div className="absolute top-20 left-20 w-64 h-64 bg-purple-500 rounded-full blur-3xl"></div>
