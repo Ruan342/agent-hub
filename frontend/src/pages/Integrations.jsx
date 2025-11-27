@@ -274,8 +274,16 @@ export default function Integrations() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Integrações</h1>
           <p className="text-gray-600">
-            Conecte seu agente <span className="font-semibold text-purple-600">{subscription?.agent_id}</span> com diferentes canais
+            Conecte seus agentes com diferentes canais de comunicação
           </p>
+          {subscriptions.length === 0 && (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-yellow-800">
+                Você precisa ter pelo menos uma assinatura ativa para criar integrações. 
+                <a href="/marketplace" className="underline font-semibold ml-1">Visite o Marketplace</a>
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Help Banner */}
