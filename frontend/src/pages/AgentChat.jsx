@@ -722,7 +722,7 @@ export default function AgentChat() {
                   {[0, 150, 300, 450, 600, 750, 900].map((delay, i) => (
                     <div 
                       key={i} 
-                      className={`w-2 bg-white rounded-full animate-pulse`}
+                      className={`w-2 bg-purple-500 rounded-full animate-pulse`}
                       style={{
                         height: `${[20, 40, 30, 50, 35, 45, 25][i]}px`,
                         animationDelay: `${delay}ms`
