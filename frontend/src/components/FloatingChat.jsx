@@ -52,11 +52,11 @@ export default function FloatingChat() {
       setIsSpeaking(false);
     };
 
-    // Add welcome message
+    // Add Lídia welcome message
     if (messages.length === 0) {
       setMessages([{
         role: 'assistant',
-        content: 'Olá! Sou o assistente da VoiceAI Hub. Como posso ajudar você hoje?',
+        content: 'Olá! Meu nome é Lídia, assistente de vendas da VoiceAI Hub. Estou aqui para apresentar nossa plataforma e ajudá-lo a encontrar o agente de IA perfeito para o seu negócio. Como posso ajudar você hoje?',
         timestamp: new Date()
       }]);
     }
