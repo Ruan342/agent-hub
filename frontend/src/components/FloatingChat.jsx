@@ -113,13 +113,13 @@ export default function FloatingChat() {
         throw new Error('Você precisa ter uma assinatura ativa para usar o chat. Visite o Marketplace para adquirir um agente.');
       }
 
-      // Call agent API - Lídia customized system prompt for outbound sales
+      // Call agent API - Lídia customized system prompt for inbound pre-sales
       const response = await axios.post(
         `${API}/agent/execute`,
         {
           input_text: text,
           session_id: sessionId,
-          custom_prompt: "Você é Lídia, uma SDR (Sales Development Representative) de IA especializada em vendas outbound da VoiceAI Hub. Seu papel é prospectar ativamente, qualificar leads, apresentar nossa plataforma de agentes de IA e gerar oportunidades de vendas. Seja proativa, consultiva e focada em resultados. Faça perguntas qualificadoras (BANT: Budget, Authority, Need, Timeline), identifique dores do negócio, apresente cases de sucesso, demonstre ROI concreto e conduza o prospect até o fechamento ou agendamento de demo. Use técnicas de vendas consultivas e sempre busque avançar o prospect no funil."
+          custom_prompt: "Você é Lídia, especialista em pré-vendas e atendimento inbound da VoiceAI Hub. Seu papel é atender leads que chegam com interesse, qualificá-los de forma consultiva, entender profundamente suas necessidades e dores, apresentar nossa plataforma de agentes de IA de forma personalizada e conduzi-los até o fechamento. Seja empática, consultiva e focada em resolver problemas reais. Faça perguntas de descoberta para entender o contexto do negócio, identifique gaps e oportunidades, apresente cases relevantes ao segmento, demonstre ROI e valor, e construa confiança para fechar a venda ou agendar próximos passos. Use abordagem SPIN Selling (Situation, Problem, Implication, Need-payoff)."
         },
         {
           headers: {
