@@ -117,6 +117,26 @@ export default function SidebarLayout({ children }) {
           </Button>
         </div>
 
+        {/* Agent Selector */}
+        {sidebarOpen && subscriptions.length > 0 && (
+          <div className="p-3 border-b border-gray-200">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
+              Agente Ativo
+            </label>
+            <select
+              value={selectedAgentId || ''}
+              onChange={(e) => handleAgentSelect(e.target.value)}
+              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              {subscriptions.map((sub) => (
+                <option key={sub.id} value={sub.agent_id}>
+                  {sub.agent_id}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Menu Items */}
         <nav className="p-2 space-y-1">
           {menuItems.map((item) => (
