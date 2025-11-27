@@ -13,8 +13,8 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 export default function Analytics() {
-  const { subscriptionId } = useParams();
   const token = localStorage.getItem("token");
+  const selectedAgentId = localStorage.getItem("selectedAgentId");
 
   const [metrics, setMetrics] = useState(null);
   const [realtime, setRealtime] = useState(null);
@@ -23,18 +23,46 @@ export default function Analytics() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState(7); // days
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [selectedSubscription, setSelectedSubscription] = useState(null);
 
   useEffect(() => {
-    fetchData();
-    
-    // Refresh realtime every 30 seconds
-    const interval = setInterval(() => {
-      fetchRealtime();
-      fetchHealth();
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, [subscriptionId, timeRange]);
+    fetchSubscriptions();
+  }, [selectedAgentId]);
+
+  useEffect(() => {
+    if (selectedSubscription) {
+      fetchData();
+      
+      // Refresh realtime every 30 seconds
+      const interval = setInterval(() => {
+        fetchRealtime();
+        fetchHealth();
+      }, 30000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [selectedSubscription, timeRange]);
+
+  const fetchSubscriptions = async () => {
+    try {
+      const response = await axios.get(`${API}/subscriptions/my`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const activeSubs = response.data.filter(sub => sub.status === 'active');
+      setSubscriptions(activeSubs);
+      
+      // Find subscription for selected agent
+      const sub = activeSubs.find(s => s.agent_id === selectedAgentId);
+      if (sub) {
+        setSelectedSubscription(sub);
+      } else if (activeSubs.length > 0) {
+        setSelectedSubscription(activeSubs[0]);
+      }
+    } catch (error) {
+      console.error("Error fetching subscriptions:", error);
+    }
+  };
 
   const fetchData = async () => {
     try {
