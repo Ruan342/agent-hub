@@ -143,7 +143,7 @@ export default function SidebarLayout({ children }) {
             >
               {subscriptions.map((sub) => (
                 <option key={sub.id} value={sub.agent_id}>
-                  {sub.agent_id}
+                  {sub.agentName || sub.agent_id}
                 </option>
               ))}
             </select>
