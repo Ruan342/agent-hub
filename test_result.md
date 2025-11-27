@@ -261,6 +261,18 @@ frontend:
         agent: "testing"
         comment: "🎉 NOVO DESIGN DO CHAT DE VOZ TESTADO COM SUCESSO: Teste visual completo do novo design implementado realizado com êxito. ✅ MELHORIAS VERIFICADAS: 1) Botão de voz flutuante discreto no canto inferior direito (posição x=1832, y=912) ✅ 2) Botão 'Texto' removido corretamente (não encontrado) ✅ 3) Campo de texto habilitado no modo texto e desabilitado no modo voz ✅ 4) Tooltip 'Modo Voz' aparece no hover ✅ 5) Card flutuante com status aparece quando modo voz é ativado ✅ 6) Card mostra status 'Escutando...' corretamente ✅ 7) Botão 'Desativar' presente no card ✅ 8) Elementos de animação detectados (3 elementos) ✅ 9) Transição entre modos funcionando perfeitamente ✅ 10) Interface mais limpa e intuitiva ✅. Todas as melhorias solicitadas foram implementadas corretamente e estão funcionando como esperado."
 
+  - task: "Agent Selection for Integrations Feature Testing"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/Integrations.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎯 TESTE COMPLETO DA FUNCIONALIDADE DE SELEÇÃO DE AGENTE POR INTEGRAÇÃO EXECUTADO COM SUCESSO TOTAL: Teste abrangente de todas as 5 partes da review request realizado conforme especificado. ✅ PARTE 1 - SIDEBAR E NAVEGAÇÃO: 1) Login com analytics@test.com/test123 realizado ✅ 2) 'Integrações' aparece no menu da sidebar ✅ 3) Página carrega sem erro ✅ 4) Header 'Conecte seus agentes com diferentes canais de comunicação' verificado ✅. ✅ PARTE 2 - VISUALIZAÇÃO DAS INTEGRAÇÕES: 1) Integrações existentes encontradas (1 integração) ✅ 2) Agente vinculado mostrado com emoji 🤖 'Agente Vendedor / Pré-venda (Inbound)' ✅. ✅ PARTE 3 - CRIAR NOVA INTEGRAÇÃO COM SELETOR: 1) Modal 'Configurar Email' abre corretamente ✅ 2) CRÍTICO: Seletor de agente presente com label '🤖 Selecione o Agente para esta Integração' ✅ 3) Dropdown com opção '-- Escolha um agente --' e lista de agentes ✅ 4) Texto explicativo '💡 Esta integração ficará vinculada ao agente selecionado' ✅ 5) Campo 'Nome da Integração' presente ✅. ✅ PARTE 4 - INTEGRAÇÃO EXISTENTE (MODO EDIÇÃO): 1) Modal de edição abre ✅ 2) CRÍTICO: NÃO há seletor de agente (correto) ✅ 3) Mostra '🤖 Agente: Agente Vendedor / Pré-venda (Inbound)' ✅ 4) Mensagem 'Não é possível alterar o agente de uma integração existente' ✅. ✅ PARTE 5 - LISTA DE INTEGRAÇÕES ATIVAS: 1) Header 'Integrações Ativas' ✅ 2) Nome, tipo, agente vinculado em roxo, status mostrados ✅. Todos os pontos críticos verificados: página carrega sem subscriptionId, modal nova integração tem seletor, modal edição NÃO permite trocar agente, lista mostra agentes vinculados, seletor tem opções de agentes. Funcionalidade implementada perfeitamente conforme especificações da review request."
+
   - task: "FloatingChat Component Testing"
     implemented: true
     working: true
