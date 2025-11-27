@@ -625,71 +625,7 @@ export default function AgentChat() {
               <div ref={messagesEndRef} />
             </div>
           </div>
-          {/* Botão flutuante discreto de voz no canto inferior direito */}
-          {!voiceMode && (
-            <button
-              onClick={toggleVoiceMode}
-              className="fixed bottom-28 right-8 z-50 w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
-              title="Ativar modo voz"
-            >
-              <Mic className="w-6 h-6" />
-              <span className="absolute right-16 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                Modo Voz
-              </span>
-            </button>
-          )}
-
-          {/* Status do modo voz - discreto no canto */}
-          {voiceMode && (
-            <div className="fixed bottom-28 right-8 z-50">
-              <div className={`rounded-2xl p-4 shadow-2xl transition-all backdrop-blur-sm ${isSpeaking ? 'bg-blue-500/95' : isListening ? 'bg-purple-500/95' : 'bg-gray-800/95'}`}>
-                <div className="flex items-center gap-3 mb-3">
-                  {isSpeaking ? (
-                    <>
-                      <Volume2 className="w-5 h-5 text-white animate-pulse" />
-                      <span className="text-sm font-semibold text-white">Agente falando...</span>
-                    </>
-                  ) : isListening ? (
-                    <>
-                      <div className="w-2.5 h-2.5 bg-red-400 rounded-full animate-pulse"></div>
-                      <span className="text-sm font-semibold text-white">Escutando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="w-5 h-5 text-white" />
-                      <span className="text-sm font-medium text-white">Voz ativa</span>
-                    </>
-                  )}
-                </div>
-                
-                {isSpeaking && (
-                  <div className="flex items-center justify-center gap-1 mb-3">
-                    {[0, 150, 300, 450, 600, 150, 300].map((delay, i) => (
-                      <div key={i} className={`w-1 ${[8, 12, 6, 10, 8, 12, 6][i] === 6 ? 'h-4' : [8, 12, 6, 10, 8, 12, 6][i] === 8 ? 'h-6' : [8, 12, 6, 10, 8, 12, 6][i] === 10 ? 'h-8' : 'h-10'} bg-white rounded-full animate-pulse`} style={{animationDelay: `${delay}ms`}}></div>
-                    ))}
-                  </div>
-                )}
-                
-                {(interimTranscript || finalTranscript) && (
-                  <div className="text-xs text-white/90 italic mb-3 p-2 bg-black/20 rounded-lg max-w-[200px]">
-                    "{interimTranscript || finalTranscript}"
-                  </div>
-                )}
-
-                <div className="flex gap-2">
-                  {isSpeaking && (
-                    <button onClick={stopSpeaking} className="flex-1 bg-red-500 hover:bg-red-600 text-white text-xs py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1">
-                      <VolumeX className="w-3.5 h-3.5" />
-                      Parar
-                    </button>
-                  )}
-                  <button onClick={toggleVoiceMode} className="flex-1 bg-white/20 hover:bg-white/30 text-white text-xs py-2 px-3 rounded-lg transition-all">
-                    Desativar
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Botão de modo voz removido conforme solicitado */}
 
           <div className="bg-white border-t border-gray-200 p-6">
             <div className="max-w-3xl mx-auto">
