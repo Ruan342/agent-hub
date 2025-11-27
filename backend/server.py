@@ -123,6 +123,7 @@ class AgentUpdate(BaseModel):
     mascot_image_hero_url: Optional[str] = None
     mascot_image_feature_url: Optional[str] = None
     mascot_image_cta_url: Optional[str] = None
+    voice_call_image_url: Optional[str] = None
     elevenlabs_voice_id: Optional[str] = None
     base_prompt: Optional[str] = None
     voice_sample_url: Optional[str] = None
