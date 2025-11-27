@@ -56,7 +56,7 @@ export default function FloatingChat() {
     if (messages.length === 0) {
       setMessages([{
         role: 'assistant',
-        content: 'Olá! Sou Lídia, sua SDR de IA especializada em vendas outbound da VoiceAI Hub. Minha missão é apresentar nossa plataforma de agentes de IA e mostrar como podemos transformar seus processos comerciais. Vamos conversar sobre como a IA pode impulsionar suas vendas?',
+        content: 'Olá! Sou Lídia, especialista em pré-vendas da VoiceAI Hub. Estou aqui para entender suas necessidades, apresentar nossa plataforma de agentes de IA e ajudá-lo a encontrar a solução perfeita para o seu negócio. Como posso ajudar você hoje?',
         timestamp: new Date()
       }]);
     }
