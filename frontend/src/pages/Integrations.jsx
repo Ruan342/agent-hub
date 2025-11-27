@@ -11,17 +11,18 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 export default function Integrations() {
-  const { subscriptionId } = useParams();
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
-  const [subscription, setSubscription] = useState(null);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [agents, setAgents] = useState([]);
   const [integrations, setIntegrations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("");
   const [modalData, setModalData] = useState({});
   const [testing, setTesting] = useState(false);
+  const [selectedSubscriptionId, setSelectedSubscriptionId] = useState("");
 
   useEffect(() => {
     if (!token) {
@@ -29,28 +30,37 @@ export default function Integrations() {
       return;
     }
     fetchData();
-  }, [subscriptionId]);
+  }, []);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       
-      // Get subscription details
-      const subRes = await axios.get(`${API}/subscriptions/${subscriptionId}`, {
+      // Get user's subscriptions
+      const subsRes = await axios.get(`${API}/subscriptions/my`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setSubscription(subRes.data);
+      const activeSubs = subsRes.data.filter(sub => sub.status === 'active');
+      setSubscriptions(activeSubs);
 
-      // Get integrations
+      // Get agents details for each subscription
+      const agentsData = await Promise.all(
+        activeSubs.map(async (sub) => {
+          try {
+            const agentRes = await axios.get(`${API}/agents/${sub.agent_id}`);
+            return { ...agentRes.data, subscription_id: sub.id };
+          } catch (error) {
+            return { id: sub.agent_id, name: sub.agent_id, subscription_id: sub.id };
+          }
+        })
+      );
+      setAgents(agentsData);
+
+      // Get all integrations
       const intRes = await axios.get(`${API}/integrations`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
-      // Filter by subscription
-      const filtered = intRes.data.integrations.filter(
-        i => i.subscription_id === subscriptionId
-      );
-      setIntegrations(filtered);
+      setIntegrations(intRes.data.integrations || []);
       
     } catch (error) {
       console.error("Error fetching data:", error);
