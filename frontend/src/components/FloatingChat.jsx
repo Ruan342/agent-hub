@@ -132,16 +132,13 @@ export default function FloatingChat() {
       const assistantMessage = {
         role: 'assistant',
         content: response.data.output_text,
-        timestamp: new Date(),
-        audio: response.data.output_audio_base64
+        timestamp: new Date()
+        // NO audio in text mode - Lídia only speaks in voice call mode
       };
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Play audio if available
-      if (response.data.output_audio_base64) {
-        playAudio(response.data.output_audio_base64);
-      }
+      // NO audio playback in text mode
 
     } catch (error) {
       console.error('Error sending message:', error);
