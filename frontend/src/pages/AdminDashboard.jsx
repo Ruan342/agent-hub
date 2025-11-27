@@ -528,6 +528,38 @@ export default function AdminDashboard() {
                             💡 Dica: Use imagens diferentes para cada seção ou repita a mesma. Recomendado: 512x512px
                           </p>
                         </div>
+
+                        {/* Imagem do Modo de Chamada de Voz */}
+                        <div className="space-y-3">
+                          <Label className="text-base font-semibold">🎙️ Imagem do Modo de Chamada de Voz</Label>
+                          <p className="text-sm text-gray-600">
+                            Esta imagem aparecerá no círculo central quando o usuário iniciar uma "Nova Conversa por Voz"
+                          </p>
+                          <div>
+                            <div className="flex items-center gap-3">
+                              <Input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleImageUpload(e, 'voice_call_image_url')}
+                                className="flex-1 border-gray-300"
+                              />
+                            </div>
+                            {newAgent.voice_call_image_url && (
+                              <div className="flex items-center gap-3 p-2 bg-purple-50 rounded-lg border border-purple-200 mt-2">
+                                <img 
+                                  src={newAgent.voice_call_image_url.startsWith('http') ? newAgent.voice_call_image_url : `${API}${newAgent.voice_call_image_url}`}
+                                  alt="Preview Voice Call"
+                                  crossOrigin="anonymous"
+                                  className="w-10 h-10 object-cover rounded-full"
+                                />
+                                <span className="text-xs text-purple-700">Imagem da Chamada de Voz</span>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            💡 Dica: Use uma imagem circular ou que fique boa em formato circular. Recomendado: 512x512px
+                          </p>
+                        </div>
                         
                         <div>
                           <Label className="text-sm font-medium">Voice ID *</Label>
