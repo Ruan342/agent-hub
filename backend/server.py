@@ -87,6 +87,7 @@ class Agent(BaseModel):
     mascot_image_hero_url: Optional[str] = None  # Imagem grande do hero (topo)
     mascot_image_feature_url: Optional[str] = None  # Imagem da seção de recursos
     mascot_image_cta_url: Optional[str] = None  # Imagem do CTA final
+    voice_call_image_url: Optional[str] = None  # Imagem para o modo de chamada de voz
     elevenlabs_voice_id: str
     base_prompt: Optional[str] = None
     voice_sample_url: Optional[str] = None
