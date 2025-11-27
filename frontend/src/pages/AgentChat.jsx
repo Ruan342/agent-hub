@@ -770,7 +770,7 @@ export default function AgentChat() {
             >
               <PhoneOff className="w-8 h-8" />
             </button>
-            <p className="text-white/60 text-sm mt-3">Encerrar chamada</p>
+            <p className="text-gray-600 text-sm mt-3">Encerrar chamada</p>
           </div>
         </div>
       )}
