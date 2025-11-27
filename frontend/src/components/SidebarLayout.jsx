@@ -88,13 +88,10 @@ export default function SidebarLayout({ children }) {
   const menuItems = [...baseMenuItems];
   
   if (subscriptions.length > 0 && selectedAgentId) {
-    const selectedSub = subscriptions.find(s => s.agent_id === selectedAgentId);
-    if (selectedSub) {
-      menuItems.push(
-        { icon: Plug, label: "Integrações", path: `/integrations/${selectedSub.id}`, requiresAgent: true },
-        { icon: BarChart3, label: "Analytics", path: `/analytics`, requiresAgent: true }
-      );
-    }
+    menuItems.push(
+      { icon: Plug, label: "Integrações", path: `/integrations`, requiresAgent: true },
+      { icon: BarChart3, label: "Analytics", path: `/analytics`, requiresAgent: true }
+    );
   }
 
   return (
