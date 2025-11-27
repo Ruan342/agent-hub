@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { MessageSquare, X, Send, Phone, PhoneOff, Volume2, Loader2, Minimize2 } from "lucide-react";
+import { MessageSquare, X, Send, Mic, MicOff, Volume2, Loader2, Minimize2 } from "lucide-react";
 import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -8,20 +8,19 @@ const API = `${BACKEND_URL}/api`;
 export default function FloatingChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isVoiceCallActive, setIsVoiceCallActive] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [callState, setCallState] = useState('idle'); // idle, connecting, listening, speaking
-  const [sessionId] = useState(`lidia_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [sessionId] = useState(`platform_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
   const audioRef = useRef(null);
-  const voiceCallAudioRef = useRef(null);
 
   useEffect(() => {
-    // Initialize Speech Recognition for voice call
+    // Initialize Speech Recognition
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
@@ -29,60 +28,33 @@ export default function FloatingChat() {
       recognitionRef.current.interimResults = false;
       recognitionRef.current.lang = 'pt-BR';
 
-      recognitionRef.current.onresult = async (event) => {
+      recognitionRef.current.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
-        console.log('Voice input:', transcript);
-        
-        if (isVoiceCallActive) {
-          await handleVoiceMessage(transcript);
-        }
-        
-        setCallState('idle');
+        setInputText(transcript);
+        setIsListening(false);
       };
 
       recognitionRef.current.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
-        setCallState('idle');
+        setIsListening(false);
       };
 
       recognitionRef.current.onend = () => {
-        // Restart listening if in voice call mode
-        if (isVoiceCallActive && callState !== 'speaking') {
-          setTimeout(() => {
-            try {
-              recognitionRef.current.start();
-              setCallState('listening');
-            } catch (error) {
-              console.error('Error restarting recognition:', error);
-            }
-          }, 500);
-        }
+        setIsListening(false);
       };
     }
 
-    // Initialize audio elements
+    // Initialize audio element
     audioRef.current = new Audio();
-    voiceCallAudioRef.current = new Audio();
-    
-    voiceCallAudioRef.current.onended = () => {
-      setCallState('listening');
-      // Restart listening after speaking
-      if (isVoiceCallActive) {
-        setTimeout(() => {
-          try {
-            recognitionRef.current?.start();
-          } catch (error) {
-            console.error('Error restarting after audio:', error);
-          }
-        }, 500);
-      }
+    audioRef.current.onended = () => {
+      setIsSpeaking(false);
     };
 
-    // Add Lídia welcome message
+    // Add welcome message
     if (messages.length === 0) {
       setMessages([{
         role: 'assistant',
-        content: 'Olá! Meu nome é Lídia, assistente de vendas da VoiceAI Hub. Estou aqui para apresentar nossa plataforma e ajudá-lo a encontrar o agente de IA perfeito para o seu negócio. Como posso ajudar você hoje?',
+        content: 'Olá! Sou o assistente da VoiceAI Hub. Como posso ajudar você hoje?',
         timestamp: new Date()
       }]);
     }
@@ -94,6 +66,16 @@ export default function FloatingChat() {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    } else {
+      recognitionRef.current?.start();
+      setIsListening(true);
+    }
   };
 
   const sendMessage = async (text = inputText) => {
@@ -110,6 +92,7 @@ export default function FloatingChat() {
     setIsLoading(true);
 
     try {
+      // Get token
       const token = localStorage.getItem('token');
       
       if (!token) {
@@ -128,13 +111,12 @@ export default function FloatingChat() {
         throw new Error('Você precisa ter uma assinatura ativa para usar o chat. Visite o Marketplace para adquirir um agente.');
       }
 
-      // Call agent API - Lídia customized system prompt for sales
+      // Call agent API
       const response = await axios.post(
         `${API}/agent/execute`,
         {
           input_text: text,
-          session_id: sessionId,
-          custom_prompt: "Você é Lídia, uma assistente de vendas especializada da VoiceAI Hub. Sua missão é apresentar a plataforma de forma envolvente, explicar os benefícios dos agentes de IA, ajudar o cliente a escolher o agente ideal para suas necessidades e incentivá-lo a fazer uma assinatura. Seja calorosa, profissional e consultiva. Destaque casos de uso, ROI e como a IA pode transformar o negócio do cliente."
+          session_id: sessionId
         },
         {
           headers: {
@@ -148,12 +130,16 @@ export default function FloatingChat() {
       const assistantMessage = {
         role: 'assistant',
         content: response.data.output_text,
-        timestamp: new Date()
+        timestamp: new Date(),
+        audio: response.data.output_audio_base64
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-      
-      // NO audio playback in text mode
+
+      // Play audio if available
+      if (response.data.output_audio_base64) {
+        playAudio(response.data.output_audio_base64);
+      }
 
     } catch (error) {
       console.error('Error sending message:', error);
@@ -181,89 +167,11 @@ export default function FloatingChat() {
     }
   };
 
-  const handleVoiceMessage = async (transcript) => {
-    if (!transcript.trim()) return;
-
-    setCallState('speaking');
-
-    try {
-      const token = localStorage.getItem('token');
-      const subsRes = await axios.get(`${API}/subscriptions/my`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      const activeSubscription = subsRes.data.find(sub => sub.status === 'active');
-      
-      if (!activeSubscription) {
-        throw new Error('Você precisa ter uma assinatura ativa');
-      }
-
-      const response = await axios.post(
-        `${API}/agent/execute`,
-        {
-          input_text: transcript,
-          session_id: `${sessionId}_voice`,
-          custom_prompt: "Você é Lídia, uma assistente de vendas especializada da VoiceAI Hub. Seja calorosa, consultiva e ajude o cliente a entender como nossa plataforma pode transformar seu negócio com IA."
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${activeSubscription.api_key}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      // Play audio response
-      if (response.data.output_audio_base64 && voiceCallAudioRef.current) {
-        voiceCallAudioRef.current.src = `data:audio/mpeg;base64,${response.data.output_audio_base64}`;
-        voiceCallAudioRef.current.play();
-      } else {
-        setCallState('listening');
-        setTimeout(() => {
-          try {
-            recognitionRef.current?.start();
-          } catch (error) {
-            console.error('Error restarting:', error);
-          }
-        }, 500);
-      }
-
-    } catch (error) {
-      console.error('Error in voice call:', error);
-      setCallState('idle');
-    }
-  };
-
-  const startVoiceCall = () => {
-    setIsVoiceCallActive(true);
-    setCallState('connecting');
-    
-    setTimeout(() => {
-      setCallState('listening');
-      try {
-        recognitionRef.current?.start();
-      } catch (error) {
-        console.error('Error starting voice recognition:', error);
-        setCallState('idle');
-      }
-    }, 1000);
-  };
-
-  const endVoiceCall = () => {
-    setIsVoiceCallActive(false);
-    setCallState('idle');
-    
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (error) {
-        console.error('Error stopping recognition:', error);
-      }
-    }
-    
-    if (voiceCallAudioRef.current) {
-      voiceCallAudioRef.current.pause();
-      voiceCallAudioRef.current.currentTime = 0;
+  const playAudio = (base64Audio) => {
+    if (audioRef.current) {
+      audioRef.current.src = `data:audio/mpeg;base64,${base64Audio}`;
+      audioRef.current.play();
+      setIsSpeaking(true);
     }
   };
 
@@ -274,111 +182,12 @@ export default function FloatingChat() {
     }
   };
 
-  // Voice Call UI - Inside floating window (not fullscreen)
-  if (isVoiceCallActive) {
-    return (
-      <div className="fixed bottom-6 right-6 z-50 w-96 h-[600px] bg-gradient-to-br from-purple-900 via-purple-800 to-pink-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden border-2 border-purple-300">
-        {/* Header */}
-        <div className="bg-black/20 backdrop-blur-sm text-white p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-white/20 p-2 rounded-lg">
-              <Phone className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-bold text-lg">Lídia</h3>
-              <p className="text-xs text-purple-200">Assistente de Vendas</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setIsMinimized(true)}
-            className="hover:bg-white/20 p-2 rounded-lg transition-colors"
-            aria-label="Minimizar"
-          >
-            <Minimize2 className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Voice Call Content */}
-        <div className="flex-1 flex flex-col items-center justify-center p-6 relative">
-          {/* Background decorativo */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-10 left-10 w-32 h-32 bg-purple-400 rounded-full blur-2xl"></div>
-            <div className="absolute bottom-10 right-10 w-32 h-32 bg-pink-400 rounded-full blur-2xl"></div>
-          </div>
-
-          {/* Status Badge */}
-          <div className="relative z-10 mb-6">
-            <span className={`inline-block text-sm px-4 py-2 rounded-full font-medium ${
-              callState === 'connecting' ? 'bg-yellow-500' : 
-              callState === 'listening' ? 'bg-green-500' : 
-              callState === 'speaking' ? 'bg-blue-500' : 
-              'bg-gray-500'
-            }`}>
-              {callState === 'connecting' && '🔄 Conectando...'}
-              {callState === 'listening' && '🎤 Escutando você...'}
-              {callState === 'speaking' && '🔊 Lídia falando...'}
-            </span>
-          </div>
-
-          {/* Círculo central com animação - COMPACTO */}
-          <div className="relative z-10 mb-8">
-            {callState === 'speaking' && (
-              <>
-                <div className="absolute inset-0 animate-ping">
-                  <div className="w-48 h-48 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 opacity-30"></div>
-                </div>
-                <div className="absolute inset-0 animate-pulse" style={{animationDelay: '0.3s'}}>
-                  <div className="w-48 h-48 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 opacity-20"></div>
-                </div>
-              </>
-            )}
-
-            <div className={`absolute inset-0 rounded-full ${
-              callState === 'speaking' 
-                ? 'animate-pulse bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500' 
-                : callState === 'listening'
-                ? 'animate-pulse bg-gradient-to-r from-green-400 to-emerald-500'
-                : 'bg-gradient-to-r from-purple-400 to-pink-400'
-            }`} style={{padding: '6px'}}>
-              <div className="w-full h-full rounded-full bg-purple-900"></div>
-            </div>
-
-            {/* Avatar de Lídia - MENOR */}
-            <div className="relative w-48 h-48 rounded-full overflow-hidden shadow-2xl flex items-center justify-center" style={{margin: '6px'}}>
-              <div className="text-7xl">👩‍💼</div>
-            </div>
-          </div>
-
-          {/* Instruções */}
-          <p className="relative z-10 text-white/80 text-center text-sm mb-6 max-w-xs">
-            Fale naturalmente para conversar com Lídia sobre a plataforma
-          </p>
-
-          {/* Botão de encerrar */}
-          <button
-            onClick={endVoiceCall}
-            className="relative z-10 bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full font-semibold shadow-xl transition-all flex items-center gap-2"
-          >
-            <PhoneOff className="w-5 h-5" />
-            Encerrar Chamada
-          </button>
-        </div>
-
-        <audio ref={voiceCallAudioRef} className="hidden" />
-      </div>
-    );
-  }
-
-  // Normal chat UI
   if (!isOpen) {
     return (
       <button
-        onClick={() => {
-          console.log('FloatingChat button clicked!');
-          setIsOpen(true);
-        }}
+        onClick={() => setIsOpen(true)}
         className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-full p-4 shadow-2xl transition-all duration-300 hover:scale-110 group"
-        aria-label="Abrir chat com Lídia"
+        aria-label="Abrir chat"
       >
         <MessageSquare className="w-6 h-6" />
         <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
@@ -388,8 +197,6 @@ export default function FloatingChat() {
     );
   }
 
-  console.log('FloatingChat rendering - isOpen:', isOpen, 'isMinimized:', isMinimized, 'isVoiceCallActive:', isVoiceCallActive);
-
   if (isMinimized) {
     return (
       <div className="fixed bottom-6 right-6 z-50">
@@ -398,7 +205,7 @@ export default function FloatingChat() {
           className="bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg px-4 py-3 shadow-2xl flex items-center gap-3 hover:from-purple-700 hover:to-purple-800 transition-all"
         >
           <MessageSquare className="w-5 h-5" />
-          <span className="font-medium">Chat com Lídia</span>
+          <span className="font-medium">Chat com IA</span>
           {messages.length > 1 && (
             <span className="bg-white text-purple-600 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
               {messages.length - 1}
@@ -418,8 +225,8 @@ export default function FloatingChat() {
             <MessageSquare className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg">Lídia</h3>
-            <p className="text-xs text-purple-100">Assistente de Vendas</p>
+            <h3 className="font-bold text-lg">Assistente VoiceAI</h3>
+            <p className="text-xs text-purple-100">Sempre online</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -457,6 +264,15 @@ export default function FloatingChat() {
               }`}
             >
               <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+              {message.audio && (
+                <button
+                  onClick={() => playAudio(message.audio)}
+                  className="mt-2 flex items-center gap-2 text-xs opacity-70 hover:opacity-100 transition-opacity"
+                >
+                  <Volume2 className="w-4 h-4" />
+                  Ouvir resposta
+                </button>
+              )}
               <p className="text-xs opacity-60 mt-1">
                 {message.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
               </p>
@@ -489,12 +305,15 @@ export default function FloatingChat() {
               style={{ maxHeight: '80px' }}
             />
             <button
-              onClick={startVoiceCall}
-              className="p-2 rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors"
-              aria-label="Iniciar chamada de voz"
-              title="Conversar por voz com Lídia"
+              onClick={toggleListening}
+              className={`p-2 rounded-lg transition-colors ${
+                isListening
+                  ? 'bg-red-500 text-white animate-pulse'
+                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+              }`}
+              aria-label={isListening ? 'Parar de ouvir' : 'Começar a ouvir'}
             >
-              <Phone className="w-4 h-4" />
+              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
             </button>
           </div>
           <button
@@ -506,9 +325,14 @@ export default function FloatingChat() {
             <Send className="w-5 h-5" />
           </button>
         </div>
+        
+        {isSpeaking && (
+          <div className="mt-2 flex items-center gap-2 text-xs text-purple-600">
+            <Volume2 className="w-4 h-4 animate-pulse" />
+            <span>Reproduzindo áudio...</span>
+          </div>
+        )}
       </div>
-
-      <audio ref={voiceCallAudioRef} className="hidden" />
     </div>
   );
 }
