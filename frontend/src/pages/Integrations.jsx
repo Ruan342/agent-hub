@@ -508,6 +508,51 @@ function IntegrationModal({ type, data, onClose, onSave, subscriptions, agents, 
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Seletor de Agente */}
+          {!isEditing && (
+            <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-4">
+              <label className="block text-sm font-semibold text-purple-900 mb-2">
+                🤖 Selecione o Agente para esta Integração
+              </label>
+              <select
+                value={selectedSubscriptionId}
+                onChange={(e) => setSelectedSubscriptionId(e.target.value)}
+                className="w-full px-4 py-2 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                required
+              >
+                <option value="">-- Escolha um agente --</option>
+                {subscriptions.map((sub) => {
+                  const agent = agents.find(a => a.subscription_id === sub.id);
+                  return (
+                    <option key={sub.id} value={sub.id}>
+                      {agent?.name || sub.agent_id}
+                    </option>
+                  );
+                })}
+              </select>
+              <p className="text-xs text-purple-700 mt-2">
+                💡 Esta integração ficará vinculada ao agente selecionado
+              </p>
+            </div>
+          )}
+
+          {isEditing && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <p className="text-sm text-gray-600">
+                🤖 Agente: <span className="font-semibold text-gray-900">
+                  {(() => {
+                    const sub = subscriptions.find(s => s.id === data.subscription_id);
+                    const agent = agents.find(a => a.subscription_id === sub?.id);
+                    return agent?.name || 'Carregando...';
+                  })()}
+                </span>
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Não é possível alterar o agente de uma integração existente
+              </p>
+            </div>
+          )}
+
           {/* Nome da Integração */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
