@@ -209,7 +209,7 @@ export default function FloatingChat() {
             </div>
             <div>
               <h3 className="font-bold text-lg text-gray-900">Lídia</h3>
-              <p className="text-xs text-gray-600">Chamada de Voz</p>
+              <p className="text-xs text-gray-600">SDR de IA · Vendas Outbound</p>
             </div>
           </div>
           <button
