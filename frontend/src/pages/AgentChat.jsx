@@ -698,7 +698,7 @@ export default function AgentChat() {
                   ? 'animate-pulse bg-gradient-to-r from-green-400 to-emerald-500'
                   : 'bg-gradient-to-r from-purple-400 to-pink-400'
               }`} style={{padding: '8px'}}>
-                <div className="w-full h-full rounded-full bg-white"></div>
+                <div className="w-full h-full rounded-full bg-gray-50"></div>
               </div>
 
               {/* Círculo interno com imagem do mascote */}
