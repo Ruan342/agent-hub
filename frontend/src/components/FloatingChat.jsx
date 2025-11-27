@@ -95,15 +95,20 @@ export default function FloatingChat() {
       // Get token
       const token = localStorage.getItem('token');
       
+      if (!token) {
+        throw new Error('Você precisa estar logado para usar o chat');
+      }
+      
       // Get user's first active subscription to use as API key
       const subsRes = await axios.get(`${API}/subscriptions/my`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 10000
       });
 
       const activeSubscription = subsRes.data.find(sub => sub.status === 'active');
       
       if (!activeSubscription) {
-        throw new Error('Nenhuma assinatura ativa encontrada');
+        throw new Error('Você precisa ter uma assinatura ativa para usar o chat. Visite o Marketplace para adquirir um agente.');
       }
 
       // Call agent API
@@ -117,7 +122,8 @@ export default function FloatingChat() {
           headers: {
             'Authorization': `Bearer ${activeSubscription.api_key}`,
             'Content-Type': 'application/json'
-          }
+          },
+          timeout: 30000
         }
       );
 
@@ -138,9 +144,19 @@ export default function FloatingChat() {
     } catch (error) {
       console.error('Error sending message:', error);
       
+      let errorText = 'Desculpe, ocorreu um erro ao processar sua mensagem.';
+      
+      if (error.message) {
+        errorText = error.message;
+      } else if (error.response?.data?.detail) {
+        errorText = error.response.data.detail;
+      } else if (error.code === 'ECONNABORTED') {
+        errorText = 'Timeout: A resposta está demorando muito. Por favor, tente novamente.';
+      }
+      
       const errorMessage = {
         role: 'assistant',
-        content: error.response?.data?.detail || 'Desculpe, ocorreu um erro ao processar sua mensagem. Por favor, tente novamente.',
+        content: errorText,
         timestamp: new Date(),
         isError: true
       };
