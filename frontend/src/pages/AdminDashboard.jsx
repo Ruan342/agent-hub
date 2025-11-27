@@ -191,6 +191,7 @@ export default function AdminDashboard() {
       mascot_image_hero_url: agent.mascot_image_hero_url || "",
       mascot_image_feature_url: agent.mascot_image_feature_url || "",
       mascot_image_cta_url: agent.mascot_image_cta_url || "",
+      voice_call_image_url: agent.voice_call_image_url || "",
       elevenlabs_voice_id: agent.elevenlabs_voice_id,
       base_prompt: agent.base_prompt || "",
       voice_sample_url: agent.voice_sample_url || "",
