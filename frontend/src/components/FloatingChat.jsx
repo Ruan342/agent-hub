@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { MessageSquare, X, Send, Mic, MicOff, Volume2, Loader2, Minimize2 } from "lucide-react";
+import { MessageSquare, X, Send, Phone, PhoneOff, Volume2, Loader2, Minimize2 } from "lucide-react";
 import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -8,12 +8,14 @@ const API = `${BACKEND_URL}/api`;
 export default function FloatingChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isVoiceMode, setIsVoiceMode] = useState(false); // NEW: Voice call mode
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [sessionId] = useState(`platform_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const [voiceCallState, setVoiceCallState] = useState('idle'); // NEW: idle, connecting, listening, speaking
+  const [sessionId] = useState(`lidia_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
