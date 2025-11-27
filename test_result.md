@@ -333,10 +333,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "VoiceAI Hub Platform Improvements testing completed successfully"
-    - "All 5 parts of the review request verified: sidebar, text chat, Lídia chat, voice modes"
-    - "Critical audio behavior differences confirmed: text chat silent, voice mode plays audio"
-    - "All UI elements and interactions working as specified"
+    - "Agent Selection for Integrations Feature testing completed successfully"
+    - "All 5 parts of the review request verified: sidebar navigation, integrations visualization, new integration modal with agent selector, edit integration modal restrictions, active integrations list"
+    - "Critical functionality confirmed: new integration modal has agent selector, edit modal correctly restricts agent changes, existing integrations show linked agents"
+    - "All UI elements and interactions working as specified in Portuguese review request"
   stuck_tasks: []
   test_all: true
   test_priority: "high_first"
