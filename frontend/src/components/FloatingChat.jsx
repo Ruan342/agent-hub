@@ -295,7 +295,7 @@ export default function FloatingChat() {
           </div>
           <div>
             <h3 className="font-bold text-lg">Lídia</h3>
-            <p className="text-xs text-purple-100">Assistente de Vendas</p>
+            <p className="text-xs text-purple-100">SDR de IA · Vendas Outbound</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
