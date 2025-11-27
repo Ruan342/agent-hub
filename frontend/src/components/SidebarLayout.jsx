@@ -142,6 +142,9 @@ export default function SidebarLayout({ children }) {
       >
         {children}
       </div>
+
+      {/* Floating Chat - Only show if user is logged in */}
+      {user.email && <FloatingChat />}
     </div>
   );
 }
