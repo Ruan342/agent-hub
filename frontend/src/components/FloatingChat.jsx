@@ -196,6 +196,75 @@ export default function FloatingChat() {
     );
   }
 
+  // Voice Mode UI - Compact within floating window
+  if (isVoiceMode) {
+    return (
+      <div className="fixed bottom-6 right-6 z-50 w-96 h-[600px] bg-gradient-to-br from-purple-900 via-purple-800 to-pink-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden border-2 border-purple-300">
+        {/* Header */}
+        <div className="bg-black/20 backdrop-blur-sm text-white p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 p-2 rounded-lg">
+              <Phone className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg">Lídia</h3>
+              <p className="text-xs text-purple-200">Chamada de Voz</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsVoiceMode(false)}
+            className="hover:bg-white/20 p-2 rounded-lg transition-colors"
+            aria-label="Fechar chamada"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Voice Call Content */}
+        <div className="flex-1 flex flex-col items-center justify-center p-6 relative">
+          {/* Background decorativo */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-10 left-10 w-32 h-32 bg-purple-400 rounded-full blur-2xl"></div>
+            <div className="absolute bottom-10 right-10 w-32 h-32 bg-pink-400 rounded-full blur-2xl"></div>
+          </div>
+
+          {/* Status Badge */}
+          <div className="relative z-10 mb-6">
+            <span className="inline-block text-sm px-4 py-2 rounded-full font-medium bg-green-500">
+              🎤 Modo Voz Ativo
+            </span>
+          </div>
+
+          {/* Círculo central com emoji Lídia */}
+          <div className="relative z-10 mb-8">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 animate-pulse" style={{padding: '6px'}}>
+              <div className="w-full h-full rounded-full bg-purple-900"></div>
+            </div>
+
+            {/* Avatar de Lídia */}
+            <div className="relative w-48 h-48 rounded-full overflow-hidden shadow-2xl flex items-center justify-center" style={{margin: '6px'}}>
+              <div className="text-7xl">👩‍💼</div>
+            </div>
+          </div>
+
+          {/* Instruções */}
+          <p className="relative z-10 text-white/80 text-center text-sm mb-6 max-w-xs">
+            Fale naturalmente para conversar com Lídia sobre a plataforma
+          </p>
+
+          {/* Botão de encerrar */}
+          <button
+            onClick={() => setIsVoiceMode(false)}
+            className="relative z-10 bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full font-semibold shadow-xl transition-all flex items-center gap-2"
+          >
+            <PhoneOff className="w-5 h-5" />
+            Encerrar Chamada
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (isMinimized) {
     return (
       <div className="fixed bottom-6 right-6 z-50">
@@ -204,7 +273,7 @@ export default function FloatingChat() {
           className="bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg px-4 py-3 shadow-2xl flex items-center gap-3 hover:from-purple-700 hover:to-purple-800 transition-all"
         >
           <MessageSquare className="w-5 h-5" />
-          <span className="font-medium">Chat com IA</span>
+          <span className="font-medium">Chat com Lídia</span>
           {messages.length > 1 && (
             <span className="bg-white text-purple-600 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
               {messages.length - 1}
