@@ -297,6 +297,18 @@ frontend:
         agent: "testing"
         comment: "🎯 TESTE COMPLETO DAS MELHORIAS DA PLATAFORMA VOICEAI HUB EXECUTADO: Teste abrangente de todas as melhorias implementadas conforme review request em português realizado com sucesso. ✅ PARTE 1 - SIDEBAR E NAVEGAÇÃO: 1) Login com analytics@test.com/test123 realizado ✅ 2) Seletor de agente encontrado na sidebar no topo (dentro de .border-b) ✅ 3) Analytics e Integrações aparecem no menu para usuários com agentes ✅ 4) Navegação para Analytics funcionando corretamente ✅. ✅ PARTE 2 - CHAT DE TEXTO SEM ÁUDIO: 1) Chat do agente acessado via botão 'Abrir' ✅ 2) Mensagem 'Olá, como você funciona?' enviada ✅ 3) CRÍTICO: Chat de texto NÃO toca áudio automaticamente (apenas modo voz) ✅ 4) Campo de texto habilitado no modo texto ✅. ✅ PARTE 3 - CHAT FLUTUANTE LÍDIA: 1) Botão flutuante roxo encontrado no canto inferior direito ✅ 2) Chat abre com header 'Lídia - Assistente de Vendas' ✅ 3) Mensagem de boas-vindas menciona 'Lídia' ✅ 4) Botão de telefone (verde) presente ao lado do campo de texto ✅ 5) Mensagem 'Quais agentes vocês têm?' testada ✅ 6) CRÍTICO: Resposta vem apenas em texto (sem áudio) ✅. ✅ PARTE 4 - MODO VOZ COM LÍDIA: 1) Botão de telefone abre interface fullscreen ✅ 2) Mostra 'Lídia - Assistente de Vendas VoiceAI Hub' ✅ 3) Círculo central com emoji 👩‍💼 ✅ 4) Status 'Escutando você...' ✅ 5) Botão 'Encerrar Chamada' funcional ✅. ✅ PARTE 5 - MODO VOZ NO CHAT DO AGENTE: 1) Botão flutuante 'Modo Voz' (roxo) no canto inferior direito ✅ 2) Modo voz ativa corretamente ✅ 3) CRÍTICO: No modo voz, mensagens TOCAM áudio (diferente do chat de texto) ✅ 4) Campo de texto desabilitado em modo voz ✅. Todas as melhorias implementadas estão funcionando conforme especificado na review request."
 
+  - task: "Floating Chat Lídia Voice Mode Testing"
+    implemented: true
+    working: false
+    file: "frontend/src/components/FloatingChat.jsx"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ CRÍTICO: CHAT FLUTUANTE LÍDIA NÃO ESTÁ FUNCIONANDO: Teste abrangente do modo de voz do chat flutuante Lídia realizado conforme review request em português. ✅ PARTE 1 - BOTÃO FLUTUANTE: 1) Login com analytics@test.com/test123 realizado ✅ 2) Botão flutuante roxo encontrado no canto inferior direito (x=1840, y=1000) ✅ 3) Botão tem aria-label correto 'Abrir chat com Lídia' ✅. ❌ PROBLEMA CRÍTICO IDENTIFICADO: 1) Botão flutuante não responde ao clique - permanece visível após tentativa de abertura ❌ 2) Nenhuma janela de chat aparece após clique no botão ❌ 3) Nenhum elemento com classe 'w-96' (384px) é encontrado ❌ 4) Nenhum elemento contendo 'Lídia' é encontrado após clique ❌ 5) Nenhuma textarea para mensagem é encontrada ❌. DIAGNÓSTICO TÉCNICO: Componente FloatingChat está renderizando o botão corretamente, mas a funcionalidade de abertura do chat não está funcionando. O estado 'isOpen' não está sendo atualizado quando o botão é clicado. IMPACTO: Impossível testar o modo de voz compacto dentro da janela flutuante pois a janela não abre. AÇÃO NECESSÁRIA: Investigar e corrigir a funcionalidade de clique do botão flutuante no componente FloatingChat.jsx."
+
   - task: "Voice Chat Design Testing"
     implemented: true
     working: true
