@@ -84,10 +84,15 @@ export default function Integrations() {
 
   const createIntegration = async (integrationData) => {
     try {
+      if (!selectedSubscriptionId) {
+        toast.error("Por favor, selecione um agente para esta integração");
+        return;
+      }
+
       await axios.post(
         `${API}/integrations`,
         {
-          subscription_id: subscriptionId,
+          subscription_id: selectedSubscriptionId,
           type: modalType,
           name: integrationData.name,
           config: integrationData.config
@@ -97,6 +102,7 @@ export default function Integrations() {
       
       toast.success("Integração criada com sucesso!");
       closeModal();
+      setSelectedSubscriptionId("");
       fetchData();
     } catch (error) {
       console.error("Error creating integration:", error);
