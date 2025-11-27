@@ -767,9 +767,9 @@ export default function AgentChat() {
 
               {/* Círculo interno com imagem do mascote */}
               <div className="relative w-80 h-80 rounded-full overflow-hidden shadow-2xl" style={{margin: '8px'}}>
-                {agent?.mascot_image_url ? (
+                {(agent?.voice_call_image_url || agent?.mascot_image_url) ? (
                   <img 
-                    src={agent.mascot_image_url} 
+                    src={agent.voice_call_image_url || agent.mascot_image_url} 
                     alt={agent.name}
                     className="w-full h-full object-cover"
                   />
