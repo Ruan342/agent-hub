@@ -37,15 +37,28 @@ export default function SidebarLayout({ children }) {
         headers: { Authorization: `Bearer ${token}` }
       });
       const activeSubs = response.data.filter(sub => sub.status === 'active');
-      setSubscriptions(activeSubs);
+      
+      // Fetch agent details for each subscription
+      const subsWithAgents = await Promise.all(
+        activeSubs.map(async (sub) => {
+          try {
+            const agentRes = await axios.get(`${API}/agents/${sub.agent_id}`);
+            return { ...sub, agentName: agentRes.data.name };
+          } catch (error) {
+            return { ...sub, agentName: sub.agent_id };
+          }
+        })
+      );
+      
+      setSubscriptions(subsWithAgents);
       
       // Get selected agent from localStorage or use first subscription
       const saved = localStorage.getItem('selectedAgentId');
-      if (saved && activeSubs.find(s => s.agent_id === saved)) {
+      if (saved && subsWithAgents.find(s => s.agent_id === saved)) {
         setSelectedAgentId(saved);
-      } else if (activeSubs.length > 0) {
-        setSelectedAgentId(activeSubs[0].agent_id);
-        localStorage.setItem('selectedAgentId', activeSubs[0].agent_id);
+      } else if (subsWithAgents.length > 0) {
+        setSelectedAgentId(subsWithAgents[0].agent_id);
+        localStorage.setItem('selectedAgentId', subsWithAgents[0].agent_id);
       }
     } catch (error) {
       console.error('Error fetching subscriptions:', error);
