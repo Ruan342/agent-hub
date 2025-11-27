@@ -211,7 +211,10 @@ export default function AgentChat() {
         audioBase64: res.data.output_audio_base64
       };
       setMessages(prev => [...prev, assistantMsg]);
-      if (res.data.output_audio_base64) playAudio(res.data.output_audio_base64);
+      // Só toca áudio se estiver no modo voz
+      if (voiceMode && res.data.output_audio_base64) {
+        playAudio(res.data.output_audio_base64);
+      }
       await loadSessions(subscriptionId);
     } catch (error) {
       toast.error(error.response?.data?.detail || "Erro ao enviar");
