@@ -304,15 +304,12 @@ export default function FloatingChat() {
               style={{ maxHeight: '80px' }}
             />
             <button
-              onClick={toggleListening}
-              className={`p-2 rounded-lg transition-colors ${
-                isListening
-                  ? 'bg-red-500 text-white animate-pulse'
-                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-              }`}
-              aria-label={isListening ? 'Parar de ouvir' : 'Começar a ouvir'}
+              onClick={() => setIsVoiceMode(true)}
+              className="p-2 rounded-lg bg-green-500 hover:bg-green-600 text-white transition-colors"
+              aria-label="Iniciar chamada de voz com Lídia"
+              title="Conversar por voz com Lídia"
             >
-              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              <Phone className="w-4 h-4" />
             </button>
           </div>
           <button
