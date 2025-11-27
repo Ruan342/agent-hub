@@ -408,6 +408,15 @@ export default function Integrations() {
                       <div>
                         <h3 className="font-semibold text-gray-900">{integration.name}</h3>
                         <p className="text-sm text-gray-500">{type?.name}</p>
+                        {(() => {
+                          const sub = subscriptions.find(s => s.id === integration.subscription_id);
+                          const agent = agents.find(a => a.subscription_id === sub?.id);
+                          return agent && (
+                            <p className="text-xs text-purple-600 font-medium mt-1">
+                              🤖 {agent.name}
+                            </p>
+                          );
+                        })()}
                       </div>
                     </div>
                     
