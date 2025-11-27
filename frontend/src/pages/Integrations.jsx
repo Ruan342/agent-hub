@@ -466,11 +466,20 @@ export default function Integrations() {
 }
 
 // Integration Configuration Modal Component
-function IntegrationModal({ type, data, onClose, onSave }) {
+function IntegrationModal({ type, data, onClose, onSave, subscriptions, agents, selectedSubscriptionId, setSelectedSubscriptionId }) {
   const [formData, setFormData] = useState({
     name: data.name || "",
     config: data.config || {}
   });
+
+  const isEditing = !!data.id;
+
+  useEffect(() => {
+    // If editing, set the subscription ID
+    if (isEditing && data.subscription_id) {
+      setSelectedSubscriptionId(data.subscription_id);
+    }
+  }, [data, isEditing, setSelectedSubscriptionId]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
