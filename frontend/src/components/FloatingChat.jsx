@@ -199,38 +199,38 @@ export default function FloatingChat() {
   // Voice Mode UI - Compact within floating window
   if (isVoiceMode) {
     return (
-      <div className="fixed bottom-6 right-6 z-50 w-96 h-[600px] bg-gradient-to-br from-purple-900 via-purple-800 to-pink-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden border-2 border-purple-300">
+      <div className="fixed bottom-6 right-6 z-50 w-96 h-[600px] bg-gray-50 rounded-2xl shadow-2xl flex flex-col overflow-hidden border-2 border-gray-200">
         {/* Header */}
-        <div className="bg-black/20 backdrop-blur-sm text-white p-4 flex items-center justify-between">
+        <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-white/20 p-2 rounded-lg">
-              <Phone className="w-5 h-5" />
+            <div className="bg-purple-100 p-2 rounded-lg">
+              <Phone className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <h3 className="font-bold text-lg">Lídia</h3>
-              <p className="text-xs text-purple-200">Chamada de Voz</p>
+              <h3 className="font-bold text-lg text-gray-900">Lídia</h3>
+              <p className="text-xs text-gray-600">Chamada de Voz</p>
             </div>
           </div>
           <button
             onClick={() => setIsVoiceMode(false)}
-            className="hover:bg-white/20 p-2 rounded-lg transition-colors"
+            className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
             aria-label="Fechar chamada"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 text-gray-600" />
           </button>
         </div>
 
         {/* Voice Call Content */}
         <div className="flex-1 flex flex-col items-center justify-center p-6 relative">
-          {/* Background decorativo */}
-          <div className="absolute inset-0 opacity-10">
+          {/* Background decorativo sutil */}
+          <div className="absolute inset-0 opacity-5">
             <div className="absolute top-10 left-10 w-32 h-32 bg-purple-400 rounded-full blur-2xl"></div>
             <div className="absolute bottom-10 right-10 w-32 h-32 bg-pink-400 rounded-full blur-2xl"></div>
           </div>
 
           {/* Status Badge */}
           <div className="relative z-10 mb-6">
-            <span className="inline-block text-sm px-4 py-2 rounded-full font-medium bg-green-500">
+            <span className="inline-block text-sm px-4 py-2 rounded-full font-medium bg-green-500 text-white">
               🎤 Modo Voz Ativo
             </span>
           </div>
@@ -238,7 +238,7 @@ export default function FloatingChat() {
           {/* Círculo central com emoji Lídia */}
           <div className="relative z-10 mb-8">
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 animate-pulse" style={{padding: '6px'}}>
-              <div className="w-full h-full rounded-full bg-purple-900"></div>
+              <div className="w-full h-full rounded-full bg-gray-50"></div>
             </div>
 
             {/* Avatar de Lídia */}
@@ -248,7 +248,7 @@ export default function FloatingChat() {
           </div>
 
           {/* Instruções */}
-          <p className="relative z-10 text-white/80 text-center text-sm mb-6 max-w-xs">
+          <p className="relative z-10 text-gray-700 text-center text-sm mb-6 max-w-xs">
             Fale naturalmente para conversar com Lídia sobre a plataforma
           </p>
 
