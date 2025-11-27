@@ -224,8 +224,8 @@ export default function FloatingChat() {
             <MessageSquare className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-lg">Assistente VoiceAI</h3>
-            <p className="text-xs text-purple-100">Sempre online</p>
+            <h3 className="font-bold text-lg">Lídia</h3>
+            <p className="text-xs text-purple-100">Assistente de Vendas</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
