@@ -261,6 +261,18 @@ frontend:
         agent: "testing"
         comment: "🎉 NOVO DESIGN DO CHAT DE VOZ TESTADO COM SUCESSO: Teste visual completo do novo design implementado realizado com êxito. ✅ MELHORIAS VERIFICADAS: 1) Botão de voz flutuante discreto no canto inferior direito (posição x=1832, y=912) ✅ 2) Botão 'Texto' removido corretamente (não encontrado) ✅ 3) Campo de texto habilitado no modo texto e desabilitado no modo voz ✅ 4) Tooltip 'Modo Voz' aparece no hover ✅ 5) Card flutuante com status aparece quando modo voz é ativado ✅ 6) Card mostra status 'Escutando...' corretamente ✅ 7) Botão 'Desativar' presente no card ✅ 8) Elementos de animação detectados (3 elementos) ✅ 9) Transição entre modos funcionando perfeitamente ✅ 10) Interface mais limpa e intuitiva ✅. Todas as melhorias solicitadas foram implementadas corretamente e estão funcionando como esperado."
 
+  - task: "FloatingChat Component Testing"
+    implemented: true
+    working: true
+    file: "frontend/src/components/FloatingChat.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎉 TESTE DO CHAT FLUTUANTE CONCLUÍDO COM SUCESSO TOTAL: Teste abrangente do componente FloatingChat realizado conforme solicitado na review request. ✅ FLUXO COMPLETO TESTADO: 1) Login com admin@voiceai.com/admin123 realizado com sucesso ✅ 2) Navegação para página admin funcionando ✅ 3) Botão flutuante roxo encontrado no canto inferior direito (posição x=1840, y=1000) com aria-label='Abrir chat' ✅ 4) Chat abre corretamente mostrando janela de 384px width e ~600px height ✅ 5) Header 'Assistente VoiceAI' presente ✅ 6) Mensagem de boas-vindas 'Olá! Sou o assistente da VoiceAI Hub. Como posso ajudar você hoje?' exibida ✅ 7) Campo textarea com placeholder 'Digite sua mensagem...' funcional ✅ 8) Botão enviar com aria-label='Enviar mensagem' funcionando ✅ 9) Funcionalidade de minimizar testada - chat minimiza para barra pequena com texto 'Chat com IA' ✅ 10) Reabertura do chat minimizado funcionando com histórico preservado ✅ 11) Botão fechar com aria-label='Fechar' retorna ao botão inicial ✅. Todos os seletores especificados na review request funcionando corretamente. Componente FloatingChat totalmente operacional em páginas autenticadas."
+
   - task: "Voice Chat Design Testing"
     implemented: true
     working: true
