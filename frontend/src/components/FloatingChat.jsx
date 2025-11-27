@@ -113,12 +113,13 @@ export default function FloatingChat() {
         throw new Error('Você precisa ter uma assinatura ativa para usar o chat. Visite o Marketplace para adquirir um agente.');
       }
 
-      // Call agent API
+      // Call agent API - Lídia customized system prompt for outbound sales
       const response = await axios.post(
         `${API}/agent/execute`,
         {
           input_text: text,
-          session_id: sessionId
+          session_id: sessionId,
+          custom_prompt: "Você é Lídia, uma SDR (Sales Development Representative) de IA especializada em vendas outbound da VoiceAI Hub. Seu papel é prospectar ativamente, qualificar leads, apresentar nossa plataforma de agentes de IA e gerar oportunidades de vendas. Seja proativa, consultiva e focada em resultados. Faça perguntas qualificadoras (BANT: Budget, Authority, Need, Timeline), identifique dores do negócio, apresente cases de sucesso, demonstre ROI concreto e conduza o prospect até o fechamento ou agendamento de demo. Use técnicas de vendas consultivas e sempre busque avançar o prospect no funil."
         },
         {
           headers: {
