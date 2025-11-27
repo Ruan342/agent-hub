@@ -91,14 +91,12 @@ export default function Analytics() {
       setHealth(healthRes.data);
       setLogs(logsRes.data.logs);
       
-      // Fetch rate limits if subscription is selected
-      if (subscriptionId) {
-        const rateLimitRes = await axios.get(`${API}/rate-limits/status`, {
-          params: { subscription_id: subscriptionId },
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setRateLimits(rateLimitRes.data);
-      }
+      // Fetch rate limits for selected subscription
+      const rateLimitRes = await axios.get(`${API}/rate-limits/status`, {
+        params: { subscription_id: selectedSubscription.id },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRateLimits(rateLimitRes.data);
       
     } catch (error) {
       console.error("Error fetching analytics:", error);
