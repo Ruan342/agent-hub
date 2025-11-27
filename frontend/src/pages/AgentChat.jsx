@@ -736,8 +736,8 @@ export default function AgentChat() {
             {/* Transcrição em tempo real */}
             {voiceCallTranscript && (
               <div className="mb-8 max-w-2xl">
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl px-8 py-4 border border-white/20">
-                  <p className="text-white text-lg italic text-center">
+                <div className="bg-gray-100 rounded-2xl px-8 py-4 border-2 border-gray-200">
+                  <p className="text-gray-800 text-lg italic text-center">
                     "{voiceCallTranscript}"
                   </p>
                 </div>
@@ -746,18 +746,18 @@ export default function AgentChat() {
 
             {/* Instruções */}
             <div className="mb-8 text-center max-w-2xl">
-              <p className="text-white text-xl font-medium mb-2">
+              <p className="text-gray-900 text-xl font-medium mb-2">
                 {callState === 'connecting' && 'Preparando conexão com o agente...'}
                 {callState === 'listening' && 'Fale naturalmente, como uma ligação telefônica'}
                 {callState === 'speaking' && 'Pode interromper a qualquer momento!'}
               </p>
               {callState === 'speaking' && (
-                <p className="text-white/60 text-sm">
+                <p className="text-gray-600 text-sm">
                   Apenas comece a falar e o agente vai parar de falar
                 </p>
               )}
               {callState === 'listening' && (
-                <p className="text-white/60 text-sm">
+                <p className="text-gray-600 text-sm">
                   O agente está sempre escutando você
                 </p>
               )}
