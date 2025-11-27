@@ -455,6 +455,10 @@ export default function Integrations() {
           data={modalData}
           onClose={closeModal}
           onSave={createIntegration}
+          subscriptions={subscriptions}
+          agents={agents}
+          selectedSubscriptionId={selectedSubscriptionId}
+          setSelectedSubscriptionId={setSelectedSubscriptionId}
         />
       )}
     </SidebarLayout>
