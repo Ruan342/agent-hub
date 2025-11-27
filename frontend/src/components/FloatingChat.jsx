@@ -274,45 +274,61 @@ export default function FloatingChat() {
     }
   };
 
-  // Voice Call Fullscreen UI
+  // Voice Call UI - Inside floating window (not fullscreen)
   if (isVoiceCallActive) {
     return (
-      <div className="fixed inset-0 z-[100] bg-gradient-to-br from-purple-900 via-purple-800 to-pink-900 flex items-center justify-center">
-        {/* Background decorativo */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-64 h-64 bg-purple-500 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-20 w-64 h-64 bg-pink-500 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500 rounded-full blur-3xl"></div>
-        </div>
-
-        <div className="relative z-10 flex flex-col items-center justify-center">
-          {/* Informações */}
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-white mb-2">Lídia</h2>
-            <p className="text-xl text-purple-200">Assistente de Vendas VoiceAI Hub</p>
-            <div className="mt-4">
-              <span className={`inline-block text-sm px-4 py-1.5 rounded-full ${
-                callState === 'connecting' ? 'bg-yellow-500' : 
-                callState === 'listening' ? 'bg-green-500' : 
-                callState === 'speaking' ? 'bg-blue-500' : 
-                'bg-gray-500'
-              }`}>
-                {callState === 'connecting' && '🔄 Conectando...'}
-                {callState === 'listening' && '🎤 Escutando você...'}
-                {callState === 'speaking' && '🔊 Lídia falando...'}
-              </span>
+      <div className="fixed bottom-6 right-6 z-50 w-96 h-[600px] bg-gradient-to-br from-purple-900 via-purple-800 to-pink-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden border-2 border-purple-300">
+        {/* Header */}
+        <div className="bg-black/20 backdrop-blur-sm text-white p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 p-2 rounded-lg">
+              <Phone className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg">Lídia</h3>
+              <p className="text-xs text-purple-200">Assistente de Vendas</p>
             </div>
           </div>
+          <button
+            onClick={() => setIsMinimized(true)}
+            className="hover:bg-white/20 p-2 rounded-lg transition-colors"
+            aria-label="Minimizar"
+          >
+            <Minimize2 className="w-4 h-4" />
+          </button>
+        </div>
 
-          {/* Círculo central com animação */}
-          <div className="relative mb-12">
+        {/* Voice Call Content */}
+        <div className="flex-1 flex flex-col items-center justify-center p-6 relative">
+          {/* Background decorativo */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-10 left-10 w-32 h-32 bg-purple-400 rounded-full blur-2xl"></div>
+            <div className="absolute bottom-10 right-10 w-32 h-32 bg-pink-400 rounded-full blur-2xl"></div>
+          </div>
+
+          {/* Status Badge */}
+          <div className="relative z-10 mb-6">
+            <span className={`inline-block text-sm px-4 py-2 rounded-full font-medium ${
+              callState === 'connecting' ? 'bg-yellow-500' : 
+              callState === 'listening' ? 'bg-green-500' : 
+              callState === 'speaking' ? 'bg-blue-500' : 
+              'bg-gray-500'
+            }`}>
+              {callState === 'connecting' && '🔄 Conectando...'}
+              {callState === 'listening' && '🎤 Escutando você...'}
+              {callState === 'speaking' && '🔊 Lídia falando...'}
+            </span>
+          </div>
+
+          {/* Círculo central com animação - COMPACTO */}
+          <div className="relative z-10 mb-8">
             {callState === 'speaking' && (
               <>
                 <div className="absolute inset-0 animate-ping">
-                  <div className="w-80 h-80 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 opacity-30"></div>
+                  <div className="w-48 h-48 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 opacity-30"></div>
                 </div>
                 <div className="absolute inset-0 animate-pulse" style={{animationDelay: '0.3s'}}>
-                  <div className="w-80 h-80 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 opacity-20"></div>
+                  <div className="w-48 h-48 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 opacity-20"></div>
                 </div>
               </>
             )}
@@ -323,25 +339,32 @@ export default function FloatingChat() {
                 : callState === 'listening'
                 ? 'animate-pulse bg-gradient-to-r from-green-400 to-emerald-500'
                 : 'bg-gradient-to-r from-purple-400 to-pink-400'
-            }`} style={{padding: '8px'}}>
+            }`} style={{padding: '6px'}}>
               <div className="w-full h-full rounded-full bg-purple-900"></div>
             </div>
 
-            {/* Avatar de Lídia */}
-            <div className="relative w-80 h-80 rounded-full overflow-hidden shadow-2xl flex items-center justify-center" style={{margin: '8px'}}>
-              <div className="text-9xl">👩‍💼</div>
+            {/* Avatar de Lídia - MENOR */}
+            <div className="relative w-48 h-48 rounded-full overflow-hidden shadow-2xl flex items-center justify-center" style={{margin: '6px'}}>
+              <div className="text-7xl">👩‍💼</div>
             </div>
           </div>
+
+          {/* Instruções */}
+          <p className="relative z-10 text-white/80 text-center text-sm mb-6 max-w-xs">
+            Fale naturalmente para conversar com Lídia sobre a plataforma
+          </p>
 
           {/* Botão de encerrar */}
           <button
             onClick={endVoiceCall}
-            className="bg-red-500 hover:bg-red-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-2xl transition-all flex items-center gap-3"
+            className="relative z-10 bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full font-semibold shadow-xl transition-all flex items-center gap-2"
           >
-            <PhoneOff className="w-6 h-6" />
+            <PhoneOff className="w-5 h-5" />
             Encerrar Chamada
           </button>
         </div>
+
+        <audio ref={voiceCallAudioRef} className="hidden" />
       </div>
     );
   }
