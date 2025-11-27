@@ -33,6 +33,7 @@ export default function AdminDashboard() {
     mascot_image_hero_url: "",
     mascot_image_feature_url: "",
     mascot_image_cta_url: "",
+    voice_call_image_url: "",
     elevenlabs_voice_id: "",
     base_prompt: "",
     voice_sample_url: "",
