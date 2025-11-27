@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Menu, X, LayoutDashboard, FileText, Code2, Home, ShoppingBag, LogOut, LogIn } from "lucide-react";
+import { Sparkles, Menu, X, LayoutDashboard, FileText, Code2, Home, ShoppingBag, LogOut, LogIn, BarChart3, Plug } from "lucide-react";
 import FloatingChat from "./FloatingChat";
+import axios from "axios";
 
-const menuItems = [
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+const baseMenuItems = [
   { icon: Home, label: "Início", path: "/" },
   { icon: ShoppingBag, label: "Marketplace", path: "/marketplace" },
   { icon: LayoutDashboard, label: "Minhas Assinaturas", path: "/dashboard" },
@@ -14,13 +18,49 @@ const menuItems = [
 
 export default function SidebarLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [selectedAgentId, setSelectedAgentId] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    if (user.email && token) {
+      fetchSubscriptions();
+    }
+  }, [user.email, token]);
+
+  const fetchSubscriptions = async () => {
+    try {
+      const response = await axios.get(`${API}/subscriptions/my`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const activeSubs = response.data.filter(sub => sub.status === 'active');
+      setSubscriptions(activeSubs);
+      
+      // Get selected agent from localStorage or use first subscription
+      const saved = localStorage.getItem('selectedAgentId');
+      if (saved && activeSubs.find(s => s.agent_id === saved)) {
+        setSelectedAgentId(saved);
+      } else if (activeSubs.length > 0) {
+        setSelectedAgentId(activeSubs[0].agent_id);
+        localStorage.setItem('selectedAgentId', activeSubs[0].agent_id);
+      }
+    } catch (error) {
+      console.error('Error fetching subscriptions:', error);
+    }
+  };
+
+  const handleAgentSelect = (agentId) => {
+    setSelectedAgentId(agentId);
+    localStorage.setItem('selectedAgentId', agentId);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("selectedAgentId");
     navigate("/");
   };
 
@@ -30,6 +70,19 @@ export default function SidebarLayout({ children }) {
     }
     return location.pathname.startsWith(path);
   };
+
+  // Build menu items based on whether user has active subscriptions
+  const menuItems = [...baseMenuItems];
+  
+  if (subscriptions.length > 0 && selectedAgentId) {
+    const selectedSub = subscriptions.find(s => s.agent_id === selectedAgentId);
+    if (selectedSub) {
+      menuItems.push(
+        { icon: Plug, label: "Integrações", path: `/integrations/${selectedSub.id}`, requiresAgent: true },
+        { icon: BarChart3, label: "Analytics", path: `/analytics`, requiresAgent: true }
+      );
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
