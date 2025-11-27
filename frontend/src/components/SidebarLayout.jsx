@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Menu, X, LayoutDashboard, FileText, Code2, Home, ShoppingBag, LogOut, LogIn } from "lucide-react";
+import FloatingChat from "./FloatingChat";
 
 const menuItems = [
   { icon: Home, label: "Início", path: "/" },
