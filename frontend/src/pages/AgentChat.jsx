@@ -647,11 +647,11 @@ export default function AgentChat() {
         <audio ref={voiceCallAudioRef} className="hidden" />
       </div>
 
-      {/* Interface de Chamada de Voz em Tempo Real - Estilo ElevenLabs */}
+      {/* Interface de Chamada de Voz em Tempo Real - Fundo Branco */}
       {isVoiceCallActive && (
-        <div className="fixed inset-0 z-[100] bg-gradient-to-br from-purple-900 via-purple-800 to-pink-900 flex items-center justify-center">
-          {/* Background com padrão decorativo */}
-          <div className="absolute inset-0 opacity-10">
+        <div className="fixed inset-0 z-[100] bg-white flex items-center justify-center">
+          {/* Background com padrão decorativo sutil */}
+          <div className="absolute inset-0 opacity-5">
             <div className="absolute top-20 left-20 w-64 h-64 bg-purple-500 rounded-full blur-3xl"></div>
             <div className="absolute bottom-20 right-20 w-64 h-64 bg-pink-500 rounded-full blur-3xl"></div>
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500 rounded-full blur-3xl"></div>
@@ -660,8 +660,8 @@ export default function AgentChat() {
           <div className="relative z-10 flex flex-col items-center justify-center">
             {/* Informações do agente */}
             <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold text-white mb-2">{agent?.name}</h2>
-              <p className="text-xl text-purple-200">{agent?.segment}</p>
+              <h2 className="text-4xl font-bold text-gray-900 mb-2">{agent?.name}</h2>
+              <p className="text-xl text-gray-600">{agent?.segment}</p>
               <div className="mt-4">
                 <Badge className={`text-sm px-4 py-1.5 ${
                   callState === 'connecting' ? 'bg-yellow-500' : 
