@@ -284,11 +284,11 @@
                 <p style="color: #666; margin-bottom: 15px;">Cole este código no HTML do seu site:</p>
                 <div class="code-block">
 <span class="comment">&lt;!-- VoiceAI Widget --&gt;</span>
-<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="string">"https://voiceai-hub-9.preview.emergentagent.com/voiceai-widget.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="string">"http://localhost:8000/voiceai-widget.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
 <span class="tag">&lt;script&gt;</span>
   VoiceAIWidget.init({
     <span class="attr">apiKey:</span> <span class="string">'sua_api_key_aqui'</span>,
-    <span class="attr">apiUrl:</span> <span class="string">'https://voiceai-hub-9.preview.emergentagent.com/api'</span>,
+    <span class="attr">apiUrl:</span> <span class="string">'http://localhost:8000/api'</span>,
     <span class="attr">themeColor:</span> <span class="string">'#7C3AED'</span>,
     <span class="attr">position:</span> <span class="string">'bottom-right'</span>,
     <span class="attr">greetingMessage:</span> <span class="string">'Olá! Como posso ajudar?'</span>,
@@ -346,7 +346,7 @@
         // DEMO com API Key fictícia (para visualização)
         VoiceAIWidget.init({
             apiKey: 'demo_key_123456789',
-            apiUrl: 'https://voiceai-hub-9.preview.emergentagent.com/api',
+            apiUrl: 'http://localhost:8000/api',
             themeColor: '#7C3AED',
             position: 'bottom-right',
             greetingMessage: 'Olá! 👋 Sou o assistente virtual da VoiceAI Hub. Como posso ajudar você hoje?',

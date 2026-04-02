@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # 1. MongoDB Database
+  mongo:
+    image: mongo:6.0
+    container_name: agenthub_mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - agenthub_network
+
+  # 2. FastAPI Backend
+  api:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: agenthub_backend
+    restart: always
+    ports:
+      - "8001:8001"
+    environment:
+      - MONGO_URL=mongodb://mongo:27017
+      - DB_NAME=agenthub
+      - JWT_SECRET=agenthub_secret_local
+    volumes:
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      - mongo
+    networks:
+      - agenthub_network
+
+  # 3. React Frontend
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_BACKEND_URL=http://localhost:8001
+    container_name: agenthub_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    networks:
+      - agenthub_network
+
+networks:
+  agenthub_network:
+    driver: bridge
+
+volumes:
+  mongo_data:

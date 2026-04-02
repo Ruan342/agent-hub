@@ -1,5 +1,3 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # IDE and editors
 .idea/
 .vscode/
@@ -18,20 +16,20 @@ node_modules/
 
 # Testing
 /coverage
-
-# Next.js
-/.next/
-/out/
-next-env.d.ts
-*.tsbuildinfo
+test_reports/
+test_*.py
+*_test.py
 
 # Production builds
 /build
+/frontend/build
 dist/
 dist
 
-# Environment files (comprehensive coverage)
-
+# Environment variables (Critical)
+.env
+.env.*
+!.env.example
 *token.json*
 *credentials.json*
 
@@ -41,6 +39,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 dump.rdb
+*.log
 
 # System files
 .DS_Store
@@ -48,60 +47,33 @@ dump.rdb
 
 # Python
 __pycache__/
-*pyc*
+*.pyc
+*.pyo
+*.pyd
 venv/
 .venv/
+env/
+.env_python/
 
-# Development tools
+# Development tools & notebooks
 chainlit.md
 .chainlit
 .ipynb_checkpoints/
-.ac
+*.ipynb
 
-# Deployment
+# Deployment & Vercel
 .vercel
 
-# Data and databases
+# Databases e Data Storage
 agenthub/agents/youtube/db
+*.sqlite3
+mongo-volume/
 
 # Archive files and large assets
 **/*.zip
 **/*.tar.gz
 **/*.tar
 **/*.tgz
-*.pack
-*.deb
-*.dylib
 
 # Build caches
 .cache/
-
-# Mobile development
-android-sdk/ -e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*

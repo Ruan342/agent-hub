@@ -1,48 +1,67 @@
-# VoiceAI Hub - Plataforma de Agentes de IA por Voz
+# 🤖 Agent Hub Platform
 
-Uma plataforma completa para disponibilizar agentes de IA por voz para empresas, com integração Stripe para pagamentos e suporte a diferentes segmentos de negócio.
+Plataforma de SaaS focada em orquestração, contratação e faturamento de Agentes Multicanais de IA, atuando como o core de um ecossistema nativo de assinaturas B2B. Este projeto contém toda a interface do usuário, API central e gateways de conexão.
 
-## 🎯 Características Principais
+## 🚀 Arquitetura e Stack
+Este projeto atua como interface cliente-assistente, delegando processamento para a automação local (n8n, webhook etc).
+- **Frontend**: React.js, Tailwind CSS, Lucide Icons, SPA (Single Page Application)
+- **Backend**: Python (FastAPI), Async, JWT Auth
+- **Banco de Dados**: MongoDB (Document Store)
+- **Contêineres**: Docker + Docker Compose, isolando serviços
 
-### Para Clientes
-- **Marketplace de Agentes**: Browse e compre agentes de IA especializados em diferentes segmentos
-- **Planos Mensais**: Assinaturas flexíveis com pagamento via Stripe
-- **API Keys**: Receba keys únicas para integrar os agentes
-- **Webhooks**: Configure webhooks para conectar com CRM, WhatsApp, Email
-- **Dashboard**: Monitore suas assinaturas e configurações
-- **Solicitação Personalizada**: Peça agentes customizados se não encontrar o ideal
+---
 
-### Para Administradores
-- **Gestão de Agentes**: Crie, edite e delete agentes na plataforma
-- **Gerenciamento de Solicitações**: Acompanhe e processe pedidos de agentes personalizados
-- **Configuração ElevenLabs**: Associe voice IDs do ElevenLabs a cada agente
-- **Painel Administrativo**: Interface completa para gerenciar a plataforma
+## 💻 Instalação Rápida (Recomendada via Docker)
 
-## 🚀 Tecnologias
+Se quiser subir todo o ecossistema Agent Hub sem se preocupar com versões de Python ou Node, basta usar Docker. O banco de dados, frontend e o backend subirão automaticamente no host.
 
-**Backend**: FastAPI, MongoDB, Motor, JWT, Bcrypt, Stripe
-**Frontend**: React 19, React Router, Axios, Shadcn/UI, Tailwind CSS
+### 1. Requisitos
+- [Docker](https://www.docker.com/products/docker-desktop) instalado em seu ambiente.
+- (Opcional) Git para clonar.
 
-## 🔐 Credenciais Padrão
+### 2. Configure os Ambient Variables (Opcional)
+Na maioria dos testes locais nada disso é estrito usando Docker (pois ele assumirá fallbacks no compose), mas para Produção / Testes Reais:
+- No diretório `backend/`, copie `.env.example` para `.env` e ajuste variáveis importantes de gateway (tokens do stripe, elevenlabs).
+- No diretório `frontend/`, copie `.env.example` para `.env` (`REACT_APP_BACKEND_URL`).
 
-**Admin**: admin@voiceai.com / admin123
+### 3. Rodando o Ambiente
+Na raiz (mesma de `docker-compose.yml`), rode o terminal:
 
-## 💳 Fluxo de Pagamento
+```bash
+docker-compose up --build -d
+```
 
-1. Cliente seleciona agente → Sistema cria checkout Stripe
-2. Cliente completa pagamento → Retorna para página de sucesso
-3. Sistema faz polling do status → Confirma e cria assinatura com API key
+> **Acessando localmente**
+> - 🟢 frontend: [http://localhost:3000](http://localhost:3000)
+> - 🟢 REST Swagger Auto-Docs: [http://localhost:8001/docs](http://localhost:8001/docs)
 
-## 📊 Agentes Pré-configurados
+---
 
-- Assistente de Vendas Pro ($49.99/mês)
-- Suporte Cliente 24/7 ($39.99/mês)
-- Marketing Outbound ($59.99/mês)
-- Assistente Financeiro ($44.99/mês)
-- RH Recruiter Pro ($54.99/mês)
+## 🛠️ Instalação Manual (Modo Dev)
 
-## ✅ Status dos Testes
+Este formato é voltado se você for modificar o código rodando servidores locais individualmente.
+Você precisará ter instalado o NodeJS e o Python (>=3.10).
 
-- Backend: 14/14 testes passando (100%)
-- Frontend: Todos os fluxos funcionais
-- Integração Stripe: Operacional
+1. Suba seu MongoDB local (na porta padronizada `:27017`).
+2. **Terminal 1 — API**:
+   ```bash
+   cd backend
+   pip install -r requirements.txt
+   uvicorn server:app --reload --port 8001
+   ```
+3. **Terminal 2 — Painel Web**:
+   ```bash
+   cd frontend
+   npm install
+   npm start
+   ```
+
+---
+
+## 🤝 Estrutura do Sistema de Agentes
+
+O projeto base possui nativamente um "Marketplace" de "Licenças de Agentes", onde clientes acessam detalhes, checam preços e compram licenças. Você poderá alterar o fluxo de pagamento posteriormente na rota `/checkout/`, sendo hoje um mock visual elegante à espera das APIs do Stripe ou Pagar.me.
+
+As integrações comunicam-se via `/api/chat` usando Webhooks e garantem o isolamento e sigilo entre sessões.
+
+Licença privada. Não copie o código para reuso desautorizado.

@@ -364,7 +364,7 @@ export default function Analytics() {
                     </div>
                     <div className="text-sm text-gray-900">{log.message}</div>
                     <div className="text-xs text-gray-500 mt-1">
-                      {new Date(log.timestamp).toLocaleString('pt-BR')}
+                      {new Date(log.timestamp).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                     </div>
                   </div>
                   {!log.resolved && (

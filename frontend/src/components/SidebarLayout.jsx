@@ -89,8 +89,7 @@ export default function SidebarLayout({ children }) {
   
   if (subscriptions.length > 0 && selectedAgentId) {
     menuItems.push(
-      { icon: Plug, label: "Integrações", path: `/integrations`, requiresAgent: true },
-      { icon: BarChart3, label: "Analytics", path: `/analytics`, requiresAgent: true }
+      { icon: Plug, label: "Integrações", path: `/integrations`, requiresAgent: true }
     );
   }
 

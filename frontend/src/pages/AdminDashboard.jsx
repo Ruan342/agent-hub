@@ -844,7 +844,7 @@ export default function AdminDashboard() {
                               </Badge>
                             </div>
                             <p className="text-sm text-gray-600 mb-2">{request.description}</p>
-                            <p className="text-xs text-gray-500">Solicitado em: {new Date(request.created_at).toLocaleDateString('pt-BR')}</p>
+                            <p className="text-xs text-gray-500">Solicitado em: {new Date(request.created_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
                           </div>
                         </div>
                         

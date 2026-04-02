@@ -17,6 +17,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
+  
+  console.log("DASHBOARD SCOPE EXECUTING...");
 
   useEffect(() => {
     if (!token) {
@@ -26,29 +28,36 @@ export default function Dashboard() {
     fetchSubscriptions();
   }, []);
 
-  const fetchSubscriptions = async () => {
-    try {
-      const response = await axios.get(`${API}/subscriptions/my`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setSubscriptions(response.data);
-
-      const agentIds = [...new Set(response.data.map(sub => sub.agent_id))];
+  const fetchSubscriptions = () => {
+    console.log("DASHBOARD V2: Fetch started");
+    axios.get(`${API}/subscriptions/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(async (response) => {
+      console.log("DASHBOARD V2: Got subs", response.data);
+      setSubscriptions(response.data || []);
+      
+      const agentIds = [...new Set((response.data || []).map(sub => sub.agent_id).filter(id => id))];
       const agentData = {};
+      
       for (const agentId of agentIds) {
         try {
-          const agentResponse = await axios.get(`${API}/agents/${agentId}`);
-          agentData[agentId] = agentResponse.data;
-        } catch (error) {
-          console.error(`Error fetching agent ${agentId}`);
+          const agentRes = await axios.get(`${API}/agents/${agentId}`);
+          agentData[agentId] = agentRes.data;
+        } catch(e) {
+          console.error("DASHBOARD V2: Error fetching agent " + agentId);
         }
       }
       setAgents(agentData);
-    } catch (error) {
+    })
+    .catch((err) => {
+      console.error("DASHBOARD V2: Error", err);
       toast.error("Erro ao carregar assinaturas");
-    } finally {
-      setLoading(false);
-    }
+    })
+    .finally(() => {
+      console.log("DASHBOARD V2: Setting loading false");
+      setTimeout(() => setLoading(false), 300);
+    });
   };
 
   if (loading) {
@@ -119,8 +128,7 @@ export default function Dashboard() {
                   className="border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-md"
                 >
                   <CardHeader 
-                    className="cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-100"
-                    onClick={() => navigate(`/agent-chat/${subscription.id}`)}
+                    className="border-b border-gray-100"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -153,36 +161,20 @@ export default function Dashboard() {
                       <div className="text-right">
                         <div className="text-2xl font-bold text-purple-700">${agent.price}</div>
                         <div className="text-sm text-gray-500">por mês</div>
-                        <div className="grid grid-cols-3 gap-2 mt-2">
+                        <div className="grid grid-cols-2 gap-2 mt-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/agent-chat/${subscription.id}`);
-                            }}
+                            onClick={() => navigate(`/minhas-assinaturas`)}
                           >
                             Abrir
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/integrations/${subscription.id}`);
-                            }}
+                            onClick={() => navigate(`/integrations/${subscription.id}`)}
                           >
                             Integrações
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/analytics/${subscription.id}`);
-                            }}
-                          >
-                            Analytics
                           </Button>
                         </div>
                       </div>

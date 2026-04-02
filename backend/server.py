@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, File, UploadFile
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, File, UploadFile, Body
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
@@ -15,7 +15,7 @@ import bcrypt
 import jwt
 import shutil
 from PIL import Image
-from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
+import stripe
 from elevenlabs import ElevenLabs, VoiceSettings
 import base64
 import io
@@ -23,16 +23,43 @@ import json
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, Email, To, Content
 import asyncio
+
+import sys
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 from fastapi import BackgroundTasks
 import httpx
+from pathlib import Path
 
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+from passlib.context import CryptContext
+import jwt
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
+# ================== ENV CONFIG ==================
+ROOT_DIR = Path(__file__).resolve().parent
+load_dotenv(ROOT_DIR / ".env")
+
+# ================== DATABASE ==================
+mongo_url = os.getenv("MONGO_URL")
+db_name = os.getenv("DB_NAME", "agenthub")
+
+if not mongo_url:
+    raise Exception("❌ MONGO_URL não definido no .env")
+
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[db_name]
+
+# ================== UPLOAD CONFIG ==================
+BASE_DIR = Path(__file__).resolve().parent
+ROOT_DIR_PROJECT = BASE_DIR.parent
+_env_upload = os.getenv("UPLOAD_DIR", "uploads")
+if Path(_env_upload).is_absolute():
+    UPLOAD_DIR = Path(_env_upload)
+else:
+    UPLOAD_DIR = ROOT_DIR_PROJECT / _env_upload
+
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+(UPLOAD_DIR / "agents").mkdir(parents=True, exist_ok=True)
+(UPLOAD_DIR / "audio").mkdir(parents=True, exist_ok=True)
 
 # JWT Secret
 JWT_SECRET = os.environ.get('JWT_SECRET', 'your-secret-key-change-in-production')
@@ -46,15 +73,11 @@ STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY', 'sk_test_emergent')
 ELEVENLABS_API_KEY = os.environ.get('ELEVENLABS_API_KEY')
 eleven_client = ElevenLabs(api_key=ELEVENLABS_API_KEY) if ELEVENLABS_API_KEY else None
 
-# Upload directory
-UPLOAD_DIR = Path("/app/uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
-(UPLOAD_DIR / "agents").mkdir(exist_ok=True)
-
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 # Create the main app
 app = FastAPI()
+app.mount("/api/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 api_router = APIRouter(prefix="/api")
 
 # Models
@@ -151,6 +174,13 @@ class SubscriptionUpdate(BaseModel):
 class SubscriptionConfigUpdate(BaseModel):
     custom_prompt: Optional[str] = None
     config: Optional[Dict] = None
+
+class KnowledgeBaseConfig(BaseModel):
+    agent: str
+    duvidas_frequentes: str = ""
+    recomendacoes: str = ""
+    combos_de_produtos: str = ""
+    controle_de_estoque: str = ""
 
 class ChatMessage(BaseModel):
     role: str  # "user" or "assistant"
@@ -308,16 +338,84 @@ class MonitoringLog(BaseModel):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     resolved: bool = False
 
+class Subscription(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    agent_id: str
+    status: str = "active"
+    api_key: str = Field(default_factory=lambda: f"ag_{uuid.uuid4().hex}")
+    webhook_url: Optional[str] = None
+    config: Dict = {}
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    end_date: Optional[datetime] = None
+
+class ChatLink(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    subscription_id: str
+    agent_id: str
+    status: str = "active"  # active, used
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class ChatSession(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    subscription_id: str
     user_id: str
     agent_id: str
-    title: Optional[str] = None  # Auto-generated from first message
-    messages: List[ChatMessage] = []
+    subscription_id: str
+    status: str = "active"  # active | closed | expired
+    is_client_chat: bool = False
+    client_name: Optional[str] = None
+    client_email: Optional[str] = None
+    chat_link_id: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_interaction: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class Message(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    session_id: str
+    role: str  # "user" or "agent"
+    content: str
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# Knowledge Base Models
+class EcommerceKnowledgeBase(BaseModel):
+    duvidas: List[str] = []
+    recomendacoes: List[Dict] = []  # e.g., {'produtos': '...', 'publico_alvo': '...', 'sugerido': '...'}
+    combos: List[Dict] = []
+    estoque: List[Dict] = []  # e.g., {'produto': '...', 'quantidade': int}
+
+class FinanceiroKnowledgeBase(BaseModel):
+    vencimentos: List[Dict] = [] # e.g., {'descricao': '...', 'codigo': '...', 'data_vencimento': '...'}
+
+class PosVendasKnowledgeBase(BaseModel):
+    processo_vendas: str = ""
+    clientes: List[Dict] = []  # e.g., {'nome': '...', 'status': '...', 'produto': '...'}
+    politicas: Dict = {} # e.g., {'upsell': '...', 'renovacao': '...', 'ativacao': '...'}
+
+class NutricaoTreinoKnowledgeBase(BaseModel):
+    contexto: str = ""  # Generic field until user defines specific requirements
+
+class KnowledgeBaseConfig(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    subscription_id: str
+    agent_type: str  # ecommerce, financeiro, posvendas, nutricao
+    ecommerce_data: Optional[EcommerceKnowledgeBase] = None
+    financeiro_data: Optional[FinanceiroKnowledgeBase] = None
+    posvendas_data: Optional[PosVendasKnowledgeBase] = None
+    nutricao_data: Optional[NutricaoTreinoKnowledgeBase] = None
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class KnowledgeBaseUpdateRequest(BaseModel):
+    ecommerce_data: Optional[EcommerceKnowledgeBase] = None
+    financeiro_data: Optional[FinanceiroKnowledgeBase] = None
+    posvendas_data: Optional[PosVendasKnowledgeBase] = None
+    nutricao_data: Optional[NutricaoTreinoKnowledgeBase] = None
 
 class AgentRequest(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -331,6 +429,15 @@ class AgentRequest(BaseModel):
 class AgentRequestCreate(BaseModel):
     segment: str
     description: str
+
+class UserCreate(BaseModel):
+    name: str
+    email: str
+    password: str
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
 
 class PaymentTransaction(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -428,6 +535,8 @@ def create_token(user_id: str, role: str) -> str:
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Authorization header required")
     try:
         token = credentials.credentials
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
@@ -440,11 +549,248 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Auth error: {str(e)}")
 
 async def require_admin(current_user: dict = Depends(get_current_user)):
     if current_user['role'] != 'admin':
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user
+
+# ==================== AUTHENTICATION ====================
+
+@api_router.post("/auth/register")
+async def register_user(user: UserCreate):
+    existing = await db.users.find_one({"email": user.email})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email já cadastrado")
+    
+    hashed_password = hash_password(user.password)
+    user_id = str(uuid.uuid4())
+    new_user = {
+        "id": user_id,
+        "name": user.name,
+        "email": user.email,
+        "password_hash": hashed_password,
+        "role": "customer",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.users.insert_one(new_user)
+    
+    token = jwt.encode(
+        {
+            "user_id": user_id, 
+            "email": user.email, 
+            "role": "customer", 
+            "exp": datetime.now(timezone.utc) + timedelta(days=7)
+        },
+        JWT_SECRET,
+        algorithm="HS256"
+    )
+    
+    return {
+        "token": token, 
+        "user": {
+            "id": user_id, 
+            "name": user.name, 
+            "email": user.email, 
+            "role": "customer"
+        }
+    }
+
+@api_router.post("/auth/login")
+async def login_user(user: UserLogin):
+    db_user = await db.users.find_one({"email": user.email})
+    if not db_user:
+        raise HTTPException(status_code=401, detail="Email ou senha incorretos")
+        
+    # Compat: se a conta for da base antiga e não tiver password_hash configurado...
+    pass_hash = db_user.get("password_hash")
+    if not pass_hash or not verify_password(user.password, pass_hash):
+        raise HTTPException(status_code=401, detail="Email ou senha incorretos")
+    
+    token = jwt.encode(
+        {
+            "user_id": db_user.get("id"), 
+            "email": db_user.get("email"), 
+            "role": db_user.get("role", "customer"), 
+            "exp": datetime.now(timezone.utc) + timedelta(days=7)
+        },
+        JWT_SECRET,
+        algorithm="HS256"
+    )
+    
+    return {
+        "token": token, 
+        "user": {
+            "id": db_user.get("id"), 
+            "name": db_user.get("name"), 
+            "email": db_user.get("email"), 
+            "role": db_user.get("role", "customer")
+        }
+    }
+
+@api_router.get("/auth/me")
+async def get_me(current_user: dict = Depends(get_current_user)):
+    if current_user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
+
+# ==================== PUBLIC / ADMIN AGENTS ====================
+
+@api_router.get("/agents")
+async def list_agents():
+    agents = await db.agents.find().to_list(length=100)
+    for a in agents:
+        if "_id" in a:
+            a["_id"] = str(a["_id"])
+    return agents
+
+@api_router.get("/agents/{agent_id}")
+async def get_agent(agent_id: str):
+    agent = await db.agents.find_one({"id": agent_id})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    if "_id" in agent:
+        agent["_id"] = str(agent["_id"])
+    return agent
+
+# ==================== SUBSCRIPTIONS ====================
+
+@api_router.post("/subscriptions")
+async def create_subscription(sub_data: dict, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+    agent_id = sub_data.get("agent_id")
+    
+    if not agent_id:
+        raise HTTPException(status_code=400, detail="Missing agent_id")
+        
+    agent = await db.agents.find_one({"id": agent_id})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+        
+    existing_sub = await db.subscriptions.find_one({"user_id": user_id, "agent_id": agent_id, "status": "active"})
+    if existing_sub:
+        raise HTTPException(status_code=400, detail="Você já possui uma assinatura ativa para este agente.")
+        
+    quantity = sub_data.get("quantity", 1)
+    
+    subscription = Subscription(
+        user_id=user_id,
+        agent_id=agent_id,
+        status="active",
+        config={"quantity": quantity}
+    )
+    
+    sub_dict = subscription.model_dump()
+    await db.subscriptions.insert_one(sub_dict)
+    
+    if "_id" in sub_dict:
+        sub_dict["_id"] = str(sub_dict["_id"])
+        
+    return sub_dict
+
+@api_router.get("/subscriptions/me")
+async def get_my_subscriptions(current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+    subs = await db.subscriptions.find({"user_id": user_id, "status": "active"}).to_list(length=100)
+    
+    for sub in subs:
+        if "_id" in sub:
+            sub["_id"] = str(sub["_id"])
+        agent = await db.agents.find_one({"id": sub["agent_id"]})
+        if agent:
+            if "_id" in agent:
+                agent["_id"] = str(agent["_id"])
+            sub["agent"] = agent
+            
+    return subs
+
+@api_router.put("/subscriptions/{sub_id}/config")
+async def update_subscription_config(sub_id: str, config_data: dict, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+    
+    sub = await db.subscriptions.find_one({"id": sub_id, "user_id": user_id})
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subscription not found or access denied")
+        
+    update_fields = {}
+    if "config" in config_data:
+        update_fields["config"] = config_data["config"]
+    if "webhook_url" in config_data:
+        update_fields["webhook_url"] = config_data["webhook_url"]
+        
+    if update_fields:
+        await db.subscriptions.update_one(
+            {"id": sub_id},
+            {"$set": update_fields}
+        )
+    return {"status": "success"}
+
+@api_router.get("/subscriptions/{sub_id}/session")
+async def get_active_session(sub_id: str, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+    session = await db.chat_sessions.find_one({"subscription_id": sub_id, "user_id": user_id, "status": "active"})
+    if not session:
+        return {"session": None, "messages": []}
+    
+    messages = await db.messages.find({"session_id": session["id"]}).sort("timestamp", 1).to_list(length=200)
+    for msg in messages:
+        if "_id" in msg: msg["_id"] = str(msg["_id"])
+    
+    if "_id" in session: session["_id"] = str(session["_id"])
+    return {"session": session, "messages": messages}
+
+@api_router.get("/admin/agent-requests")
+async def get_agent_requests(current_user: dict = Depends(require_admin)):
+    reqs = await db.agent_requests.find().to_list(length=100)
+    for r in reqs:
+        if "_id" in r:
+            r["_id"] = str(r["_id"])
+    return reqs
+
+@api_router.post("/admin/agents")
+async def create_agent(agent_data: dict, current_user: dict = Depends(require_admin)):
+    agent_data["id"] = str(uuid.uuid4())
+    await db.agents.insert_one(agent_data)
+    if "_id" in agent_data:
+        agent_data["_id"] = str(agent_data["_id"])
+    return agent_data
+
+@api_router.put("/admin/agents/{agent_id}")
+async def update_agent(agent_id: str, agent_data: dict, current_user: dict = Depends(require_admin)):
+    # Remove _id provided by frontend to prevent immutable field error
+    agent_data.pop("_id", None)
+    res = await db.agents.update_one({"id": agent_id}, {"$set": agent_data})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    return {"status": "success"}
+
+@api_router.delete("/admin/agents/{agent_id}")
+async def delete_agent(agent_id: str, current_user: dict = Depends(require_admin)):
+    res = await db.agents.delete_one({"id": agent_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    return {"status": "success"}
+
+@api_router.post("/admin/upload-image")
+async def upload_image(file: UploadFile = File(...), current_user: dict = Depends(require_admin)):
+    file_location = UPLOAD_DIR / "agents" / file.filename
+    with open(file_location, "wb+") as file_object:
+        file_object.write(await file.read())
+    b_url = os.getenv("BACKEND_URL", "http://localhost:8001")
+    return {"url": f"{b_url}/uploads/agents/{file.filename}"}
+
+@api_router.post("/admin/upload-audio")
+async def upload_audio(file: UploadFile = File(...), current_user: dict = Depends(require_admin)):
+    file_location = UPLOAD_DIR / "audio" / file.filename
+    with open(file_location, "wb+") as file_object:
+        file_object.write(await file.read())
+    b_url = os.getenv("BACKEND_URL", "http://localhost:8001")
+    return {"url": f"{b_url}/uploads/audio/{file.filename}"}
 
 async def verify_api_key(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Verify API Key and return subscription"""
@@ -718,41 +1064,52 @@ async def create_checkout(checkout_req: CheckoutRequest, current_user: dict = De
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
     
-    webhook_url = f"{checkout_req.origin_url}/api/webhooks/stripe"
-    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+    stripe.api_key = STRIPE_API_KEY
     
-    success_url = f"{checkout_req.origin_url}/payment-success?session_id={{{{CHECKOUT_SESSION_ID}}}}"
+    success_url = f"{checkout_req.origin_url}/payment-success?session_id={{CHECKOUT_SESSION_ID}}"
     cancel_url = f"{checkout_req.origin_url}/marketplace"
     
-    session_request = CheckoutSessionRequest(
-        amount=agent['price'],
-        currency="usd",
-        success_url=success_url,
-        cancel_url=cancel_url,
-        metadata={
-            "user_id": current_user['user_id'],
-            "agent_id": checkout_req.agent_id,
-            "type": "subscription"
-        }
-    )
-    
-    session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(session_request)
-    
-    transaction = PaymentTransaction(
-        session_id=session.session_id,
-        user_id=current_user['user_id'],
-        agent_id=checkout_req.agent_id,
-        amount=agent['price'],
-        currency="usd",
-        payment_status="pending",
-        metadata=session_request.metadata
-    )
-    
-    trans_dict = transaction.model_dump()
-    trans_dict['created_at'] = trans_dict['created_at'].isoformat()
-    await db.payment_transactions.insert_one(trans_dict)
-    
-    return {"url": session.url, "session_id": session.session_id}
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': agent['name'],
+                        'description': 'Subscription',
+                    },
+                    'unit_amount': int(agent['price'] * 100),
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={
+                "user_id": current_user['user_id'],
+                "agent_id": checkout_req.agent_id,
+                "type": "subscription"
+            }
+        )
+        
+        transaction = PaymentTransaction(
+            session_id=session.id,
+            user_id=current_user['user_id'],
+            agent_id=checkout_req.agent_id,
+            amount=agent['price'],
+            currency="usd",
+            payment_status="pending",
+            metadata=session.metadata
+        )
+        
+        trans_dict = transaction.model_dump()
+        trans_dict['created_at'] = trans_dict['created_at'].isoformat()
+        await db.payment_transactions.insert_one(trans_dict)
+        
+        return {"url": session.url, "session_id": session.id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.get("/subscriptions/checkout/status/{session_id}")
 async def get_checkout_status(session_id: str, current_user: dict = Depends(get_current_user)):
@@ -760,43 +1117,49 @@ async def get_checkout_status(session_id: str, current_user: dict = Depends(get_
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
     
-    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url="")
-    status: CheckoutStatusResponse = await stripe_checkout.get_checkout_status(session_id)
+    stripe.api_key = STRIPE_API_KEY
     
-    if status.payment_status == "paid" and transaction['payment_status'] != "paid":
-        await db.payment_transactions.update_one(
-            {"session_id": session_id},
-            {"$set": {"payment_status": "paid"}}
-        )
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
         
-        subscription = Subscription(
-            user_id=transaction['user_id'],
-            agent_id=transaction['agent_id'],
-            status="active",
-            start_date=datetime.now(timezone.utc),
-            end_date=datetime.now(timezone.utc) + timedelta(days=30)
-        )
-        
-        sub_dict = subscription.model_dump()
-        for field in ['created_at', 'start_date', 'end_date']:
-            sub_dict[field] = sub_dict[field].isoformat()
-        
-        await db.subscriptions.insert_one(sub_dict)
-        
-        # Create invoice
-        agent = await db.agents.find_one({"id": transaction['agent_id']})
-        invoice = Invoice(
-            user_id=transaction['user_id'],
-            subscription_id=subscription.id,
-            amount=agent['price'],
-            due_date=datetime.now(timezone.utc),
-            paid_date=datetime.now(timezone.utc)
-        )
-        invoice_dict = invoice.model_dump()
-        for field in ['invoice_date', 'due_date', 'paid_date', 'created_at']:
-            if invoice_dict[field]:
-                invoice_dict[field] = invoice_dict[field].isoformat()
-        await db.invoices.insert_one(invoice_dict)
+        if session.payment_status == "paid" and transaction['payment_status'] != "paid":
+            await db.payment_transactions.update_one(
+                {"session_id": session_id},
+                {"$set": {"payment_status": "paid"}}
+            )
+            
+            subscription = Subscription(
+                user_id=transaction['user_id'],
+                agent_id=transaction['agent_id'],
+                status="active",
+                start_date=datetime.now(timezone.utc),
+                end_date=datetime.now(timezone.utc) + timedelta(days=30)
+            )
+            
+            sub_dict = subscription.model_dump()
+            for field in ['created_at', 'start_date', 'end_date']:
+                sub_dict[field] = sub_dict[field].isoformat()
+            
+            await db.subscriptions.insert_one(sub_dict)
+            
+            # Create invoice
+            agent = await db.agents.find_one({"id": transaction['agent_id']})
+            invoice = Invoice(
+                user_id=transaction['user_id'],
+                subscription_id=subscription.id,
+                amount=agent['price'],
+                due_date=datetime.now(timezone.utc),
+                paid_date=datetime.now(timezone.utc)
+            )
+            invoice_dict = invoice.model_dump()
+            for field in ['invoice_date', 'due_date', 'paid_date', 'created_at']:
+                if invoice_dict[field]:
+                    invoice_dict[field] = invoice_dict[field].isoformat()
+            await db.invoices.insert_one(invoice_dict)
+            
+        return {"status": session.payment_status}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
     return status
 
@@ -816,6 +1179,120 @@ async def update_webhook(subscription_id: str, update: SubscriptionUpdate, curre
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Subscription not found")
     return {"success": True}
+
+# Knowledge Base Endpoints
+
+# ==================== KNOWLEDGE BASE ====================
+
+async def validate_api_token(request: Request) -> bool:
+    """Validate request against API tokens stored in the DB or the env fallback."""
+    auth_header = request.headers.get("Authorization", "")
+    api_key_header = request.headers.get("x-api-key", "")
+
+    # Extract raw token from header
+    raw_token = ""
+    if auth_header.startswith("Bearer "):
+        raw_token = auth_header.split(" ", 1)[1].strip()
+    elif api_key_header:
+        raw_token = api_key_header.strip()
+
+    if not raw_token:
+        return False
+
+    # 1. Check against DB api_tokens collection
+    db_token = await db.api_tokens.find_one({"token": raw_token, "active": True})
+    if db_token:
+        return True
+
+    # 2. Fallback: env variable token
+    env_token = os.environ.get("API_HISTORY_TOKEN", "agent-hub-secret-token")
+    return raw_token == env_token
+
+
+@api_router.get("/knowledge-base/context")
+async def get_kb_context_v2(user_id: str, agent: str, request: Request, field: Optional[str] = None):
+    """Public endpoint for n8n/webhooks to query a user's knowledge base."""
+    if not await validate_api_token(request):
+        raise HTTPException(status_code=403, detail="Acesso negado. Token inválido.")
+
+    doc = await db.knowledge_base.find_one({"user_id": user_id, "agent": agent})
+    if not doc:
+        return {"context": ""}
+    doc.pop("_id", None)
+    if field and field in doc:
+        return {field: doc[field]}
+    return doc
+
+
+@api_router.get("/knowledge-base/{subscription_id}")
+async def get_knowledge_base(subscription_id: str, current_user: dict = Depends(get_current_user)):
+    kb = await db.knowledge_bases.find_one({"subscription_id": subscription_id, "user_id": current_user['user_id']}, {"_id": 0})
+    if not kb:
+        return {}
+    return kb
+
+@api_router.put("/knowledge-base/{subscription_id}")
+async def update_knowledge_base(subscription_id: str, update: KnowledgeBaseUpdateRequest, current_user: dict = Depends(get_current_user)):
+    sub = await db.subscriptions.find_one({"id": subscription_id, "user_id": current_user['user_id']})
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+
+    agent = await db.agents.find_one({"id": sub['agent_id']})
+    agent_type = "ecommerce"
+    if agent and "finance" in agent['segment'].lower():
+        agent_type = "financeiro"
+    elif agent and "nutri" in agent['segment'].lower():
+        agent_type = "nutricao"
+    elif agent and "vendas" in agent['segment'].lower():
+        agent_type = "posvendas"
+
+    update_data = update.model_dump(exclude_unset=True)
+    update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
+    
+    existing = await db.knowledge_bases.find_one({"subscription_id": subscription_id})
+    if existing:
+        await db.knowledge_bases.update_one(
+            {"subscription_id": subscription_id},
+            {"$set": update_data}
+        )
+    else:
+        new_kb = KnowledgeBaseConfig(
+            user_id=current_user['user_id'],
+            subscription_id=subscription_id,
+            agent_type=agent_type,
+            ecommerce_data=update.ecommerce_data,
+            financeiro_data=update.financeiro_data,
+            posvendas_data=update.posvendas_data,
+            nutricao_data=update.nutricao_data
+        )
+        kb_dict = new_kb.model_dump()
+        kb_dict['updated_at'] = kb_dict['updated_at'].isoformat()
+        await db.knowledge_bases.insert_one(kb_dict)
+
+    updated = await db.knowledge_bases.find_one({"subscription_id": subscription_id}, {"_id": 0})
+    return updated
+
+@api_router.get("/agent-context/{user_id}")
+async def get_agent_context(user_id: str, subscription_id: str, agent_id: str):
+    """
+    Called by the Agent to get full context: User's filled data and latest conversation history.
+    """
+    kb = await db.knowledge_bases.find_one({"user_id": user_id, "subscription_id": subscription_id}, {"_id": 0})
+    
+    # Get recent conversation history (last 10 messages)
+    chat_session = await db.chat_sessions.find_one(
+        {"user_id": user_id, "subscription_id": subscription_id},
+        sort=[("updated_at", -1)]
+    )
+    
+    recent_messages = []
+    if chat_session and 'messages' in chat_session:
+        recent_messages = chat_session['messages'][-10:]
+        
+    return {
+        "knowledge_base": kb or {},
+        "recent_conversation": recent_messages
+    }
 
 # Chat Sessions endpoints
 @api_router.post("/chat-sessions")
@@ -842,17 +1319,19 @@ async def create_chat_session(subscription_id: str, current_user: dict = Depends
 
 @api_router.get("/chat-sessions/subscription/{subscription_id}")
 async def get_chat_sessions(subscription_id: str, current_user: dict = Depends(get_current_user)):
-    """Get all chat sessions for a subscription"""
-    # Verify subscription belongs to user
+    """Get all chat sessions for a subscription, purging expired ones first"""
     sub = await db.subscriptions.find_one({"id": subscription_id, "user_id": current_user['user_id']})
     if not sub:
         raise HTTPException(status_code=404, detail="Subscription not found")
-    
+
+    # Purge expired sessions for this subscription before returning
+    await purge_expired_sessions(subscription_id=subscription_id)
+
     sessions = await db.chat_sessions.find(
         {"subscription_id": subscription_id, "user_id": current_user['user_id']},
         {"_id": 0}
     ).sort("updated_at", -1).to_list(100)
-    
+
     return sessions
 
 @api_router.get("/chat-sessions/{session_id}")
@@ -1319,10 +1798,10 @@ async def execute_agent(
         if not agent:
             raise HTTPException(status_code=404, detail="Agent not found")
         
-        # Get EMERGENT_LLM_KEY
-        emergent_llm_key = os.environ.get('EMERGENT_LLM_KEY')
-        if not emergent_llm_key:
-            raise HTTPException(status_code=503, detail="LLM service not configured")
+        # Get LLM Keys
+        openai_api_key = os.environ.get('OPENAI_API_KEY')
+        if not openai_api_key and agent.get('llm_provider', 'openai') == 'openai':
+            raise HTTPException(status_code=503, detail="OpenAI API key not configured")
         
         input_text = request.input_text
         
@@ -1330,7 +1809,7 @@ async def execute_agent(
         if request.input_audio_base64 and not input_text:
             try:
                 from openai import OpenAI
-                openai_client = OpenAI(api_key=emergent_llm_key)
+                openai_client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY', ''))
                 
                 # Decode base64 audio
                 audio_bytes = base64.b64decode(request.input_audio_base64)
@@ -1392,61 +1871,64 @@ async def execute_agent(
         # Generate session_id if not provided
         session_id = request.session_id or str(uuid.uuid4())
         
-        # Process with LLM - Try with custom OpenAI key first, fallback to Emergent LLM
+        # Process with LLM
         response_text = None
-        openai_api_key = os.environ.get('OPENAI_API_KEY')
-        
-        # Try with direct OpenAI if key is provided
-        if openai_api_key and openai_api_key.strip():
-            try:
+        llm_provider = agent.get('llm_provider', 'openai')
+        llm_model = agent.get('llm_model', 'gpt-4o')
+        if llm_model == 'gpt-5':
+            llm_model = 'gpt-4o'
+            
+        try:
+            if llm_provider == 'openai':
+                openai_key = os.environ.get('OPENAI_API_KEY')
+                if not openai_key:
+                    raise HTTPException(status_code=503, detail="OPENAI_API_KEY not configured")
                 from openai import OpenAI
-                openai_client = OpenAI(api_key=openai_api_key)
-                
-                # Map model names to correct OpenAI models
-                model_name = agent.get('llm_model', 'gpt-4o')
-                if model_name == 'gpt-5':
-                    model_name = 'gpt-4o'  # Use gpt-4o as gpt-5 doesn't exist yet
+                openai_client = OpenAI(api_key=openai_key)
                 
                 completion = openai_client.chat.completions.create(
-                    model=model_name,
+                    model=llm_model,
                     messages=[
                         {"role": "system", "content": system_message},
                         {"role": "user", "content": input_text}
                     ]
                 )
-                
                 response_text = completion.choices[0].message.content
-                logging.info("Used direct OpenAI API successfully")
                 
-            except Exception as e:
-                logging.warning(f"OpenAI direct API failed: {str(e)}, trying Emergent LLM...")
-        
-        # Fallback to Emergent LLM if OpenAI didn't work
-        if not response_text:
-            try:
-                from emergentintegrations.llm.chat import LlmChat, UserMessage
-                import litellm
-                
-                # Disable budget limits entirely
-                litellm.max_budget = float('inf')  # Infinite budget
-                litellm._current_cost = 0
-                
-                chat = LlmChat(
-                    api_key=emergent_llm_key,
-                    session_id=session_id,
-                    system_message=system_message
+            elif llm_provider == 'anthropic':
+                anthropic_key = os.environ.get('ANTHROPIC_API_KEY')
+                if not anthropic_key:
+                    raise HTTPException(status_code=503, detail="ANTHROPIC_API_KEY not configured")
+                from anthropic import Anthropic
+                client = Anthropic(api_key=anthropic_key)
+                response = client.messages.create(
+                    model=llm_model,
+                    max_tokens=1024,
+                    system=system_message,
+                    messages=[{"role": "user", "content": input_text}]
                 )
+                response_text = response.content[0].text
                 
-                # Set the model based on agent configuration
-                chat.with_model(agent.get('llm_provider', 'openai'), agent.get('llm_model', 'gpt-5'))
+            elif llm_provider == 'gemini':
+                gemini_key = os.environ.get('GEMINI_API_KEY')
+                if not gemini_key:
+                    raise HTTPException(status_code=503, detail="GEMINI_API_KEY not configured")
+                from google import genai
+                client = genai.Client(api_key=gemini_key)
+                response = client.models.generate_content(
+                    model=llm_model,
+                    contents=[{"role": "user", "parts": [{"text": input_text}]}],
+                    config=genai.types.GenerateContentConfig(system_instruction=system_message)
+                )
+                response_text = response.text
+            else:
+                raise HTTPException(status_code=400, detail=f"Unsupported LLM provider: {llm_provider}")
                 
-                user_message = UserMessage(text=input_text)
-                response_text = await chat.send_message(user_message)
-                logging.info("Used Emergent LLM successfully")
-                
-            except Exception as e:
-                logging.error(f"Error processing with LLM: {str(e)}")
-                raise HTTPException(status_code=500, detail=f"Error processing with LLM: {str(e)}")
+            logging.info(f"Used {llm_provider} successfully")
+            
+        except Exception as e:
+            logging.error(f"Error processing with LLM: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Error processing with LLM: {str(e)}")
         
         # Generate audio response with ElevenLabs
         output_audio_base64 = None
@@ -2256,25 +2738,6 @@ async def process_whatsapp_audio(audio_id: str, access_token: str) -> str:
                 
                 return transcribed_text
             else:
-                # Fallback: Try with Emergent integration if available
-                try:
-                    from emergentintegrations import OpenAI as EmergentOpenAI
-                    emergent_key = os.environ.get('EMERGENT_LLM_KEY')
-                    
-                    if emergent_key:
-                        client = EmergentOpenAI(api_key=emergent_key)
-                        
-                        with open(temp_audio_path, 'rb') as audio_file:
-                            transcript = client.audio.transcriptions.create(
-                                model="whisper-1",
-                                file=audio_file,
-                                language="pt"
-                            )
-                        
-                        return transcript.text
-                except Exception as e:
-                    logging.error(f"Emergent Whisper error: {str(e)}")
-                
                 return "[Áudio recebido - configure OPENAI_API_KEY para transcrição]"
                 
         finally:
@@ -2339,41 +2802,6 @@ async def process_whatsapp_image(image_id: str, caption: str, access_token: str)
             else:
                 return f"[Usuário enviou imagem: {image_description}]"
         else:
-            # Fallback: Try with Emergent integration
-            try:
-                from emergentintegrations import OpenAI as EmergentOpenAI
-                emergent_key = os.environ.get('EMERGENT_LLM_KEY')
-                
-                if emergent_key:
-                    client = EmergentOpenAI(api_key=emergent_key)
-                    
-                    prompt = "Descreva esta imagem em detalhes."
-                    if caption:
-                        prompt = f"O usuário enviou esta imagem com a legenda: '{caption}'. Descreva a imagem e responda de acordo."
-                    
-                    response = client.chat.completions.create(
-                        model="gpt-4-vision-preview",
-                        messages=[
-                            {
-                                "role": "user",
-                                "content": [
-                                    {"type": "text", "text": prompt},
-                                    {
-                                        "type": "image_url",
-                                        "image_url": {
-                                            "url": f"data:image/jpeg;base64,{image_base64}"
-                                        }
-                                    }
-                                ]
-                            }
-                        ],
-                        max_tokens=500
-                    )
-                    
-                    return f"[Imagem: {response.choices[0].message.content}]" + (f"\nLegenda: {caption}" if caption else "")
-            except Exception as e:
-                logging.error(f"Emergent Vision error: {str(e)}")
-            
             if caption:
                 return f"[Imagem recebida com legenda: {caption}]"
             else:
@@ -2384,27 +2812,24 @@ async def process_whatsapp_image(image_id: str, caption: str, access_token: str)
         return f"[Erro ao processar imagem: {str(e)}]"
 
 async def process_message_with_llm(message_text: str, agent: dict, subscription: dict) -> str:
-    """Process message with LLM (reuse logic from agent/execute)"""
+    """Process message with LLM"""
     try:
-        from emergentintegrations import (
-            Anthropic as EmergentAnthropic,
-            OpenAI as EmergentOpenAI,
-            Google as EmergentGoogle
-        )
-        
-        # Usar Emergent LLM Key
-        emergent_key = os.environ.get('EMERGENT_LLM_KEY')
-        
         system_prompt = agent.get('base_prompt', '')
         if subscription.get('custom_prompt'):
             system_prompt += f"\n\n{subscription['custom_prompt']}"
         
         # Processar com LLM
         llm_provider = agent.get('llm_provider', 'openai')
-        llm_model = agent.get('llm_model', 'gpt-5')
-        
-        if llm_provider == 'openai' and emergent_key:
-            client = EmergentOpenAI(api_key=emergent_key)
+        llm_model = agent.get('llm_model', 'gpt-4o')
+        if llm_model == 'gpt-5':
+            llm_model = 'gpt-4o'
+            
+        if llm_provider == 'openai':
+            openai_key = os.environ.get('OPENAI_API_KEY')
+            if not openai_key:
+                return "Configuração incorreta: OPENAI_API_KEY ausente."
+            import openai
+            client = openai.OpenAI(api_key=openai_key)
             response = client.chat.completions.create(
                 model=llm_model,
                 messages=[
@@ -2413,20 +2838,33 @@ async def process_message_with_llm(message_text: str, agent: dict, subscription:
                 ]
             )
             return response.choices[0].message.content
-        
-        # Fallback para OpenAI direto
-        openai_key = os.environ.get('OPENAI_API_KEY')
-        if openai_key:
-            import openai
-            openai.api_key = openai_key
-            response = openai.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": message_text}
-                ]
+            
+        elif llm_provider == 'anthropic':
+            anthropic_key = os.environ.get('ANTHROPIC_API_KEY')
+            if not anthropic_key:
+                return "Configuração incorreta: ANTHROPIC_API_KEY ausente."
+            from anthropic import Anthropic
+            client = Anthropic(api_key=anthropic_key)
+            response = client.messages.create(
+                model=llm_model,
+                max_tokens=1024,
+                system=system_prompt,
+                messages=[{"role": "user", "content": message_text}]
             )
-            return response.choices[0].message.content
+            return response.content[0].text
+            
+        elif llm_provider == 'gemini':
+            gemini_key = os.environ.get('GEMINI_API_KEY')
+            if not gemini_key:
+                return "Configuração incorreta: GEMINI_API_KEY ausente."
+            from google import genai
+            client = genai.Client(api_key=gemini_key)
+            response = client.models.generate_content(
+                model=llm_model,
+                contents=[{"role": "user", "parts": [{"text": message_text}]}],
+                config=genai.types.GenerateContentConfig(system_instruction=system_prompt)
+            )
+            return response.text
         
         return "Desculpe, não foi possível processar sua mensagem no momento."
         
@@ -2697,11 +3135,11 @@ async def get_widget_snippet(
         
         # Generate snippet
         snippet = f"""<!-- VoiceAI Widget -->
-<script src="{os.environ.get('REACT_APP_BACKEND_URL', 'https://voiceai-hub-9.preview.emergentagent.com')}/voiceai-widget.js"></script>
+<script src="{os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:8000')}/voiceai-widget.js"></script>
 <script>
   VoiceAIWidget.init({{
     apiKey: '{subscription['api_key']}',
-    apiUrl: '{os.environ.get('REACT_APP_BACKEND_URL', 'https://voiceai-hub-9.preview.emergentagent.com')}/api',
+    apiUrl: '{os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:8000')}/api',
     themeColor: '{config.theme_color}',
     position: '{config.position}',
     greetingMessage: '{config.greeting_message}',
@@ -3530,6 +3968,497 @@ async def resolve_monitoring_log(
     except Exception as e:
         logging.error(f"Error resolving log: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== N8N WEBHOOK CHAT ====================
+
+class ChatWebhookRequest(BaseModel):
+    subscription_id: str
+    agent_id: str
+    session_id: Optional[str] = None
+    input_text: str = ""
+    input_audio_base64: Optional[str] = None
+    audio: bool = False
+
+@api_router.post("/chat")
+async def process_chat(request: ChatWebhookRequest, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+    
+    sub = await db.subscriptions.find_one({"id": request.subscription_id, "user_id": user_id, "status": "active"})
+    if not sub:
+        raise HTTPException(status_code=403, detail="Subscription not active or invalid")
+        
+    agent = await db.agents.find_one({"id": request.agent_id})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+        
+    session_id = request.session_id
+    if not session_id:
+        new_session = ChatSession(
+            user_id=user_id,
+            agent_id=request.agent_id,
+            subscription_id=request.subscription_id,
+            status="active"
+        )
+        await db.chat_sessions.insert_one(new_session.model_dump())
+        session_id = new_session.id
+    else:
+        session = await db.chat_sessions.find_one({"id": session_id})
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        if session.get("status") != "active":
+            raise HTTPException(status_code=400, detail="Session is closed or expired")
+            
+        last_interaction = session.get("last_interaction")
+        if last_interaction:
+            if isinstance(last_interaction, str):
+                try:
+                    last_interaction = datetime.fromisoformat(last_interaction.replace("Z", "+00:00"))
+                except:
+                    pass
+            if isinstance(last_interaction, datetime):
+                diff = datetime.now(timezone.utc) - last_interaction
+                # Update expiration to 30 days (2592000 seconds)
+                if diff.total_seconds() > 2592000:
+                    await db.chat_sessions.update_one({"id": session_id}, {"$set": {"status": "expired"}})
+                    await db.messages.delete_many({"session_id": session_id})
+                    return {"error": "Sessão expirada (30 dias inativa)", "session_status": "expired"}
+                
+    user_msg_dict = Message(session_id=session_id, role="user", content=request.input_text).model_dump()
+    if request.input_audio_base64:
+        user_msg_dict["audioBase64"] = request.input_audio_base64
+    await db.messages.insert_one(user_msg_dict)
+    
+    segment = agent.get("segment", "")
+    webhook_url = sub.get("config", {}).get("webhook_url") or agent.get("webhook_url")
+    if not webhook_url:
+        webhook_map = {
+            "ecommerce": "https://corefy.app.n8n.cloud/webhook/e_commerce_manager",
+            "sdr": "https://corefy.app.n8n.cloud/webhook/vendedor_outbound",
+            "suporte": "https://corefy.app.n8n.cloud/webhook/suporte+knowledge",
+            "pos_vendas": "https://corefy.app.n8n.cloud/webhook/pos_venda_retenção"
+        }
+        webhook_url = webhook_map.get(segment)
+        
+    if not webhook_url:
+        return {"response_text": "Error: Webhook endpoint not mapped for this agent segment.", "session_id": session_id}
+        
+    sanitized_sub = dict(sub)
+    if "_id" in sanitized_sub: sanitized_sub["_id"] = str(sanitized_sub["_id"])
+    if "created_at" in sanitized_sub and isinstance(sanitized_sub["created_at"], datetime):
+        sanitized_sub["created_at"] = sanitized_sub["created_at"].isoformat()
+    if "updated_at" in sanitized_sub and isinstance(sanitized_sub["updated_at"], datetime):
+        sanitized_sub["updated_at"] = sanitized_sub["updated_at"].isoformat()
+        
+    sanitized_agent = dict(agent)
+    if "_id" in sanitized_agent: sanitized_agent["_id"] = str(sanitized_agent["_id"])
+    if "created_at" in sanitized_agent and isinstance(sanitized_agent["created_at"], datetime):
+        sanitized_agent["created_at"] = sanitized_agent["created_at"].isoformat()
+        
+    payload = {
+        "subscription_id": request.subscription_id,
+        "agent_id": request.agent_id,
+        "session_id": session_id,
+        "input_text": request.input_text,
+        "input_audio_base64": request.input_audio_base64,
+        "audio": request.audio,
+        "custom_prompt": None,
+        "user_context": {
+            "subscription": sanitized_sub,
+            "agent": sanitized_agent
+        }
+    }
+    
+    agent_response_text = "Desculpe, sistema indisponível no momento."
+    metadata = {}
+    audio_b64 = None
+    
+    async with httpx.AsyncClient() as client:
+        for attempt in range(3):
+            try:
+                resp = await client.post(webhook_url, json=payload, timeout=60.0)
+                if resp.status_code == 200:
+                    try:
+                        n8n_data = resp.json()
+                        if isinstance(n8n_data, list) and len(n8n_data) > 0:
+                            n8n_data = n8n_data[0]
+                        if isinstance(n8n_data, dict):
+                            # Mapped to match user's n8n 'output_text' key or fallbacks
+                            agent_response_text = n8n_data.get(
+                                "output_text", 
+                                n8n_data.get("response_text", n8n_data.get("output", n8n_data.get("resposta", agent_response_text)))
+                            )
+                            audio_b64 = n8n_data.get("audio_base64", n8n_data.get("input_audio_base64"))
+                            metadata = n8n_data.get("metadata", {})
+                    except:
+                        agent_response_text = resp.text
+                    break
+            except Exception as e:
+                logging.error(f"Webhook Attempt {attempt+1} Failed: {repr(e)}")
+                if attempt == 2:
+                    break
+                    
+    agent_msg_dict = Message(session_id=session_id, role="agent", content=agent_response_text).model_dump()
+    if audio_b64:
+        agent_msg_dict["audioBase64"] = audio_b64
+    await db.messages.insert_one(agent_msg_dict)
+    
+    await db.chat_sessions.update_one(
+        {"id": session_id}, 
+        {"$set": {"last_interaction": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {
+        "response_text": agent_response_text,
+        "audio_base64": audio_b64,
+        "metadata": metadata,
+        "session_id": session_id
+    }
+
+@api_router.post("/chat/session/{session_id}/close")
+async def close_chat_session(session_id: str, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+    session = await db.chat_sessions.find_one({"id": session_id, "user_id": user_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    await db.chat_sessions.update_one({"id": session_id}, {"$set": {"status": "closed"}})
+    await db.messages.delete_many({"session_id": session_id})
+    
+    return {"status": "success", "message": "Sessão encerrada"}
+
+@api_router.post("/client-chat/{session_id}/close")
+async def close_client_chat_session(session_id: str):
+    """Close a client (public) chat session - no auth required, keeps messages for history."""
+    session = await db.chat_sessions.find_one({"id": session_id, "is_client_chat": True})
+    if not session:
+        raise HTTPException(status_code=404, detail="Sessão não encontrada")
+    await db.chat_sessions.update_one(
+        {"id": session_id},
+        {"$set": {"status": "closed", "closed_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"status": "success", "message": "Atendimento finalizado"}
+
+@api_router.get("/chat/session/{session_id}/history")
+async def get_session_history(session_id: str, request: Request):
+    if not await validate_api_token(request):
+        raise HTTPException(status_code=403, detail="Acesso negado. Token inválido.")
+        
+    session = await db.chat_sessions.find_one({"id": session_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Sessão não encontrada.")
+    
+    messages = await db.messages.find({"session_id": session_id}).sort("timestamp", 1).to_list(100)
+    
+    formatted_messages = []
+    for msg in messages:
+        formatted_messages.append({
+            "message_id": str(msg.get("_id", "")),
+            "role": msg.get("role"),
+            "content": msg.get("content"),
+            "audioBase64": msg.get("audioBase64"),
+            "timestamp": msg.get("timestamp")
+        })
+        
+    return {
+        "ok": True,
+        "session_id": session_id,
+        "agent_id": session.get("agent_id"),
+        "messages": formatted_messages
+    }
+
+@api_router.post("/knowledge-base")
+async def save_kb(request: Request, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+    payload = await request.json()
+    agent_name = payload.get("agent")
+    
+    if not agent_name:
+        raise HTTPException(status_code=400, detail="Agent id/name is required in payload")
+        
+    await db.knowledge_base.update_one(
+        {"user_id": user_id, "agent": agent_name},
+        {"$set": payload},
+        upsert=True
+    )
+    return {"status": "success"}
+
+@api_router.get("/knowledge-base")
+async def get_my_kb(agent: str, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+    doc = await db.knowledge_base.find_one({"user_id": user_id, "agent": agent})
+    if not doc:
+        return {}
+    doc.pop("_id", None)
+    return doc
+
+@api_router.post("/chat-links")
+async def create_chat_link(subscription_id: str = Body(..., embed=True), current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+    sub = await db.subscriptions.find_one({"id": subscription_id, "user_id": user_id, "status": "active"})
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+        
+    chat_link = ChatLink(
+        user_id=user_id,
+        subscription_id=subscription_id,
+        agent_id=sub["agent_id"]
+    )
+    await db.chat_links.insert_one(chat_link.model_dump())
+    
+    return {"link_id": chat_link.id}
+
+@api_router.get("/chat-links/{link_id}")
+async def get_chat_link_info(link_id: str):
+    link = await db.chat_links.find_one({"id": link_id})
+    if not link:
+        raise HTTPException(status_code=404, detail="Link inválido")
+    if link.get("status") == "used":
+        session = await db.chat_sessions.find_one({"chat_link_id": link_id})
+        if session:
+            return {"ok": True, "already_used": True, "session_id": session["id"]}
+        raise HTTPException(status_code=400, detail="Este link já foi utilizado e a sessão foi perdida")
+        
+    agent = await db.agents.find_one({"id": link["agent_id"]})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agente não encontrado")
+        
+    return {
+        "ok": True,
+        "agent_name": agent.get("name"),
+        "agent_avatar": agent.get("mascot_image_url"),
+        "agent_segment": agent.get("segment")
+    }
+
+class StartClientChatRequest(BaseModel):
+    link_id: str
+    client_name: str
+    client_email: EmailStr
+
+@api_router.post("/client-chat/start")
+async def start_client_chat(request: StartClientChatRequest):
+    link = await db.chat_links.find_one({"id": request.link_id})
+    if not link:
+        raise HTTPException(status_code=404, detail="Link inválido")
+    if link.get("status") == "used":
+        session = await db.chat_sessions.find_one({"chat_link_id": request.link_id})
+        if session:
+            return {"session_id": session["id"]}
+        raise HTTPException(status_code=400, detail="Este link já foi utilizado e a sessão foi perdida")
+        
+    # Mark as used (queimar o link)
+    await db.chat_links.update_one({"id": request.link_id}, {"$set": {"status": "used"}})
+    
+    new_session = ChatSession(
+        user_id=link["user_id"], # SaaS user owner
+        agent_id=link["agent_id"],
+        subscription_id=link["subscription_id"],
+        status="active",
+        is_client_chat=True,
+        client_name=request.client_name,
+        client_email=request.client_email,
+        chat_link_id=request.link_id
+    )
+    await db.chat_sessions.insert_one(new_session.model_dump())
+    
+    return {"session_id": new_session.id}
+
+class ClientChatWebhookRequest(BaseModel):
+    session_id: str
+    input_text: str = ""
+    input_audio_base64: Optional[str] = None
+    audio: bool = False
+
+@api_router.post("/client-chat/message")
+async def process_client_chat(request: ClientChatWebhookRequest):
+    # This route bypasses Bearer token, strictly uses session_id
+    if not request.session_id:
+        raise HTTPException(status_code=400, detail="session_id é obrigatório para chat de clientes")
+        
+    session = await db.chat_sessions.find_one({"id": request.session_id})
+    if not session or not session.get("is_client_chat"):
+        raise HTTPException(status_code=404, detail="Sessão de cliente inválida")
+        
+    if session.get("status") != "active":
+        raise HTTPException(status_code=400, detail="Sessão está encerrada ou expirada")
+
+    sub = await db.subscriptions.find_one({"id": session["subscription_id"]})
+    agent = await db.agents.find_one({"id": session["agent_id"]})
+
+    user_msg_dict = Message(session_id=request.session_id, role="user", content=request.input_text).model_dump()
+    if request.input_audio_base64:
+        user_msg_dict["audioBase64"] = request.input_audio_base64
+    await db.messages.insert_one(user_msg_dict)
+    
+    segment = agent.get("segment", "")
+    webhook_url = sub.get("config", {}).get("webhook_url") or agent.get("webhook_url")
+    if not webhook_url:
+        webhook_map = {
+            "ecommerce": "https://corefy.app.n8n.cloud/webhook/e_commerce_manager",
+            "sdr": "https://corefy.app.n8n.cloud/webhook/vendedor_outbound",
+            "suporte": "https://corefy.app.n8n.cloud/webhook/suporte+knowledge",
+            "pos_vendas": "https://corefy.app.n8n.cloud/webhook/pos_venda_retenção"
+        }
+        webhook_url = webhook_map.get(segment.lower())
+        
+    if not webhook_url:
+        return {"response_text": "Error: Webhook endpoint not mapped for this agent segment.", "session_id": request.session_id}
+
+    sanitized_sub = dict(sub)
+    if "_id" in sanitized_sub: sanitized_sub["_id"] = str(sanitized_sub["_id"])
+    if "created_at" in sanitized_sub and isinstance(sanitized_sub["created_at"], datetime):
+        sanitized_sub["created_at"] = sanitized_sub["created_at"].isoformat()
+    
+    sanitized_agent = dict(agent)
+    if "_id" in sanitized_agent: sanitized_agent["_id"] = str(sanitized_agent["_id"])
+    if "created_at" in sanitized_agent and isinstance(sanitized_agent["created_at"], datetime):
+        sanitized_agent["created_at"] = sanitized_agent["created_at"].isoformat()
+
+    payload = {
+        "subscription_id": session["subscription_id"],
+        "agent_id": session["agent_id"],
+        "session_id": request.session_id,
+        "input_text": request.input_text,
+        "input_audio_base64": request.input_audio_base64,
+        "audio": request.audio,
+        "custom_prompt": None,
+        "user_context": {
+            "subscription": sanitized_sub,
+            "agent": sanitized_agent
+        }
+    }
+
+    agent_response_text = ""
+    audio_b64 = None
+    metadata = {}
+    
+    async with httpx.AsyncClient() as client:
+        for attempt in range(3):
+            try:
+                resp = await client.post(webhook_url, json=payload, timeout=60.0)
+                if resp.status_code == 200:
+                    try:
+                        n8n_data = resp.json()
+                        if isinstance(n8n_data, list) and len(n8n_data) > 0: n8n_data = n8n_data[0]
+                        if isinstance(n8n_data, dict):
+                            agent_response_text = n8n_data.get("output_text", n8n_data.get("response_text", n8n_data.get("output", n8n_data.get("resposta", agent_response_text))))
+                            audio_b64 = n8n_data.get("audio_base64", n8n_data.get("input_audio_base64"))
+                            metadata = n8n_data.get("metadata", {})
+                    except:
+                        agent_response_text = resp.text
+                    break
+            except Exception as e:
+                logging.error(f"Webhook Attempt {attempt+1} Failed: {repr(e)}")
+                if attempt == 2: break
+                    
+    agent_msg_dict = Message(session_id=request.session_id, role="agent", content=agent_response_text).model_dump()
+    if audio_b64:
+        agent_msg_dict["audioBase64"] = audio_b64
+    await db.messages.insert_one(agent_msg_dict)
+    
+    await db.chat_sessions.update_one(
+        {"id": request.session_id}, 
+        {"$set": {"last_interaction": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {
+        "response_text": agent_response_text,
+        "audio_base64": audio_b64,
+        "metadata": metadata,
+        "session_id": request.session_id
+    }
+
+@api_router.get("/client-chat/{session_id}")
+async def get_client_chat_session(session_id: str):
+    session = await db.chat_sessions.find_one({"id": session_id})
+    if not session or not session.get("is_client_chat"):
+        raise HTTPException(status_code=404, detail="Sessão não encontrada")
+        
+    agent = await db.agents.find_one({"id": session["agent_id"]})
+    messages = await db.messages.find({"session_id": session_id}).sort("timestamp", 1).to_list(1000)
+    
+    # Strip sensitive data
+    agent_safe = {
+        "name": agent.get("name"),
+        "mascot_image_url": agent.get("mascot_image_url"),
+        "segment": agent.get("segment")
+    }
+    
+    msgs_safe = []
+    for m in messages:
+        msgs_safe.append({
+            "role": m.get("role"),
+            "content": m.get("content", ""),
+            "audioBase64": m.get("audioBase64"),
+            "timestamp": m.get("timestamp")
+        })
+        
+    return {
+        "status": session.get("status"),
+        "agent": agent_safe,
+        "messages": msgs_safe
+    }
+
+async def purge_expired_sessions(subscription_id: str = None, user_id: str = None):
+    """Delete sessions expired >30 days based on last interaction or closed_at. Purge messages too."""
+    THIRTY_DAYS = timedelta(days=30)
+    cutoff = (datetime.now(timezone.utc) - THIRTY_DAYS).isoformat()
+
+    query = {}
+    if subscription_id:
+        query["subscription_id"] = subscription_id
+    if user_id:
+        query["user_id"] = user_id
+
+    # A session is expired if:
+    # - closed: closed_at < cutoff
+    # - active: last_interaction (or created_at) < cutoff
+    expired_ids = []
+    async for sess in db.chat_sessions.find(query, {"id": 1, "status": 1, "closed_at": 1, "last_interaction": 1, "created_at": 1}):
+        ref = sess.get("closed_at") or sess.get("last_interaction") or sess.get("created_at")
+        if ref and ref < cutoff:
+            expired_ids.append(sess["id"])
+
+    if expired_ids:
+        await db.messages.delete_many({"session_id": {"$in": expired_ids}})
+        await db.chat_sessions.delete_many({"id": {"$in": expired_ids}})
+        logger.info(f"Purged {len(expired_ids)} expired sessions")
+
+@api_router.get("/subscriptions/{subscription_id}/client-sessions")
+async def get_client_sessions_history(subscription_id: str, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+    sub = await db.subscriptions.find_one({"id": subscription_id, "user_id": user_id})
+    if not sub:
+        raise HTTPException(status_code=403, detail="Subscription not found")
+
+    # Purge expired client sessions
+    await purge_expired_sessions(subscription_id=subscription_id)
+
+    sessions = await db.chat_sessions.find({
+        "subscription_id": subscription_id,
+        "is_client_chat": True
+    }).sort("last_interaction", -1).to_list(100)
+
+    results = []
+    for s in sessions:
+        msgs = await db.messages.find({"session_id": s["id"]}).sort("timestamp", 1).limit(2).to_list(2)
+        preview = []
+        for m in msgs:
+            preview.append({
+                "role": m.get("role"),
+                "content": m.get("content", ""),
+                "has_audio": bool(m.get("audioBase64"))
+            })
+        results.append({
+            "session_id": s["id"],
+            "client_name": s.get("client_name", "Desconhecido"),
+            "client_email": s.get("client_email", ""),
+            "status": s.get("status"),
+            "created_at": s.get("created_at"),
+            "last_interaction": s.get("last_interaction"),
+            "preview_messages": preview
+        })
+
+    return results
 
 app.include_router(api_router)
 

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo - VoiceAI Widget</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .demo-container {
+            max-width: 1200px;
+            width: 100%;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .demo-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .demo-header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .demo-header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .demo-content {
+            padding: 40px;
+        }
+
+        .demo-section {
+            margin-bottom: 40px;
+        }
+
+        .demo-section h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .demo-section h2::before {
+            content: "✨";
+            font-size: 28px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            padding: 20px;
+            border-radius: 16px;
+            border: 2px solid #667eea30;
+        }
+
+        .feature-card h3 {
+            font-size: 18px;
+            color: #667eea;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        .code-block .comment {
+            color: #6a9955;
+        }
+
+        .code-block .tag {
+            color: #569cd6;
+        }
+
+        .code-block .attr {
+            color: #9cdcfe;
+        }
+
+        .code-block .string {
+            color: #ce9178;
+        }
+
+        .instructions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .demo-footer {
+            background: #f8f9fa;
+            padding: 30px 40px;
+            text-align: center;
+            color: #666;
+        }
+
+        .color-preview {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            vertical-align: middle;
+            margin-right: 10px;
+            border: 2px solid #ddd;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .status-indicator::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #667eea30 0%, #764ba230 100%);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>🎙️ VoiceAI Widget Demo</h1>
+            <p>Chat inteligente com voz e texto para seu site</p>
+            <div style="margin-top: 20px;">
+                <span class="status-indicator">Widget Ativo</span>
+            </div>
+        </div>
+
+        <div class="demo-content">
+            <!-- Features -->
+            <div class="demo-section">
+                <h2>Recursos do Widget</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>💬 Chat de Texto</h3>
+                        <p>Conversação fluida com IA via texto. Digite e receba respostas inteligentes instantaneamente.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🎤 Chat de Voz</h3>
+                        <p>Fale naturalmente com o agente. Reconhecimento de voz em tempo real e respostas por áudio.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🎨 Totalmente Customizável</h3>
+                        <p>Personalize cores, posição, mensagens e comportamento para combinar com sua marca.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>📱 Responsivo</h3>
+                        <p>Funciona perfeitamente em desktop, tablet e mobile. Interface adaptativa.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual Demo -->
+            <div class="demo-section">
+                <h2>Design e Aparência</h2>
+                <p style="color: #666; margin-bottom: 20px;">
+                    <strong>👉 Veja no canto inferior direito desta página!</strong> 
+                    O botão flutuante roxo é o widget em ação. Clique nele para testar!
+                </p>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <p style="margin-bottom: 15px;"><strong>Elementos Visuais:</strong></p>
+                    <ul style="margin-left: 30px; line-height: 2;">
+                        <li><span class="color-preview" style="background: #7C3AED;"></span> <strong>Botão Flutuante:</strong> Circular, roxo, com ícone de chat</li>
+                        <li><span class="color-preview" style="background: white; border-color: #7C3AED;"></span> <strong>Janela do Chat:</strong> 380x600px, fundo branco, bordas arredondadas</li>
+                        <li><span class="color-preview" style="background: linear-gradient(135deg, #7C3AED, #C026D3);"></span> <strong>Header:</strong> Gradiente roxo com nome do agente</li>
+                        <li><span class="color-preview" style="background: #F9FAFB;"></span> <strong>Área de Mensagens:</strong> Fundo cinza claro, mensagens em bolhas</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Installation -->
+            <div class="demo-section">
+                <h2>Como Instalar em Seu Site</h2>
+                <div class="instructions">
+                    <p style="font-weight: 600; margin-bottom: 15px;">📋 Instruções de Instalação:</p>
+                    <ol>
+                        <li>No dashboard do VoiceAI Hub, vá em <span class="highlight">Integrações</span></li>
+                        <li>Clique em <span class="highlight">Widget de Chat</span> → <span class="highlight">Adicionar</span></li>
+                        <li>Configure nome, cor, posição e mensagem de saudação</li>
+                        <li>Copie o código gerado</li>
+                        <li>Cole antes do <code>&lt;/body&gt;</code> do seu site</li>
+                        <li>Pronto! O widget aparecerá automaticamente 🎉</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Code Example -->
+            <div class="demo-section">
+                <h2>Código de Instalação</h2>
+                <p style="color: #666; margin-bottom: 15px;">Cole este código no HTML do seu site:</p>
+                <div class="code-block">
+<span class="comment">&lt;!-- VoiceAI Widget --&gt;</span>
+<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="string">"https://voiceai-hub-9.preview.emergentagent.com/voiceai-widget.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+<span class="tag">&lt;script&gt;</span>
+  VoiceAIWidget.init({
+    <span class="attr">apiKey:</span> <span class="string">'sua_api_key_aqui'</span>,
+    <span class="attr">apiUrl:</span> <span class="string">'https://voiceai-hub-9.preview.emergentagent.com/api'</span>,
+    <span class="attr">themeColor:</span> <span class="string">'#7C3AED'</span>,
+    <span class="attr">position:</span> <span class="string">'bottom-right'</span>,
+    <span class="attr">greetingMessage:</span> <span class="string">'Olá! Como posso ajudar?'</span>,
+    <span class="attr">voiceEnabled:</span> <span class="string">true</span>,
+    <span class="attr">textEnabled:</span> <span class="string">true</span>,
+    <span class="attr">agentName:</span> <span class="string">'Assistente Virtual'</span>
+  });
+<span class="tag">&lt;/script&gt;</span>
+<span class="comment">&lt;!-- End VoiceAI Widget --&gt;</span>
+                </div>
+            </div>
+
+            <!-- Customization -->
+            <div class="demo-section">
+                <h2>Opções de Customização</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>🎨 themeColor</h3>
+                        <p>Cor principal do widget. Exemplos: <code>#7C3AED</code>, <code>#FF6B6B</code>, <code>#4ECDC4</code></p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>📍 position</h3>
+                        <p>Posição na tela: <code>bottom-right</code> ou <code>bottom-left</code></p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>💬 greetingMessage</h3>
+                        <p>Primeira mensagem que o usuário vê ao abrir o chat</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🎤 voiceEnabled</h3>
+                        <p>Habilita/desabilita o botão de voz (<code>true</code> ou <code>false</code>)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA -->
+            <div style="text-align: center; margin-top: 40px;">
+                <a href="/dashboard" class="cta-button">
+                    🚀 Criar Meu Widget Agora
+                </a>
+            </div>
+        </div>
+
+        <div class="demo-footer">
+            <p><strong>VoiceAI Hub</strong> - Plataforma Enterprise de IA Conversacional</p>
+            <p style="margin-top: 10px; font-size: 14px;">
+                Widget standalone · Zero dependências · 14KB minificado · Performance otimizada
+            </p>
+        </div>
+    </div>
+
+    <!-- WIDGET DEMO AQUI -->
+    <script src="/voiceai-widget.js"></script>
+    <script>
+        // DEMO com API Key fictícia (para visualização)
+        VoiceAIWidget.init({
+            apiKey: 'demo_key_123456789',
+            apiUrl: 'https://voiceai-hub-9.preview.emergentagent.com/api',
+            themeColor: '#7C3AED',
+            position: 'bottom-right',
+            greetingMessage: 'Olá! 👋 Sou o assistente virtual da VoiceAI Hub. Como posso ajudar você hoje?',
+            voiceEnabled: true,
+            textEnabled: true,
+            agentName: 'Assistente Virtual',
+            agentAvatar: null
+        });
+
+        // Mensagem de boas-vindas no console
+        console.log('%c🎙️ VoiceAI Widget Demo', 'font-size: 24px; color: #7C3AED; font-weight: bold;');
+        console.log('%cWidget carregado com sucesso!', 'font-size: 14px; color: #10b981;');
+        console.log('%cClique no botão roxo no canto inferior direito para testar!', 'font-size: 12px; color: #666;');
+    </script>
+</body>
+</html>

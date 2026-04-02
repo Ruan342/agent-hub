@@ -19,6 +19,7 @@ export default function AgentDetails() {
   const [purchasing, setPurchasing] = useState(false);
   const [testingVoice, setTestingVoice] = useState(false);
   const [audio, setAudio] = useState(null);
+  const [hasSubscription, setHasSubscription] = useState(false);
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -29,6 +30,12 @@ export default function AgentDetails() {
     try {
       const response = await axios.get(`${API}/agents/${id}`);
       setAgent(response.data);
+      if (token) {
+        try {
+          const subRes = await axios.get(`${API}/subscriptions/me`, { headers: { Authorization: `Bearer ${token}` } });
+          setHasSubscription(subRes.data.some(sub => sub.agent_id === id));
+        } catch(e) {}
+      }
     } catch (error) {
       toast.error("Erro ao carregar agente");
       navigate("/marketplace");
@@ -39,32 +46,18 @@ export default function AgentDetails() {
 
   const handlePurchase = async () => {
     if (!token) {
-      toast.error("Faça login para comprar");
+      toast.error("Faça login para continuar");
       navigate("/login");
       return;
     }
-
-    setPurchasing(true);
-    try {
-      const originUrl = window.location.origin;
-      const response = await axios.post(
-        `${API}/subscriptions/checkout`,
-        {
-          agent_id: id,
-          origin_url: originUrl,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      window.location.href = response.data.url;
-    } catch (error) {
-      toast.error(
-        error.response?.data?.detail || "Erro ao processar pagamento"
-      );
-      setPurchasing(false);
+    
+    if (hasSubscription) {
+      toast.info("Você já possui este agente.");
+      navigate("/minhas-assinaturas");
+      return;
     }
+
+    navigate(`/checkout/${id}`);
   };
 
   const handlePlaySample = () => {
@@ -289,10 +282,10 @@ export default function AgentDetails() {
               <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                 <div>
                   <div className="flex items-baseline mb-3">
-                    <span className="text-7xl font-bold text-purple-700">
-                      ${agent.price}
+                    <span className="text-5xl md:text-7xl font-bold text-purple-700">
+                      R$ {Number(agent.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
-                    <span className="text-3xl ml-3 text-gray-600">/mês</span>
+                    <span className="text-2xl md:text-3xl ml-3 text-gray-600">/mês</span>
                   </div>
                   <p className="text-gray-600 text-xl">Plano mensal, cancele quando quiser</p>
                   <p className="text-gray-500 text-sm mt-2">✓ Sem compromisso • ✓ Cancele quando quiser</p>
@@ -565,7 +558,7 @@ export default function AgentDetails() {
                       className="bg-white text-purple-600 hover:bg-gray-100 text-xl py-8 px-12 font-bold shadow-2xl hover:shadow-3xl transition-all"
                       size="lg"
                     >
-                      {purchasing ? "Processando..." : `Começar Agora - $${agent.price}/mês →`}
+                      {purchasing ? "Redirecionando..." : `Começar Agora - R$ ${Number(agent.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/mês →`}
                     </Button>
                     <p className="text-purple-200 text-sm mt-4">
                       ✓ Sem compromisso • ✓ Cancele quando quiser

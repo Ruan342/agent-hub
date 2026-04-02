@@ -1,0 +1,233 @@
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Sparkles, Menu, X, LayoutDashboard, FileText, Code2, Home, ShoppingBag, LogOut, LogIn, BarChart3, Plug } from "lucide-react";
+import FloatingChat from "./FloatingChat";
+import axios from "axios";
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+const baseMenuItems = [
+  { icon: Home, label: "Início", path: "/" },
+  { icon: ShoppingBag, label: "Marketplace", path: "/marketplace" },
+  { icon: LayoutDashboard, label: "Minhas Assinaturas", path: "/dashboard" },
+  { icon: FileText, label: "Faturas", path: "/billing" },
+  { icon: Code2, label: "Documentação API", path: "/api-docs" }
+];
+
+export default function SidebarLayout({ children }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [selectedAgentId, setSelectedAgentId] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    if (user.email && token) {
+      fetchSubscriptions();
+    }
+  }, [user.email, token]);
+
+  const fetchSubscriptions = async () => {
+    try {
+      const response = await axios.get(`${API}/subscriptions/my`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const activeSubs = response.data.filter(sub => sub.status === 'active');
+      
+      // Fetch agent details for each subscription
+      const subsWithAgents = await Promise.all(
+        activeSubs.map(async (sub) => {
+          try {
+            const agentRes = await axios.get(`${API}/agents/${sub.agent_id}`);
+            return { ...sub, agentName: agentRes.data.name };
+          } catch (error) {
+            return { ...sub, agentName: sub.agent_id };
+          }
+        })
+      );
+      
+      setSubscriptions(subsWithAgents);
+      
+      // Get selected agent from localStorage or use first subscription
+      const saved = localStorage.getItem('selectedAgentId');
+      if (saved && subsWithAgents.find(s => s.agent_id === saved)) {
+        setSelectedAgentId(saved);
+      } else if (subsWithAgents.length > 0) {
+        setSelectedAgentId(subsWithAgents[0].agent_id);
+        localStorage.setItem('selectedAgentId', subsWithAgents[0].agent_id);
+      }
+    } catch (error) {
+      console.error('Error fetching subscriptions:', error);
+    }
+  };
+
+  const handleAgentSelect = (agentId) => {
+    setSelectedAgentId(agentId);
+    localStorage.setItem('selectedAgentId', agentId);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("selectedAgentId");
+    navigate("/");
+  };
+
+  const isActive = (path) => {
+    if (path === "/") {
+      return location.pathname === "/";
+    }
+    return location.pathname.startsWith(path);
+  };
+
+  // Build menu items based on whether user has active subscriptions
+  const menuItems = [...baseMenuItems];
+  
+  if (subscriptions.length > 0 && selectedAgentId) {
+    menuItems.push(
+      { icon: Plug, label: "Integrações", path: `/integrations`, requiresAgent: true },
+      { icon: BarChart3, label: "Analytics", path: `/analytics`, requiresAgent: true }
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 bg-white/80 backdrop-blur border-r border-gray-200 transition-all duration-300 ${
+          sidebarOpen ? "w-64" : "w-16"
+        }`}
+      >
+        {/* Header */}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100">
+          {sidebarOpen && (
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="flex items-center space-x-2"
+            >
+              <div className="w-7 h-7 bg-purple-600 rounded flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-lg font-semibold tracking-tight">VoiceAI Hub</span>
+            </button>
+          )}
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className={`${sidebarOpen ? "" : "mx-auto mt-2"}`}
+          >
+            {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </Button>
+        </div>
+
+        {/* Agent Selector */}
+        {sidebarOpen && subscriptions.length > 0 && (
+          <div className="p-3 border-b border-gray-200">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">
+              Agente Ativo
+            </label>
+            <select
+              value={selectedAgentId || ''}
+              onChange={(e) => handleAgentSelect(e.target.value)}
+              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              {subscriptions.map((sub) => (
+                <option key={sub.id} value={sub.agent_id}>
+                  {sub.agentName || sub.agent_id}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Menu Items */}
+        <nav className="p-2 space-y-1">
+          {menuItems.map((item) => (
+            <button
+              key={item.path}
+              type="button"
+              onClick={() => navigate(item.path)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                isActive(item.path)
+                  ? "bg-purple-600 text-white shadow-sm"
+                  : "text-gray-700 hover:bg-purple-50"
+              }`}
+            >
+              <item.icon className="w-5 h-5 flex-shrink-0" />
+              {sidebarOpen && <span className="text-sm font-medium">{item.label}</span>}
+            </button>
+          ))}
+        </nav>
+
+        {/* User Info */}
+        {sidebarOpen && (
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+            {user.name ? (
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-semibold text-gray-600">
+                      {user.name?.[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
+                    {user.email && (
+                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="text-xs text-gray-500 hover:text-gray-800 inline-flex items-center gap-1"
+                >
+                  <LogOut className="w-3 h-3" />
+                  Sair
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Button
+                  onClick={() => navigate("/login")}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  size="sm"
+                >
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Entrar
+                </Button>
+                <Button
+                  onClick={() => navigate("/register")}
+                  variant="outline"
+                  className="w-full border-purple-200 text-purple-700 hover:bg-purple-50"
+                  size="sm"
+                >
+                  Criar conta
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Main Content */}
+      <div
+        className={`flex-1 transition-all duration-300 ${
+          sidebarOpen ? "ml-64" : "ml-16"
+        }`}
+      >
+        {children}
+      </div>
+
+      {/* Floating Chat - Only show if user is logged in */}
+      {user.email && <FloatingChat />}
+    </div>
+  );
+}

@@ -4,7 +4,7 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Search, SlidersHorizontal, X } from "lucide-react";
+import { Sparkles, Search, SlidersHorizontal, X, Clock } from "lucide-react";
 import { toast } from "sonner";
 import SidebarLayout from "@/components/SidebarLayout";
 
@@ -33,9 +33,28 @@ export default function Marketplace() {
 
   const priceRanges = [
     { id: "all", label: "Todos os preços" },
-    { id: "0-40", label: "Até $40" },
-    { id: "40-60", label: "$40 - $60" },
-    { id: "60+", label: "Acima de $60" }
+    { id: "0-250", label: "Até R$250" },
+    { id: "250-300", label: "R$250 - R$300" },
+    { id: "300+", label: "Acima de R$300" }
+  ];
+
+  const comingSoonAgents = [
+    {
+      name: "Secretaria 24/7",
+      subtitle: "Atende WhatsApp, site e Insta 24h, responde dúvidas e coloca o cliente direto na sua agenda"
+    },
+    {
+      name: "Assistente Executivo",
+      subtitle: "Organiza e-mail, agenda, tarefas e follow-ups como um braço direito digital para empreendedores e diretores"
+    },
+    {
+      name: "Inteligência de Marca",
+      subtitle: "Monitora redes, reviews e concorrentes e te entrega insights prontos para decisão e marketing"
+    },
+    {
+      name: "Assistente Financeiro",
+      subtitle: "Lembra vencimentos, envia links de pagamento, faz cobranças suaves e atualiza o status financeiro"
+    }
   ];
 
   useEffect(() => {
@@ -77,12 +96,12 @@ export default function Marketplace() {
 
     // Filter by price range
     if (priceRange !== "all") {
-      if (priceRange === "0-40") {
-        filtered = filtered.filter((agent) => agent.price <= 40);
-      } else if (priceRange === "40-60") {
-        filtered = filtered.filter((agent) => agent.price > 40 && agent.price <= 60);
-      } else if (priceRange === "60+") {
-        filtered = filtered.filter((agent) => agent.price > 60);
+      if (priceRange === "0-250") {
+        filtered = filtered.filter((agent) => agent.price <= 250);
+      } else if (priceRange === "250-300") {
+        filtered = filtered.filter((agent) => agent.price > 250 && agent.price <= 300);
+      } else if (priceRange === "300+") {
+        filtered = filtered.filter((agent) => agent.price > 300);
       }
     }
 
@@ -261,7 +280,7 @@ export default function Marketplace() {
 
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                     <div>
-                      <span className="text-2xl font-bold">${agent.price}</span>
+                      <span className="text-2xl font-bold">R$ {Number(agent.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                       <span className="text-gray-500 text-sm">/mês</span>
                     </div>
                     <Button 
@@ -271,6 +290,48 @@ export default function Marketplace() {
                     >
                       Ver Detalhes
                     </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Coming Soon Agents */}
+            {(selectedSegment === "all") && !searchQuery && comingSoonAgents.map((agent, idx) => (
+              <div
+                key={`coming-${idx}`}
+                className="relative bg-white border border-gray-100 rounded-2xl overflow-hidden group select-none"
+              >
+                {/* Blurred placeholder content */}
+                <div className="blur-md pointer-events-none saturate-50">
+                  <div className="h-48 bg-gradient-to-br from-purple-100 via-indigo-50 to-violet-100 border-b border-gray-100 flex items-center justify-center">
+                    <div className="w-20 h-20 bg-purple-200/80 rounded-full" />
+                  </div>
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="h-5 bg-gray-300 rounded w-32" />
+                      <div className="h-5 bg-purple-200 rounded w-16" />
+                    </div>
+                    <div className="space-y-2 mb-4">
+                      <div className="h-3 bg-gray-200 rounded w-full" />
+                      <div className="h-3 bg-gray-200 rounded w-4/5" />
+                      <div className="h-3 bg-gray-200 rounded w-3/5" />
+                    </div>
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                      <div className="h-7 bg-gray-300 rounded w-20" />
+                      <div className="h-8 bg-purple-200 rounded w-24" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Em Breve Badge Overlay */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="bg-white/95 backdrop-blur-sm rounded-2xl px-5 py-4 text-center shadow-xl border border-purple-100 mx-4">
+                    <div className="flex items-center justify-center gap-1.5 mb-2">
+                      <Clock className="w-3.5 h-3.5 text-purple-500" />
+                      <span className="text-[10px] font-black text-purple-600 uppercase tracking-[0.15em]">Em Breve</span>
+                    </div>
+                    <p className="text-[15px] font-bold text-gray-900 mb-1">{agent.name}</p>
+                    <p className="text-[11px] text-gray-500 leading-snug max-w-[200px]">{agent.subtitle}</p>
                   </div>
                 </div>
               </div>

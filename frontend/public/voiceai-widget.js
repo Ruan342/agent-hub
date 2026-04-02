@@ -25,7 +25,7 @@
 
       this.config = {
         apiKey: config.apiKey,
-        apiUrl: config.apiUrl || 'https://voiceai-hub-9.preview.emergentagent.com/api',
+        apiUrl: config.apiUrl || 'http://localhost:8000/api',
         themeColor: config.themeColor || '#7C3AED',
         position: config.position || 'bottom-right',
         greetingMessage: config.greetingMessage || 'Olá! Como posso ajudar?',
