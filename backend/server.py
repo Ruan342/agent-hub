@@ -1303,12 +1303,13 @@ async def create_chat_session(subscription_id: str, current_user: dict = Depends
     if not sub:
         raise HTTPException(status_code=404, detail="Subscription not found")
     
+    session_id = str(uuid.uuid4())
     session = {
-        "id": str(uuid.uuid4()),
+        "id": session_id,
         "subscription_id": subscription_id,
         "user_id": current_user['user_id'],
         "agent_id": sub['agent_id'],
-        "title": None,
+        "title": f"Atendimento #{session_id[:5].upper()}",
         "messages": [],
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat()
@@ -1360,8 +1361,7 @@ async def add_message_to_session(session_id: str, message: ChatMessage, current_
     }
     
     if not session.get('messages') and message.role == "user":
-        # Generate title from first 50 chars of first message
-        title = message.content[:50] + ("..." if len(message.content) > 50 else "")
+        title = message.content[:30] + "..."
         update_data["$set"]["title"] = title
     
     await db.chat_sessions.update_one(
@@ -3979,6 +3979,39 @@ class ChatWebhookRequest(BaseModel):
     input_audio_base64: Optional[str] = None
     audio: bool = False
 
+async def trigger_n8n_title_webhook_task(session_id: str):
+    try:
+        messages_cursor = db.messages.find({"session_id": session_id, "role": "user"}).sort("timestamp", 1).limit(2)
+        user_msgs = await messages_cursor.to_list(length=2)
+        
+        if len(user_msgs) != 2:
+            return
+
+        context_msg = f"Mensagem 1: {user_msgs[0].get('content', '')}\nMensagem 2: {user_msgs[1].get('content', '')}"
+        
+        async with httpx.AsyncClient() as client:
+            webhook_url = "https://corefy.app.n8n.cloud/webhook/titulo_chat"
+            payload = {
+                "message": context_msg,
+                "session_id": session_id,
+                "message_number": 2
+            }
+            response = await client.post(webhook_url, json=payload, timeout=10.0)
+            if response.status_code == 200:
+                text_resp = response.text.strip()
+                try:
+                    json_resp = response.json()
+                    if isinstance(json_resp, list) and len(json_resp) > 0:
+                        json_resp = json_resp[0]
+                    title = json_resp.get("output", json_resp.get("output_text", json_resp.get("title", json_resp.get("titulo", text_resp))))
+                except ValueError:
+                    title = text_resp
+                
+                if title and title.strip():
+                    await db.chat_sessions.update_one({"id": session_id}, {"$set": {"title": title}})
+    except Exception as e:
+        print(f"Error calling n8n title webhook task: {e}")
+
 @api_router.post("/chat")
 async def process_chat(request: ChatWebhookRequest, current_user: dict = Depends(get_current_user)):
     user_id = current_user["user_id"]
@@ -4027,6 +4060,10 @@ async def process_chat(request: ChatWebhookRequest, current_user: dict = Depends
     if request.input_audio_base64:
         user_msg_dict["audioBase64"] = request.input_audio_base64
     await db.messages.insert_one(user_msg_dict)
+    
+    count_user_msgs = await db.messages.count_documents({"session_id": session_id, "role": "user"})
+    if count_user_msgs == 2:
+        asyncio.create_task(trigger_n8n_title_webhook_task(session_id))
     
     segment = agent.get("segment", "")
     webhook_url = sub.get("config", {}).get("webhook_url") or agent.get("webhook_url")

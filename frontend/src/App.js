@@ -8,7 +8,6 @@ import Marketplace from "@/pages/Marketplace";
 import AgentDetails from "@/pages/AgentDetails";
 import Dashboard from "@/pages/Dashboard";
 import AgentChat from "@/pages/AgentChat";
-import Checkout from "@/pages/Checkout";
 import Integrations from "@/pages/Integrations";
 import Analytics from "@/pages/Analytics";
 import RequestAgent from "@/pages/RequestAgent";
@@ -54,7 +53,6 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/agent/:id" element={<AgentDetails />} />
-          <Route path="/checkout/:id" element={<Checkout />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/minhas-assinaturas" element={<MinhasAssinaturas />} />
           <Route path="/agent-chat/:subscriptionId" element={<AgentChat />} />

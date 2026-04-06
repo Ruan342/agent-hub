@@ -147,6 +147,7 @@ export default function AgentChat() {
         if (!ref) return false;
         return now - new Date(ref).getTime() < THIRTY_DAYS_MS;
       });
+      valid.sort((a, b) => new Date(b.updated_at || b.created_at || now) - new Date(a.updated_at || a.created_at || now));
       setChatHistory(valid);
     } catch (e) {
       console.error('Error fetching chat history', e);
@@ -214,6 +215,13 @@ export default function AgentChat() {
     }
   };
 
+  const startNewChat = () => {
+    if (messages.length > 0) {
+      setCurrentSessionId(null);
+      setMessages([]);
+    }
+  };
+
   const handleSendMessage = async (messageText = inputMessage, userAudioBase64 = null) => {
     if ((!messageText.trim() && !userAudioBase64) || sending) return;
     
@@ -259,6 +267,11 @@ export default function AgentChat() {
       if (voiceMode && res.data.audio_base64) {
         playAudio(res.data.audio_base64);
       }
+      
+      // Reload chat history slightly later to catch the async WebHook title automatically
+      setTimeout(() => {
+        if (subscriptionId) fetchChatHistory(subscriptionId);
+      }, 3500);
     } catch (error) {
       toast.error(error.response?.data?.detail || "Erro ao enviar mensagem");
       setMessages(prev => prev.slice(0, -1));
@@ -580,7 +593,7 @@ export default function AgentChat() {
     <SidebarLayout>
       <div className="h-screen flex bg-white">
         {/* Simplified Left Profile Sidebar */}
-        <div className="w-80 bg-gradient-to-b from-purple-600 to-purple-800 flex flex-col text-white shadow-xl z-10">
+        <div className="w-96 bg-gradient-to-b from-purple-600 to-purple-800 flex flex-col text-white shadow-xl z-10 transition-all">
           <div className="p-8 flex flex-col items-center text-center mt-8">
             <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-4 shadow-xl border-4 border-purple-300/30 overflow-hidden relative">
               {agent?.mascot_image_url ? (
@@ -628,9 +641,10 @@ export default function AgentChat() {
                             : 'cursor-pointer hover:bg-white/15'
                       }`}
                     >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <MessageSquare className="w-3 h-3 text-purple-300 shrink-0" />
-                        <span className="truncate text-white/90 text-xs">{dateLabel} {isClosed ? '· Finalizado' : isCurrentSession ? '· Atual' : ''}</span>
+                      <div className="flex items-center min-w-0 flex-1 hover-marquee-container">
+                        <span className="text-white/90 text-xs font-medium hover-marquee-content">
+                          {dateLabel} - {sess.title} {isClosed ? '(Finalizado)' : isCurrentSession ? '(Atual)' : ''}
+                        </span>
                       </div>
                       <div
                         title={`Expira em: ${expiresInfo.tooltip}`}
@@ -652,17 +666,21 @@ export default function AgentChat() {
 
           <div className="flex-1" />
 
-          <div className="p-6 flex flex-col justify-end mb-8">
+          <div className="p-6 flex flex-col justify-end mb-8 gap-3">
+            <button 
+              onClick={startNewChat} 
+              className="w-full py-4 px-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-1"
+            >
+              <MessageSquare className="w-5 h-5 text-purple-200" />
+              Novo Chat
+            </button>
             <button 
               onClick={terminateSession} 
               className="w-full py-4 px-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-1"
             >
               <Trash2 className="w-5 h-5" />
-              Finalizar Conversa
+              Finalizar Atual
             </button>
-            <p className="text-xs text-purple-300 text-center mt-4">
-              Isto apagará o histórico atual e fechará a sessão, permitindo um recomeço.
-            </p>
           </div>
         </div>
 

@@ -57,7 +57,22 @@ export default function AgentDetails() {
       return;
     }
 
-    navigate(`/checkout/${id}`);
+    setPurchasing(true);
+    try {
+      await axios.post(
+        `${API}/subscriptions`,
+        { agent_id: id, quantity: 1 },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Assinatura confirmada com sucesso!");
+      navigate("/minhas-assinaturas");
+    } catch (error) {
+      toast.error(
+        error.response?.data?.detail || "Erro ao confirmar assinatura"
+      );
+    } finally {
+      setPurchasing(false);
+    }
   };
 
   const handlePlaySample = () => {
