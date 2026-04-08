@@ -4049,6 +4049,8 @@ async def process_chat(request: ChatWebhookRequest, current_user: dict = Depends
                 except:
                     pass
             if isinstance(last_interaction, datetime):
+                if last_interaction.tzinfo is None:
+                    last_interaction = last_interaction.replace(tzinfo=timezone.utc)
                 diff = datetime.now(timezone.utc) - last_interaction
                 # Update expiration to 30 days (2592000 seconds)
                 if diff.total_seconds() > 2592000:
