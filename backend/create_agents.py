@@ -38,7 +38,8 @@ agents_to_add = [
 ]
 
 async def main():
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
+    mongo_url = os.getenv("MONGO_URL", "mongodb://localhost:27017")
+    client = AsyncIOMotorClient(mongo_url)
     db = client["agenthub"]
     agents_col = db["agents"]
     
