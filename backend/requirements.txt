@@ -20,7 +20,6 @@ ecdsa==0.19.1
 elevenlabs==2.23.0
 email-validator==2.3.0
 anthropic==0.25.7
-google-genai==0.3.0
 fastapi==0.110.1
 fastuuid==0.14.0
 filelock==3.20.0
