@@ -19,8 +19,16 @@
       "destination": "/backend/server.py"
     },
     {
-      "source": "/(.*)",
+      "source": "/static/(.*)",
+      "destination": "/frontend/static/$1"
+    },
+    {
+      "source": "/(favicon.ico|manifest.json|robots.txt|logo192.png|logo512.png|voiceai-widget.js|widget-demo.html)",
       "destination": "/frontend/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/frontend/index.html"
     }
   ]
 }
