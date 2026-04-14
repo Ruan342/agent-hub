@@ -10,6 +10,14 @@ import SidebarLayout from "@/components/SidebarLayout";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+const SEGMENT_LABELS_CHAT = {
+  ecommerce: "E-Commerce",
+  sdr: "SDR",
+  suporte: "Suporte",
+  pos_vendas: "Pós-Vendas",
+  lidia_prospec: "Prospecção",
+};
+
 export default function AgentChat() {
   const { subscriptionId } = useParams();
   const navigate = useNavigate();
@@ -582,8 +590,8 @@ export default function AgentChat() {
   if (loading) {
     return (
       <SidebarLayout>
-        <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
-          <Loader2 className="w-10 h-10 animate-spin text-purple-600" />
+        <div className="min-h-screen bg-paper flex items-center justify-center">
+          <Loader2 className="w-10 h-10 animate-spin text-coreblue" />
         </div>
       </SidebarLayout>
     );
@@ -591,11 +599,11 @@ export default function AgentChat() {
 
   return (
     <SidebarLayout>
-      <div className="h-screen flex bg-white">
-        {/* Simplified Left Profile Sidebar */}
-        <div className="w-96 bg-gradient-to-b from-purple-600 to-purple-800 flex flex-col text-white shadow-xl z-10 transition-all">
+      <div className="h-screen flex bg-paper">
+        {/* Left Profile Sidebar */}
+        <div className="w-96 bg-navy flex flex-col text-white shadow-xl z-10 transition-all">
           <div className="p-8 flex flex-col items-center text-center mt-8">
-            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-4 shadow-xl border-4 border-purple-300/30 overflow-hidden relative">
+            <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mb-4 shadow-xl border-2 border-white/20 overflow-hidden relative">
               {agent?.mascot_image_url ? (
                 <img 
                   src={agent?.mascot_image_url} 
@@ -604,20 +612,22 @@ export default function AgentChat() {
                   onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
                 />
               ) : null}
-              <Sparkles className={`w-12 h-12 text-purple-600 ${agent?.mascot_image_url ? 'hidden' : ''}`} />
+              <Sparkles className={`w-12 h-12 text-blue-400 ${agent?.mascot_image_url ? 'hidden' : ''}`} />
             </div>
             <h2 className="text-2xl font-bold mb-1">{agent?.name}</h2>
-            <p className="text-sm font-medium text-purple-200 uppercase tracking-widest">{agent?.segment}</p>
-            <Badge className="mt-4 bg-green-500 hover:bg-green-600 text-white border-0 px-4 py-1 flex items-center gap-2">
-              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-              Sessão Ativa
-            </Badge>
+            <p className="text-sm font-bold text-blue-300 uppercase tracking-widest">
+              {SEGMENT_LABELS_CHAT[agent?.segment] || agent?.segment}
+            </p>
+            <div className="mt-4 flex items-center gap-2 px-4 py-1.5 bg-coregreen/20 border border-coregreen/30 rounded-full">
+              <div className="w-2 h-2 bg-coregreen rounded-full animate-pulse"></div>
+              <span className="text-xs font-bold text-coregreen">Sessão Ativa</span>
+            </div>
           </div>
 
           {/* Chat History */}
           {chatHistory.length > 0 && (
             <div className="px-4 pb-4">
-              <p className="text-[10px] font-bold text-purple-300 uppercase tracking-widest mb-2 px-2">Conversas recentes</p>
+              <p className="text-[10px] font-bold text-blue-300 uppercase tracking-widest mb-2 px-2">Conversas recentes</p>
               <div className="space-y-1 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
                 {chatHistory.map((sess) => {
                   const expiresInfo = getExpiresInfo(sess);
@@ -651,7 +661,7 @@ export default function AgentChat() {
                         className={`shrink-0 flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
                           parseInt(expiresInfo.label) <= 3
                             ? 'bg-red-500/30 text-red-300'
-                            : 'bg-purple-400/30 text-purple-200'
+                            : 'bg-white/10 text-blue-200'
                         }`}
                       >
                         <Clock className="w-2.5 h-2.5" />
@@ -671,12 +681,12 @@ export default function AgentChat() {
               onClick={startNewChat} 
               className="w-full py-4 px-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-1"
             >
-              <MessageSquare className="w-5 h-5 text-purple-200" />
+              <MessageSquare className="w-5 h-5 text-blue-300" />
               Novo Chat
             </button>
             <button 
               onClick={terminateSession} 
-              className="w-full py-4 px-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-1"
+              className="w-full py-4 px-4 bg-red-500/80 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-1"
             >
               <Trash2 className="w-5 h-5" />
               Finalizar Atual
@@ -685,21 +695,25 @@ export default function AgentChat() {
         </div>
 
         {/* Main Chat Interface */}
-        <div className="flex-1 flex flex-col bg-[#F9FAFB] relative">
+        <div className="flex-1 flex flex-col bg-paper relative">
           <div className="flex-1 overflow-y-auto p-8">
             <div className="max-w-4xl mx-auto space-y-6 pb-20">
               {messages.length === 0 && !currentSessionId && (
                 <div className="flex flex-col items-center justify-center h-full text-center py-20">
-                  <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mb-6">
-                    <Sparkles className="w-10 h-10 text-purple-500" />
+                  <div className="w-20 h-20 bg-coreblue/10 border border-coreblue/20 rounded-full flex items-center justify-center mb-6">
+                    <Sparkles className="w-10 h-10 text-coreblue" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Seja bem-vindo</h3>
-                  <p className="text-gray-500 max-w-md">Envie a primeira mensagem para iniciar uma nova conversa e registrar a sessão.</p>
+                  <h3 className="text-2xl font-extrabold text-navy mb-2">Seja bem-vindo</h3>
+                  <p className="text-gray-500 font-medium max-w-md">Envie a primeira mensagem para iniciar uma nova conversa e registrar a sessão.</p>
                 </div>
               )}
               {messages.map((msg, idx) => (
                 <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[75%] rounded-3xl px-6 py-4 shadow-sm ${msg.role === 'user' ? 'bg-purple-600 text-white rounded-br-none' : 'bg-white border border-gray-100 text-gray-800 rounded-bl-none'}`}>
+                  <div className={`max-w-[75%] rounded-3xl px-6 py-4 shadow-sm ${
+                    msg.role === 'user'
+                      ? 'bg-coreblue text-white rounded-br-none'
+                      : 'bg-white border border-line text-navy rounded-bl-none'
+                  }`}>
                     {msg.content && !(msg.role === 'user' && msg.audioBase64) && (
                       <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                     )}
@@ -715,9 +729,9 @@ export default function AgentChat() {
               ))}
               {sending && (
                 <div className="flex justify-start">
-                  <div className="bg-white border border-gray-100 rounded-3xl rounded-bl-none px-6 py-4 shadow-sm">
+                  <div className="bg-white border border-line rounded-3xl rounded-bl-none px-6 py-4 shadow-sm">
                     <div className="flex items-center gap-3">
-                      <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
+                      <Loader2 className="w-5 h-5 animate-spin text-coreblue" />
                       <span className="text-[15px] font-medium text-gray-500">Agente processando...</span>
                     </div>
                   </div>
@@ -728,9 +742,9 @@ export default function AgentChat() {
           </div>
 
           {/* Chat Input Area */}
-          <div className="bg-white border-t border-gray-200 p-6 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)] z-20">
+          <div className="bg-white border-t border-line p-6 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)] z-20">
             {audioPreview ? (
-              <div className="max-w-4xl mx-auto flex items-center gap-4 bg-gray-50/80 p-3 rounded-3xl border-2 border-purple-100 shadow-sm">
+              <div className="max-w-4xl mx-auto flex items-center gap-4 bg-paper p-3 rounded-3xl border-2 border-line shadow-sm">
                 <button 
                   onClick={() => setAudioPreview(null)} 
                   className="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-red-100/80 text-red-600 rounded-full hover:bg-red-200 transition-colors"
@@ -749,7 +763,7 @@ export default function AgentChat() {
                     setAudioPreview(null);
                   }} 
                   disabled={sending}
-                  className="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg transition-transform active:scale-95 disabled:opacity-50"
+                  className="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-coreblue hover:bg-blue-700 text-white rounded-full shadow-lg transition-transform active:scale-95 disabled:opacity-50"
                   title="Enviar áudio"
                 >
                   {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 ml-1" />}
@@ -777,14 +791,14 @@ export default function AgentChat() {
                     onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())} 
                     placeholder={voiceMode ? "Modo de voz ativo. Gravando..." : "Digite sua mensagem para o agente..."} 
                     disabled={sending || voiceMode} 
-                    className="w-full px-6 py-4 pr-16 text-base bg-gray-50 border-2 border-transparent focus:bg-white rounded-2xl resize-none focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all shadow-inner disabled:opacity-60 disabled:cursor-not-allowed font-medium leading-relaxed" 
+                    className="w-full px-6 py-4 pr-16 text-base bg-paper border-2 border-transparent focus:bg-white rounded-2xl resize-none focus:outline-none focus:border-coreblue focus:ring-4 focus:ring-blue-100 transition-all shadow-inner disabled:opacity-60 disabled:cursor-not-allowed font-medium leading-relaxed" 
                     rows={1} 
                     style={{ minHeight: '60px', maxHeight: '150px' }} 
                   />
                   <button 
                     onClick={() => handleSendMessage()} 
                     disabled={!inputMessage.trim() || sending || voiceMode} 
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-transform active:scale-95"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-coreblue hover:bg-blue-700 text-white rounded-xl shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-transform active:scale-95"
                   >
                     {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 ml-1" />}
                   </button>
@@ -792,7 +806,7 @@ export default function AgentChat() {
               </div>
             )}
             {interimTranscript && !audioPreview && (
-              <p className="text-sm text-center mt-3 text-purple-600 animate-pulse font-medium">"{interimTranscript}"</p>
+              <p className="text-sm text-center mt-3 text-coreblue animate-pulse font-bold">"{interimTranscript}"</p>
             )}
           </div>
         </div>

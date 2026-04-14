@@ -11,6 +11,16 @@ import SidebarLayout from "@/components/SidebarLayout";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+const SEGMENT_LABELS = {
+  ecommerce: "E-Commerce",
+  sdr: "SDR",
+  suporte: "Suporte",
+  pos_vendas: "Pós-Vendas",
+  lidia_prospec: "Prospecção",
+};
+
+const formatSegment = (seg) => SEGMENT_LABELS[seg] || (seg ? seg.toUpperCase() : 'AGENTE');
+
 export default function AgentDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -275,7 +285,7 @@ export default function AgentDetails() {
           <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
             <div className="container mx-auto">
               <Badge className="bg-white/20 backdrop-blur-sm text-white border-0 mb-3">
-                {agent.segment}
+                {formatSegment(agent.segment)}
               </Badge>
               <h1 className="text-5xl font-bold mb-3 drop-shadow-lg">
                 {agent.name}

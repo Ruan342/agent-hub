@@ -11,6 +11,16 @@ import SidebarLayout from "@/components/SidebarLayout";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+const SEGMENT_LABELS = {
+  ecommerce: "E-Commerce",
+  sdr: "SDR",
+  suporte: "Suporte",
+  pos_vendas: "Pós-Vendas",
+  lidia_prospec: "Prospecção",
+};
+
+const formatSegment = (seg) => SEGMENT_LABELS[seg] || (seg ? seg.toUpperCase() : 'AGENTE');
+
 export default function Marketplace() {
   const navigate = useNavigate();
   const [agents, setAgents] = useState([]);
@@ -128,12 +138,12 @@ export default function Marketplace() {
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-8">
-          <span className="inline-flex items-center gap-2 px-3 py-1 bg-purple-50 border border-purple-100 rounded-full text-xs font-medium text-purple-700 mb-3">
+          <span className="inline-flex items-center gap-2 px-3 py-1 bg-coreblue/10 border border-coreblue/20 rounded-full text-xs font-bold text-coreblue mb-3 uppercase tracking-wide">
             <Sparkles className="w-3 h-3" />
             Catálogo de agentes de voz
           </span>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Marketplace</h1>
-          <p className="text-gray-600">Encontre o agente perfeito para seu negócio</p>
+          <h1 className="text-3xl font-extrabold tracking-tight mb-2 text-navy">Marketplace</h1>
+          <p className="text-gray-500 font-medium tracking-wide">Encontre o agente perfeito para seu negócio</p>
         </div>
 
         {/* Search and Filters */}
@@ -165,7 +175,7 @@ export default function Marketplace() {
                     onClick={() => setSelectedSegment(segment.id)}
                     variant={selectedSegment === segment.id ? "default" : "outline"}
                     size="sm"
-                    className={selectedSegment === segment.id ? "bg-purple-600 hover:bg-purple-700" : "border-gray-300 hover:border-purple-400"}
+                    className={selectedSegment === segment.id ? "bg-coreblue hover:bg-blue-700 font-bold" : "border-line bg-white hover:bg-paper font-semibold text-navy"}
                   >
                     <span className="mr-1">{segment.icon}</span>
                     {segment.label}
@@ -197,7 +207,7 @@ export default function Marketplace() {
                 onClick={() => setPriceRange(range.id)}
                 variant={priceRange === range.id ? "default" : "outline"}
                 size="sm"
-                className={priceRange === range.id ? "bg-purple-600 hover:bg-purple-700" : "border-gray-300 text-gray-600"}
+                className={priceRange === range.id ? "bg-coreblue hover:bg-blue-700 font-bold" : "border-line bg-white text-navy font-semibold hover:bg-paper"}
               >
                 {range.label}
               </Button>
@@ -215,7 +225,7 @@ export default function Marketplace() {
             onClick={() => navigate("/request-agent")} 
             variant="outline"
             size="sm"
-            className="border-gray-300"
+            className="border-line font-bold text-navy hover:bg-paper"
           >
             Solicitar Agente Personalizado
           </Button>
@@ -223,9 +233,33 @@ export default function Marketplace() {
 
         {/* Agents Grid */}
         {loading ? (
-          <div className="text-center py-20">
-            <div className="inline-block w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin"></div>
-            <p className="text-gray-600 mt-4">Carregando agentes...</p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((idx) => (
+              <div key={idx} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm animate-pulse">
+                <div className="h-48 bg-gray-200"></div>
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="w-1/2 h-5 bg-gray-200 rounded"></div>
+                    <div className="w-16 h-5 bg-gray-200 rounded-full"></div>
+                  </div>
+                  <div className="w-full h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="w-3/4 h-4 bg-gray-200 rounded mb-6"></div>
+                  
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    <div className="w-16 h-6 bg-gray-200 rounded-full"></div>
+                    <div className="w-20 h-6 bg-gray-200 rounded-full"></div>
+                  </div>
+
+                  <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-auto">
+                    <div className="space-y-1">
+                      <div className="w-12 h-3 bg-gray-200 rounded"></div>
+                      <div className="w-16 h-5 bg-gray-200 rounded"></div>
+                    </div>
+                    <div className="w-24 h-8 bg-gray-200 rounded-lg"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : filteredAgents.length === 0 ? (
           <div className="text-center py-20 bg-white border border-gray-200 rounded-xl" data-testid="no-agents-message">
@@ -242,10 +276,10 @@ export default function Marketplace() {
               <div 
                 key={agent.id} 
                 data-testid={`agent-card-${agent.id}`}
-                className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:border-purple-300 hover:shadow-sm transition-all cursor-pointer group"
+                className="bg-white border border-line rounded-2xl overflow-hidden hover:border-coreblue hover:shadow-lg transition-all duration-300 cursor-pointer group"
                 onClick={() => navigate(`/agent/${agent.id}`)}
               >
-                <div className="h-48 bg-gradient-to-br from-purple-50 via-white to-purple-50 border-b border-gray-100 overflow-hidden">
+                <div className="h-48 bg-paper border-b border-line overflow-hidden p-6 flex items-center justify-center">
                   <img 
                     src={agent.mascot_image_url} 
                     alt={agent.name}
@@ -258,9 +292,9 @@ export default function Marketplace() {
                 </div>
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-lg font-semibold group-hover:text-black transition-colors">{agent.name}</h3>
-                    <Badge className="bg-purple-50 text-purple-700 border-0 text-xs shrink-0">
-                      {agent.segment}
+                    <h3 className="text-lg font-extrabold text-navy group-hover:text-coreblue transition-colors">{agent.name}</h3>
+                    <Badge className="bg-navy/5 text-navy border-line text-xs shrink-0 tracking-wide uppercase">
+                      {formatSegment(agent.segment)}
                     </Badge>
                   </div>
                   <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">{agent.description}</p>
@@ -278,15 +312,15 @@ export default function Marketplace() {
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-between pt-4 border-t border-line">
                     <div>
-                      <span className="text-2xl font-bold">R$ {Number(agent.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                      <span className="text-gray-500 text-sm">/mês</span>
+                      <span className="text-2xl font-extrabold text-navy">R$ {Number(agent.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      <span className="text-gray-500 text-sm font-medium">/mês</span>
                     </div>
                     <Button 
                       data-testid={`view-agent-${agent.id}`}
                       size="sm" 
-                      className="bg-purple-600 hover:bg-purple-700"
+                      className="bg-coreblue hover:bg-blue-700 text-white font-bold"
                     >
                       Ver Detalhes
                     </Button>
@@ -299,36 +333,36 @@ export default function Marketplace() {
             {(selectedSegment === "all") && !searchQuery && comingSoonAgents.map((agent, idx) => (
               <div
                 key={`coming-${idx}`}
-                className="relative bg-white border border-gray-100 rounded-2xl overflow-hidden group select-none"
+                className="relative bg-white border border-line rounded-2xl overflow-hidden group select-none"
               >
                 {/* Blurred placeholder content */}
                 <div className="blur-md pointer-events-none saturate-50">
-                  <div className="h-48 bg-gradient-to-br from-purple-100 via-indigo-50 to-violet-100 border-b border-gray-100 flex items-center justify-center">
-                    <div className="w-20 h-20 bg-purple-200/80 rounded-full" />
+                  <div className="h-48 bg-paper border-b border-line flex items-center justify-center">
+                    <div className="w-20 h-20 bg-slate-200/80 rounded-full" />
                   </div>
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-3">
-                      <div className="h-5 bg-gray-300 rounded w-32" />
-                      <div className="h-5 bg-purple-200 rounded w-16" />
+                      <div className="h-5 bg-slate-300 rounded w-32" />
+                      <div className="h-5 bg-slate-200 rounded w-16" />
                     </div>
                     <div className="space-y-2 mb-4">
-                      <div className="h-3 bg-gray-200 rounded w-full" />
-                      <div className="h-3 bg-gray-200 rounded w-4/5" />
-                      <div className="h-3 bg-gray-200 rounded w-3/5" />
+                      <div className="h-3 bg-slate-200 rounded w-full" />
+                      <div className="h-3 bg-slate-200 rounded w-4/5" />
+                      <div className="h-3 bg-slate-200 rounded w-3/5" />
                     </div>
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                      <div className="h-7 bg-gray-300 rounded w-20" />
-                      <div className="h-8 bg-purple-200 rounded w-24" />
+                    <div className="flex items-center justify-between pt-4 border-t border-line">
+                      <div className="h-7 bg-slate-300 rounded w-20" />
+                      <div className="h-8 bg-slate-200 rounded w-24" />
                     </div>
                   </div>
                 </div>
 
                 {/* Em Breve Badge Overlay */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <div className="bg-white/95 backdrop-blur-sm rounded-2xl px-5 py-4 text-center shadow-xl border border-purple-100 mx-4">
+                  <div className="bg-white/95 backdrop-blur-sm rounded-2xl px-5 py-4 text-center shadow-xl border border-line mx-4">
                     <div className="flex items-center justify-center gap-1.5 mb-2">
-                      <Clock className="w-3.5 h-3.5 text-purple-500" />
-                      <span className="text-[10px] font-black text-purple-600 uppercase tracking-[0.15em]">Em Breve</span>
+                      <Clock className="w-3.5 h-3.5 text-amber-500" />
+                      <span className="text-[10px] font-black text-amber-600 uppercase tracking-[0.15em]">Em Breve</span>
                     </div>
                     <p className="text-[15px] font-bold text-gray-900 mb-1">{agent.name}</p>
                     <p className="text-[11px] text-gray-500 leading-snug max-w-[200px]">{agent.subtitle}</p>

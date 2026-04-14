@@ -7,6 +7,14 @@ import { toast } from "sonner";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+const SEGMENT_LABELS_CC = {
+  ecommerce: "E-Commerce",
+  sdr: "SDR",
+  suporte: "Suporte",
+  pos_vendas: "Pós-Vendas",
+  lidia_prospec: "Prospecção",
+};
+
 export default function ClientChat() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
@@ -190,33 +198,35 @@ export default function ClientChat() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-10 h-10 animate-spin text-purple-600" />
+      <div className="min-h-screen bg-paper flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-coreblue" />
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 font-sans relative">
+    <div className="h-screen flex flex-col bg-paper font-sans relative">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm z-10 shrink-0">
+      <div className="bg-navy border-b border-white/10 px-6 py-4 flex items-center justify-between shadow-lg z-10 shrink-0">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center overflow-hidden border-2 border-purple-50">
+          <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center overflow-hidden border-2 border-white/20">
             {agent?.mascot_image_url ? (
               <img src={agent.mascot_image_url} alt="Agente" className="w-full h-full object-cover" />
             ) : (
-              <Sparkles className="w-6 h-6 text-purple-600" />
+              <Sparkles className="w-6 h-6 text-blue-400" />
             )}
           </div>
           <div>
-            <h2 className="text-lg font-bold text-gray-900">{agent?.name}</h2>
-            <p className="text-xs font-semibold text-purple-600 uppercase tracking-wider">{agent?.segment}</p>
+            <h2 className="text-lg font-extrabold text-white">{agent?.name}</h2>
+            <p className="text-xs font-bold text-blue-300 uppercase tracking-wider">
+              {SEGMENT_LABELS_CC[agent?.segment] || agent?.segment}
+            </p>
           </div>
         </div>
         
         <button 
           onClick={() => setShowLeaveModal(true)}
-          className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+          className="p-2 text-white/40 hover:text-red-400 transition-colors"
           title="Sair do atendimento"
         >
           <LogOut className="w-5 h-5" />
@@ -257,15 +267,19 @@ export default function ClientChat() {
         <div className="max-w-4xl mx-auto space-y-6 pb-20">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                <Sparkles className="w-8 h-8 text-purple-600" />
+              <div className="w-16 h-16 bg-coreblue/10 border border-coreblue/20 rounded-full flex items-center justify-center mb-4">
+                <Sparkles className="w-8 h-8 text-coreblue" />
               </div>
-              <p className="text-gray-500 max-w-sm">Mande a primeira mensagem ou áudio para iniciar seu atendimento.</p>
+              <p className="text-gray-500 font-medium max-w-sm">Mande a primeira mensagem ou áudio para iniciar seu atendimento.</p>
             </div>
           )}
           {messages.map((msg, idx) => (
             <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] md:max-w-[70%] rounded-2xl px-5 py-3 shadow-sm ${msg.role === 'user' ? 'bg-purple-600 text-white rounded-br-none' : 'bg-white border border-gray-100 text-gray-800 rounded-bl-none'}`}>
+              <div className={`max-w-[85%] md:max-w-[70%] rounded-2xl px-5 py-3 shadow-sm ${
+                msg.role === 'user'
+                  ? 'bg-coreblue text-white rounded-br-none'
+                  : 'bg-white border border-line text-navy rounded-bl-none'
+              }`}>
                 {msg.content && !(msg.role === 'user' && msg.audioBase64) && (
                   <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                 )}
@@ -281,10 +295,10 @@ export default function ClientChat() {
           ))}
           {sending && (
             <div className="flex justify-start">
-              <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-none px-5 py-3 shadow-sm">
+              <div className="bg-white border border-line rounded-2xl rounded-bl-none px-5 py-3 shadow-sm">
                 <div className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
-                  <span className="text-[14px] text-gray-500">Agente digitando...</span>
+                  <Loader2 className="w-4 h-4 animate-spin text-coreblue" />
+                  <span className="text-[14px] text-gray-500 font-medium">Agente digitando...</span>
                 </div>
               </div>
             </div>
@@ -294,23 +308,23 @@ export default function ClientChat() {
       </div>
 
       {/* Input Area */}
-      <div className="bg-white border-t border-gray-200 p-4 md:p-6 shadow-[0_-5px_20px_-15px_rgba(0,0,0,0.1)] shrink-0 z-20">
+      <div className="bg-white border-t border-line p-4 md:p-6 shadow-[0_-5px_20px_-15px_rgba(0,0,0,0.1)] shrink-0 z-20">
         <div className="max-w-4xl mx-auto">
           {audioPreview ? (
-            <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-2xl border border-gray-200">
+            <div className="flex items-center gap-3 bg-paper p-2 rounded-2xl border border-line">
               <button 
                 onClick={() => setAudioPreview(null)} 
                 className="w-10 h-10 flex items-center justify-center bg-red-100 text-red-600 rounded-full hover:bg-red-200"
               >
                 <Trash2 className="w-5 h-5"/>
               </button>
-              <div className="flex-1 bg-white rounded-xl border border-gray-200 overflow-hidden flex items-center px-2 py-1">
+              <div className="flex-1 bg-white rounded-xl border border-line overflow-hidden flex items-center px-2 py-1">
                 <audio controls src={audioPreview.blobUrl} className="w-full h-10 bg-transparent" />
               </div>
               <button 
                 onClick={() => handleSendMessage(audioPreview.text, audioPreview.base64)} 
                 disabled={sending}
-                className="w-10 h-10 flex flex-shrink-0 items-center justify-center bg-purple-600 text-white rounded-full disabled:opacity-50"
+                className="w-10 h-10 flex flex-shrink-0 items-center justify-center bg-coreblue text-white rounded-full disabled:opacity-50 hover:bg-blue-700"
               >
                 {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4 ml-1" />}
               </button>
@@ -320,7 +334,7 @@ export default function ClientChat() {
               <button
                 onClick={toggleVoiceMode}
                 className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-                  voiceMode ? 'bg-red-100 text-red-600 border-2 border-red-500 animate-pulse' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  voiceMode ? 'bg-red-100 text-red-600 border-2 border-red-400 animate-pulse' : 'bg-paper text-navy hover:bg-gray-100'
                 }`}
               >
                 {voiceMode ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
@@ -333,14 +347,14 @@ export default function ClientChat() {
                   onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())} 
                   placeholder={voiceMode ? "Modo de voz ativo. Gravando..." : "Digite sua mensagem..."} 
                   disabled={sending || voiceMode} 
-                  className="w-full px-5 py-3 pr-14 text-base bg-gray-50 border border-transparent focus:bg-white rounded-xl resize-none outline-none focus:border-purple-300 focus:ring-4 focus:ring-purple-50 disabled:opacity-60" 
+                  className="w-full px-5 py-3 pr-14 text-base bg-paper border border-transparent focus:bg-white rounded-xl resize-none outline-none focus:border-coreblue focus:ring-4 focus:ring-blue-50 disabled:opacity-60 font-medium" 
                   rows={1} 
                   style={{ minHeight: '52px', maxHeight: '120px' }} 
                 />
                 <button 
                   onClick={() => handleSendMessage()} 
                   disabled={!inputMessage.trim() || sending || voiceMode} 
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-purple-600 text-white rounded-lg flex items-center justify-center disabled:opacity-50"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-coreblue text-white rounded-lg flex items-center justify-center disabled:opacity-50 hover:bg-blue-700 transition-colors"
                 >
                   {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 ml-0.5" />}
                 </button>
@@ -348,7 +362,7 @@ export default function ClientChat() {
             </div>
           )}
           {interimTranscript && !audioPreview && (
-            <p className="text-xs text-center mt-2 text-purple-600/70 font-medium">"{interimTranscript}"</p>
+            <p className="text-xs text-center mt-2 text-coreblue font-bold">"{interimTranscript}"</p>
           )}
         </div>
       </div>

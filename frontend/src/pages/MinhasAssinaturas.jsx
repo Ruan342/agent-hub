@@ -10,6 +10,15 @@ import { X, Link2, MessageSquare, History, CheckCircle2, Plus, Trash2 } from "lu
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Mapa de segmentos para labels de exibição amigáveis
+const SEGMENT_LABELS = {
+  ecommerce: "E-Commerce",
+  sdr: "SDR",
+  suporte: "Suporte",
+  pos_vendas: "Pós-Vendas",
+  lidia_prospec: "Prospecção",
+};
+
 export default function MinhasAssinaturas() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,6 +27,7 @@ export default function MinhasAssinaturas() {
   const [formData, setFormData] = useState({});
   const [copiedLink, setCopiedLink] = useState(null);
   const [paymentLinks, setPaymentLinks] = useState([]);
+  const [schedulingLinks, setSchedulingLinks] = useState([]);
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
@@ -72,6 +82,12 @@ export default function MinhasAssinaturas() {
         { id: 'informacoes_necessarias_prospeccao', label: 'Informações necessárias para prospecção', placeholder: 'Quais informações são necessárias para que um lead seja considerado qualificado (quente)?' }
       ];
     }
+    if (name.includes("Lidia") || name.includes("Lídia") || name.toLowerCase().includes("lidia prospec")) {
+      return [
+        { id: 'orientacoes_prospeccao', label: 'Orientações de Prospecção', placeholder: 'Descreva como a Lidia deve abordar e prospectar clientes. Tom, estratégia, objeções comuns, etc.' },
+        { id: 'produtos', label: 'Produtos / Serviços', placeholder: 'Descreva os produtos ou serviços que a Lidia deve apresentar e vender. Inclua preços, diferenciais e benefícios.' },
+      ];
+    }
     
     // Default (e.g. Lucy E-commerce)
     return [
@@ -87,6 +103,7 @@ export default function MinhasAssinaturas() {
     setConfigModalOpen(true);
     setFormData({});
     setPaymentLinks([]);
+    setSchedulingLinks([]);
     try {
       const res = await axios.get(`${API}/knowledge-base?agent=${encodeURIComponent(sub.agent?.name)}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -96,6 +113,10 @@ export default function MinhasAssinaturas() {
       // Load existing payment links for Bruno SDR
       if (Array.isArray(data.links_pagamento) && data.links_pagamento.length > 0) {
         setPaymentLinks(data.links_pagamento);
+      }
+      // Load scheduling links for Lidia
+      if (Array.isArray(data.links_agendamento) && data.links_agendamento.length > 0) {
+        setSchedulingLinks(data.links_agendamento);
       }
     } catch(e) {
       console.error("Erro ao puxar Base de Conhecimento", e);
@@ -110,10 +131,15 @@ export default function MinhasAssinaturas() {
     try {
       const agentName = currentSub.agent?.name || "";
       const isBrunoSdr = agentName.includes("Bruno") || agentName.includes("SDR") || agentName.toLowerCase().includes("sdr");
+      const isLidia = agentName.includes("Lidia") || agentName.includes("Lídia") || agentName.toLowerCase().includes("lidia prospec");
       const payload = {
         agent: agentName,
         ...formData,
-        ...(isBrunoSdr ? { links_pagamento: paymentLinks.filter(l => l.plano || l.link) } : {})
+        ...(isBrunoSdr ? { links_pagamento: paymentLinks.filter(l => l.plano || l.link) } : {}),
+        ...(isLidia ? {
+          links_agendamento: schedulingLinks.filter(l => l.usuario || l.link),
+          links_pagamento: paymentLinks.filter(l => l.plano || l.link)
+        } : {})
       };
       await axios.post(`${API}/knowledge-base`, payload, {
         headers: { Authorization: `Bearer ${token}` }
@@ -128,35 +154,35 @@ export default function MinhasAssinaturas() {
   return (
     <SidebarLayout>
       <div className="container mx-auto px-6 py-10">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Minhas Assinaturas</h1>
+        <h1 className="text-3xl font-extrabold text-navy mb-8">Minhas Assinaturas</h1>
         
         {loading ? (
-          <p>Carregando...</p>
+          <p className="text-gray-500 font-medium">Carregando...</p>
         ) : subscriptions.length === 0 ? (
-          <div className="text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed">
-            <h2 className="text-2xl font-bold text-gray-700">Nenhum agente assinado</h2>
-            <Button className="mt-4" onClick={() => navigate("/marketplace")}>Ir para o Marketplace</Button>
+          <div className="text-center py-20 bg-white shadow-sm rounded-2xl border border-line">
+            <h2 className="text-2xl font-bold text-navy">Nenhum agente assinado</h2>
+            <Button className="mt-4 bg-coreblue hover:bg-blue-700 text-white font-bold" onClick={() => navigate("/marketplace")}>Ir para o Marketplace</Button>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {subscriptions.map((sub) => (
-              <div key={sub.id} className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm hover:shadow-md transition-all">
+              <div key={sub.id} className="bg-white rounded-2xl p-6 border border-line shadow-sm hover:shadow-md hover:border-coreblue transition-all duration-300">
                 <div className="flex justify-between items-start mb-4">
-                  <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200 border-0">
-                    {sub.agent?.segment?.toUpperCase() || 'AGENTE'}
+                  <Badge className="bg-navy/5 text-navy border-line uppercase tracking-wide">
+                    {SEGMENT_LABELS[sub.agent?.segment] || sub.agent?.segment?.toUpperCase() || 'AGENTE'}
                   </Badge>
                   <span className="text-xs text-gray-400">Ativo</span>
                 </div>
                 
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{sub.agent?.name || "Agente Desconhecido"}</h3>
-                <p className="text-gray-500 text-sm mb-6 line-clamp-2">
+                <h3 className="text-xl font-bold text-navy mb-2">{sub.agent?.name || "Agente Desconhecido"}</h3>
+                <p className="text-gray-500 font-medium text-sm mb-6 line-clamp-2">
                   {sub.agent?.description || "Inicie a conversa para testar."}
                 </p>
                 
                 <div className="flex flex-col gap-2">
                   <div className="flex gap-2">
                     <Button 
-                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                      className="flex-1 bg-coreblue hover:bg-blue-700 text-white font-bold"
                       onClick={() => navigate(`/agent-chat/${sub.id}`)}
                     >
                       <MessageSquare className="w-4 h-4 mr-2" />
@@ -164,17 +190,17 @@ export default function MinhasAssinaturas() {
                     </Button>
                     <Button 
                       variant="outline" 
-                      className="flex-1"
+                      className="flex-1 border-line text-navy hover:bg-paper font-semibold"
                       onClick={() => openConfig(sub)}
                     >
                       ⚙️ Regras (Base)
                     </Button>
                   </div>
                   
-                  <div className="flex gap-2 mt-1 pt-3 border-t border-gray-100">
+                  <div className="flex gap-2 mt-1 pt-3 border-t border-line">
                     <Button 
                       variant="secondary"
-                      className="flex-1 bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
+                      className="flex-1 bg-coregreen/10 text-coregreen hover:bg-coregreen/20 border border-coregreen/30 font-semibold tracking-wide"
                       onClick={() => handleGenerateLink(sub.id)}
                     >
                       {copiedLink === sub.id ? <CheckCircle2 className="w-4 h-4 mr-2"/> : <Link2 className="w-4 h-4 mr-2" />}
@@ -182,7 +208,7 @@ export default function MinhasAssinaturas() {
                     </Button>
                     <Button 
                       variant="outline"
-                      className="flex-1 bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200"
+                      className="flex-1 border-line text-navy hover:bg-paper font-semibold"
                       onClick={() => navigate(`/subscriptions/${sub.id}/history`)}
                     >
                       <History className="w-4 h-4 mr-2" />
@@ -196,29 +222,29 @@ export default function MinhasAssinaturas() {
         )}
 
         {configModalOpen && currentSub && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-              <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/80 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-line animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex justify-between items-center p-6 border-b border-line bg-paper">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Configuração Base</h2>
-                  <p className="text-gray-500 text-sm mt-1">
-                    Preencha os dados de inteligência para o <b>{currentSub.agent?.name}</b>.
+                  <h2 className="text-2xl font-extrabold text-navy">Configuração Base</h2>
+                  <p className="text-gray-500 font-medium text-sm mt-1">
+                    Preencha os dados de inteligência para o <b className="text-navy">{currentSub.agent?.name}</b>.
                   </p>
                 </div>
-                <button onClick={() => setConfigModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
+                <button onClick={() => setConfigModalOpen(false)} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-gray-500">
                   <X className="w-6 h-6" />
                 </button>
               </div>
               
-              <div className="overflow-y-auto p-6 flex-1 bg-gray-50/30">
+              <div className="overflow-y-auto p-6 flex-1 bg-white">
                 <div className="space-y-6">
                   {getKbFields(currentSub.agent?.name).map(field => (
-                    <div key={field.id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-purple-500 transition-all hover:shadow-md">
-                      <label className="block text-[15px] font-bold text-gray-800 mb-2">
+                    <div key={field.id} className="bg-white p-5 rounded-2xl border border-line shadow-sm border-l-4 border-l-coreblue transition-all hover:shadow-md">
+                      <label className="block text-[15px] font-bold text-navy mb-2">
                         {field.label}
                       </label>
                       <textarea
-                        className="w-full h-32 p-4 text-sm border-2 border-gray-100 rounded-xl resize-none focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all text-gray-700 bg-gray-50 focus:bg-white"
+                        className="w-full h-32 p-4 text-sm border-2 border-line rounded-xl resize-none focus:outline-none focus:border-coreblue focus:ring-4 focus:ring-blue-100 transition-all font-medium text-navy bg-paper focus:bg-white"
                         value={formData[field.id] || ""}
                         onChange={(e) => handleFieldChange(field.id, e.target.value)}
                         placeholder={field.placeholder}
@@ -228,8 +254,8 @@ export default function MinhasAssinaturas() {
 
                   {/* Payment Links — Bruno SDR only */}
                   {(currentSub.agent?.name?.includes("Bruno") || currentSub.agent?.name?.toLowerCase().includes("sdr")) && (
-                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-green-500">
-                      <p className="text-[15px] font-bold text-gray-800 mb-3">Links de Pagamento</p>
+                    <div className="bg-white p-5 rounded-2xl border border-line shadow-sm border-l-4 border-l-coregreen">
+                      <p className="text-[15px] font-bold text-navy mb-3">Links de Pagamento</p>
                       {paymentLinks.length > 0 && (
                         <div className="space-y-2 mb-3">
                           {paymentLinks.map((lnk, idx) => (
@@ -243,7 +269,7 @@ export default function MinhasAssinaturas() {
                                   updated[idx] = { ...updated[idx], plano: e.target.value };
                                   setPaymentLinks(updated);
                                 }}
-                                className="flex-1 px-3 py-2.5 text-sm border-2 border-gray-100 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 bg-gray-50 focus:bg-white transition-all"
+                                className="flex-1 px-3 py-2.5 text-sm border-2 border-line text-navy font-medium rounded-xl focus:outline-none focus:border-coreblue focus:ring-2 focus:ring-blue-100 bg-paper focus:bg-white transition-all"
                               />
                               <input
                                 type="text"
@@ -254,7 +280,7 @@ export default function MinhasAssinaturas() {
                                   updated[idx] = { ...updated[idx], link: e.target.value };
                                   setPaymentLinks(updated);
                                 }}
-                                className="flex-1 px-3 py-2.5 text-sm border-2 border-gray-100 rounded-xl focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 bg-gray-50 focus:bg-white transition-all"
+                                className="flex-1 px-3 py-2.5 text-sm border-2 border-line text-navy font-medium rounded-xl focus:outline-none focus:border-coreblue focus:ring-2 focus:ring-blue-100 bg-paper focus:bg-white transition-all"
                               />
                               <button
                                 onClick={() => setPaymentLinks(prev => prev.filter((_, i) => i !== idx))}
@@ -269,19 +295,122 @@ export default function MinhasAssinaturas() {
                       )}
                       <button
                         onClick={() => setPaymentLinks(prev => [...prev, { plano: "", link: "" }])}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border-2 border-dashed border-purple-200 rounded-xl transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-coreblue bg-coreblue/5 hover:bg-coreblue/10 border-2 border-dashed border-coreblue/20 rounded-xl transition-colors"
                       >
                         <Plus className="w-4 h-4" />
                         Inserir Link de Pagamento
                       </button>
                     </div>
                   )}
+
+                  {/* Lidia Prospecção — Links de Agendamento + Pagamento */}
+                  {(currentSub.agent?.name?.includes("Lidia") || currentSub.agent?.name?.includes("Lídia") || currentSub.agent?.name?.toLowerCase().includes("lidia prospec")) && (
+                    <>
+                      {/* Links de Agendamento */}
+                      <div className="bg-white p-5 rounded-2xl border border-line shadow-sm border-l-4 border-l-coreblue">
+                        <p className="text-[15px] font-bold text-navy mb-3">Links de Agendamento</p>
+                        {schedulingLinks.length > 0 && (
+                          <div className="space-y-2 mb-3">
+                            {schedulingLinks.map((lnk, idx) => (
+                              <div key={idx} className="flex gap-2 items-center">
+                                <input
+                                  type="text"
+                                  placeholder="Usuário/Vendedor"
+                                  value={lnk.usuario || ""}
+                                  onChange={(e) => {
+                                    const updated = [...schedulingLinks];
+                                    updated[idx] = { ...updated[idx], usuario: e.target.value };
+                                    setSchedulingLinks(updated);
+                                  }}
+                                  className="flex-1 px-3 py-2.5 text-sm border-2 border-line text-navy font-medium rounded-xl focus:outline-none focus:border-coreblue focus:ring-2 focus:ring-blue-100 bg-paper focus:bg-white transition-all"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Link da agenda"
+                                  value={lnk.link || ""}
+                                  onChange={(e) => {
+                                    const updated = [...schedulingLinks];
+                                    updated[idx] = { ...updated[idx], link: e.target.value };
+                                    setSchedulingLinks(updated);
+                                  }}
+                                  className="flex-1 px-3 py-2.5 text-sm border-2 border-line text-navy font-medium rounded-xl focus:outline-none focus:border-coreblue focus:ring-2 focus:ring-blue-100 bg-paper focus:bg-white transition-all"
+                                />
+                                <button
+                                  onClick={() => setSchedulingLinks(prev => prev.filter((_, i) => i !== idx))}
+                                  className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                  title="Remover"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => setSchedulingLinks(prev => [...prev, { usuario: "", link: "" }])}
+                          className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-coreblue bg-coreblue/5 hover:bg-coreblue/10 border-2 border-dashed border-coreblue/20 rounded-xl transition-colors"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Inserir Link de Agendamento
+                        </button>
+                      </div>
+
+                      {/* Links de Pagamento */}
+                      <div className="bg-white p-5 rounded-2xl border border-line shadow-sm border-l-4 border-l-coregreen">
+                        <p className="text-[15px] font-bold text-navy mb-3">Links de Pagamento</p>
+                        {paymentLinks.length > 0 && (
+                          <div className="space-y-2 mb-3">
+                            {paymentLinks.map((lnk, idx) => (
+                              <div key={idx} className="flex gap-2 items-center">
+                                <input
+                                  type="text"
+                                  placeholder="Plano/Produto"
+                                  value={lnk.plano || ""}
+                                  onChange={(e) => {
+                                    const updated = [...paymentLinks];
+                                    updated[idx] = { ...updated[idx], plano: e.target.value };
+                                    setPaymentLinks(updated);
+                                  }}
+                                  className="flex-1 px-3 py-2.5 text-sm border-2 border-line text-navy font-medium rounded-xl focus:outline-none focus:border-coreblue focus:ring-2 focus:ring-blue-100 bg-paper focus:bg-white transition-all"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Link"
+                                  value={lnk.link || ""}
+                                  onChange={(e) => {
+                                    const updated = [...paymentLinks];
+                                    updated[idx] = { ...updated[idx], link: e.target.value };
+                                    setPaymentLinks(updated);
+                                  }}
+                                  className="flex-1 px-3 py-2.5 text-sm border-2 border-line text-navy font-medium rounded-xl focus:outline-none focus:border-coreblue focus:ring-2 focus:ring-blue-100 bg-paper focus:bg-white transition-all"
+                                />
+                                <button
+                                  onClick={() => setPaymentLinks(prev => prev.filter((_, i) => i !== idx))}
+                                  className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                  title="Remover"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => setPaymentLinks(prev => [...prev, { plano: "", link: "" }])}
+                          className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-coreblue bg-coreblue/5 hover:bg-coreblue/10 border-2 border-dashed border-coreblue/20 rounded-xl transition-colors"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Inserir Link de Pagamento
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
               
-              <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-white">
-                <Button variant="ghost" onClick={() => setConfigModalOpen(false)} className="rounded-xl px-6 hover:bg-red-50 hover:text-red-600">Cancelar</Button>
-                <Button onClick={saveConfig} className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-8 shadow-lg transition-transform active:scale-95">Salvar Alterações</Button>
+              <div className="p-6 border-t border-line flex justify-end gap-3 bg-paper">
+                <Button variant="ghost" onClick={() => setConfigModalOpen(false)} className="rounded-xl px-6 hover:bg-red-50 hover:text-red-600 font-bold border border-line bg-white">Cancelar</Button>
+                <Button onClick={saveConfig} className="bg-coreblue hover:bg-blue-700 text-white rounded-xl px-8 shadow-sm transition-transform active:scale-95 font-bold">Salvar Alterações</Button>
               </div>
             </div>
           </div>

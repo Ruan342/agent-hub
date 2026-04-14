@@ -63,11 +63,44 @@ export default function Dashboard() {
   if (loading) {
     return (
       <SidebarLayout>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="inline-block w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin mb-4"></div>
-            <p className="text-gray-600">Carregando dashboard...</p>
+        {/* Top Bar Skeleton */}
+        <div className="bg-paper/80 backdrop-blur border-b border-line px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="w-48 h-6 bg-gray-200 rounded-full animate-pulse mb-2"></div>
+              <div className="w-64 h-8 bg-gray-200 rounded animate-pulse"></div>
+            </div>
           </div>
+        </div>
+        
+        {/* Content Skeleton */}
+        <div className="p-6 flex flex-col space-y-6">
+          {[1, 2].map((idx) => (
+            <div key={idx} className="bg-white border border-line rounded-xl overflow-hidden shadow-sm animate-pulse">
+              <div className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-gray-200 rounded-xl shrink-0"></div>
+                    <div>
+                      <div className="w-32 h-6 bg-gray-200 rounded mb-2"></div>
+                      <div className="flex gap-2">
+                        <div className="w-16 h-5 bg-gray-200 rounded-full"></div>
+                        <div className="w-16 h-5 bg-gray-200 rounded-full"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right flex flex-col items-end">
+                    <div className="w-20 h-8 bg-gray-200 rounded"></div>
+                    <div className="w-16 h-4 bg-gray-200 rounded mt-2"></div>
+                    <div className="flex gap-2 mt-2">
+                      <div className="w-20 h-8 bg-gray-200 rounded-md"></div>
+                      <div className="w-20 h-8 bg-gray-200 rounded-md"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </SidebarLayout>
     );
@@ -76,21 +109,21 @@ export default function Dashboard() {
   return (
     <SidebarLayout>
       {/* Top Bar */}
-      <div className="bg-white/80 backdrop-blur border-b border-gray-100 px-6 py-4">
+      <div className="bg-paper/80 backdrop-blur border-b border-line px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <span className="inline-flex items-center gap-2 px-3 py-1 bg-purple-50 border border-purple-100 rounded-full text-xs font-medium text-purple-700 mb-2">
+            <span className="inline-flex items-center gap-2 px-3 py-1 bg-coreblue/10 border border-coreblue/20 rounded-full text-xs font-bold text-coreblue mb-2 tracking-wide uppercase">
               Minhas assinaturas de agentes
             </span>
-            <h1 className="text-2xl font-bold tracking-tight">Minhas Assinaturas</h1>
-            <p className="text-sm text-gray-600 mt-1">Gerencie suas assinaturas e integrações</p>
+            <h1 className="text-2xl font-extrabold tracking-tight text-navy">Minhas Assinaturas</h1>
+            <p className="text-sm text-gray-500 mt-1 font-medium">Gerencie suas assinaturas e integrações</p>
           </div>
           {user.role === "admin" && (
             <Button
               variant="outline"
               onClick={() => navigate("/admin")}
               size="sm"
-              className="border-purple-200 text-purple-700 hover:bg-purple-50"
+              className="border-line text-navy hover:bg-slate-100 font-bold"
             >
               Painel Admin
             </Button>
@@ -101,15 +134,15 @@ export default function Dashboard() {
       {/* Content */}
       <div className="p-6">
         {subscriptions.length === 0 ? (
-          <Card className="border-gray-200 bg-gradient-to-br from-purple-50/40 via-white to-purple-50/40">
+          <Card className="border-line bg-white shadow-sm">
             <CardContent className="py-16 text-center">
               <div className="text-4xl mb-4">🤖</div>
-              <h3 className="text-xl font-semibold mb-2">Nenhuma assinatura ativa</h3>
-              <p className="text-gray-600 mb-6">Explore o marketplace e escolha seu primeiro agente de IA</p>
+              <h3 className="text-xl font-bold text-navy mb-2">Nenhuma assinatura ativa</h3>
+              <p className="text-gray-500 mb-6 font-medium">Explore o marketplace e escolha seu primeiro agente de IA</p>
               <Button
                 data-testid="go-to-marketplace"
                 onClick={() => navigate("/marketplace")}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-coreblue hover:bg-blue-700 text-white font-bold"
               >
                 Explorar Agentes
               </Button>
@@ -125,14 +158,14 @@ export default function Dashboard() {
                 <Card
                   key={subscription.id}
                   data-testid={`subscription-card-${subscription.id}`}
-                  className="border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-md"
+                  className="border-line bg-white overflow-hidden transition-all duration-200 hover:shadow-md"
                 >
                   <CardHeader 
-                    className="border-b border-gray-100"
+                    className="border-b border-line"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-gradient-to-br from-purple-50 via-white to-purple-50 rounded-xl flex items-center justify-center border border-purple-100 shrink-0">
+                        <div className="w-14 h-14 bg-paper rounded-xl flex items-center justify-center border border-line shrink-0">
                           <img
                             src={agent.mascot_image_url}
                             alt={agent.name}
@@ -141,16 +174,16 @@ export default function Dashboard() {
                           />
                         </div>
                         <div>
-                          <CardTitle className="text-xl mb-1">{agent.name}</CardTitle>
+                          <CardTitle className="text-xl font-bold text-navy mb-1">{agent.name}</CardTitle>
                           <div className="flex items-center gap-2">
-                            <Badge className="bg-purple-50 text-purple-700 border-0 text-xs">
+                            <Badge className="bg-navy/5 text-navy border-line text-xs uppercase tracking-wide">
                               {agent.segment}
                             </Badge>
                             <Badge
                               className={
                                 subscription.status === "active"
-                                  ? "bg-green-50 text-green-700 border border-green-200"
-                                  : "bg-yellow-50 text-yellow-700 border border-yellow-200"
+                                  ? "bg-coregreen/10 text-coregreen border border-coregreen/30 tracking-wide uppercase"
+                                  : "bg-amber-100 text-amber-700 border border-amber-200 tracking-wide uppercase"
                               }
                             >
                               {subscription.status === "active" ? "Ativo" : "Pendente"}
@@ -159,12 +192,13 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-purple-700">${agent.price}</div>
-                        <div className="text-sm text-gray-500">por mês</div>
+                        <div className="text-2xl font-extrabold text-navy">${agent.price}</div>
+                        <div className="text-sm font-medium text-gray-500">por mês</div>
                         <div className="grid grid-cols-2 gap-2 mt-2">
                           <Button
                             variant="outline"
                             size="sm"
+                            className="border-line text-navy hover:bg-paper font-semibold"
                             onClick={() => navigate(`/minhas-assinaturas`)}
                           >
                             Abrir
@@ -172,6 +206,7 @@ export default function Dashboard() {
                           <Button
                             variant="outline"
                             size="sm"
+                            className="border-line text-navy hover:bg-paper font-semibold"
                             onClick={() => navigate(`/integrations/${subscription.id}`)}
                           >
                             Integrações

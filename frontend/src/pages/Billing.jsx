@@ -45,10 +45,10 @@ export default function Billing() {
   if (loading) {
     return (
       <SidebarLayout>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-paper flex items-center justify-center">
           <div className="text-center">
-            <div className="inline-block w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin mb-4"></div>
-            <p className="text-gray-600">Carregando faturas...</p>
+            <div className="inline-block w-8 h-8 border-2 border-line border-t-coreblue rounded-full animate-spin mb-4"></div>
+            <p className="text-gray-500 font-medium">Carregando faturas...</p>
           </div>
         </div>
       </SidebarLayout>
@@ -59,34 +59,34 @@ export default function Billing() {
     <SidebarLayout>
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="mb-8">
-          <span className="inline-flex items-center gap-2 px-3 py-1 bg-purple-50 border border-purple-100 rounded-full text-xs font-medium text-purple-700 mb-3">
+          <span className="inline-flex items-center gap-2 px-3 py-1 bg-coreblue/10 border border-coreblue/20 rounded-full text-xs font-bold text-coreblue mb-3 uppercase tracking-wide">
             Faturas e cobranças
           </span>
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Faturamento</h1>
-          <p className="text-gray-600">Histórico de pagamentos e faturas</p>
+          <h1 className="text-4xl font-extrabold tracking-tight mb-2 text-navy">Faturamento</h1>
+          <p className="text-gray-500 font-medium tracking-wide">Histórico de pagamentos e faturas</p>
         </div>
 
         {invoices.length === 0 ? (
-          <Card className="border-gray-200 bg-gradient-to-br from-purple-50/40 via-white to-purple-50/40">
+          <Card className="border-line bg-white shadow-sm">
             <CardContent className="py-16 text-center">
               <div className="text-4xl mb-4">💳</div>
-              <h3 className="text-xl font-semibold mb-2">Nenhuma fatura ainda</h3>
-              <p className="text-gray-600">Suas faturas aparecerão aqui após as compras</p>
+              <h3 className="text-xl font-bold text-navy mb-2">Nenhuma fatura ainda</h3>
+              <p className="text-gray-500 font-medium">Suas faturas aparecerão aqui após as compras</p>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
             {invoices.map((invoice) => (
-              <Card key={invoice.id} className="border-gray-200">
+              <Card key={invoice.id} className="border-line bg-white shadow-sm hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
-                        <FileText className="w-6 h-6 text-purple-700" />
+                      <div className="w-12 h-12 bg-paper border border-line rounded-lg flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-navy" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-lg">Fatura #{invoice.id.substring(0, 8)}</h3>
-                        <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
+                        <h3 className="font-extrabold text-navy text-lg">Fatura #{invoice.id.substring(0, 8)}</h3>
+                        <div className="flex items-center gap-3 text-sm text-gray-500 font-medium mt-1">
                           <span>Data: {formatDate(invoice.invoice_date)}</span>
                           <span>•</span>
                           <span>Valor: ${invoice.amount.toFixed(2)}</span>
@@ -94,10 +94,10 @@ export default function Billing() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge className="bg-green-50 text-green-700 border border-green-200">
+                      <Badge className="bg-coregreen/10 text-coregreen border border-coregreen/30 tracking-wide uppercase">
                         Pago
                       </Badge>
-                      <Button variant="outline" size="sm" className="border-gray-300">
+                      <Button variant="outline" size="sm" className="border-line text-navy hover:bg-paper font-bold">
                         <Download className="w-4 h-4 mr-2" />
                         Baixar
                       </Button>
