@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 
 # Use the production atlas connection string
-MONGO_URI = "mongodb+srv://ruan342com_db_user:wadHdi62ThepoLe8@cluster0.ti27cxn.mongodb.net/?appName=Cluster0"
+MONGO_URI = ""
 client = MongoClient(MONGO_URI)
 db = client["agenthub"]
 
