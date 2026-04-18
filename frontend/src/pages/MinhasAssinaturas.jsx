@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import SidebarLayout from "@/components/SidebarLayout";
-import { X, Link2, MessageSquare, History, CheckCircle2, Plus, Trash2 } from "lucide-react";
+import { X, Link2, MessageSquare, History, CheckCircle2, Plus, Trash2, Clock, Users } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -132,10 +132,25 @@ export default function MinhasAssinaturas() {
       const agentName = currentSub.agent?.name || "";
       const isBrunoSdr = agentName.includes("Bruno") || agentName.includes("SDR") || agentName.toLowerCase().includes("sdr");
       const isLidia = agentName.includes("Lidia") || agentName.includes("Lídia") || agentName.toLowerCase().includes("lidia prospec");
+
+      // Normalize SDR scheduler fields so the backend can register the APScheduler job
+      let sdrSchedulerFields = {};
+      if (isBrunoSdr) {
+        const enabled = !!formData.scheduler_enabled;
+        sdrSchedulerFields = {
+          scheduler_enabled: enabled,
+          scheduler_time: enabled ? (formData.scheduler_time || "09:00") : null,
+          scheduler_leads_qty: enabled ? Number(formData.scheduler_leads_qty || 0) : 0,
+        };
+      }
+
       const payload = {
         agent: agentName,
         ...formData,
-        ...(isBrunoSdr ? { links_pagamento: paymentLinks.filter(l => l.plano || l.link) } : {}),
+        ...(isBrunoSdr ? {
+          links_pagamento: paymentLinks.filter(l => l.plano || l.link),
+          ...sdrSchedulerFields,
+        } : {}),
         ...(isLidia ? {
           links_agendamento: schedulingLinks.filter(l => l.usuario || l.link),
           links_pagamento: paymentLinks.filter(l => l.plano || l.link)
@@ -302,6 +317,69 @@ export default function MinhasAssinaturas() {
                     </div>
                   ))}
 
+                  {/* Bruno SDR — Agendamento de Extração de Leads */}
+                  {(currentSub.agent?.name?.includes("Bruno") || currentSub.agent?.name?.includes("SDR") || currentSub.agent?.name?.toLowerCase().includes("sdr")) && (
+                    <div className="bg-white p-5 rounded-2xl border border-line shadow-sm border-l-4 border-l-coregreen">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <p className="text-[15px] font-bold text-navy flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-coregreen" />
+                            Agendamento de Extração de Leads
+                          </p>
+                          <p className="text-xs text-gray-500 font-medium mt-1">
+                            Quando ligado, o SDR é acionado automaticamente no horário definido e o retorno aparece na caixa de chat flutuante.
+                          </p>
+                        </div>
+                        {/* Toggle on/off */}
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={!!formData.scheduler_enabled}
+                          onClick={() => handleFieldChange('scheduler_enabled', !formData.scheduler_enabled)}
+                          className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-200 ${
+                            formData.scheduler_enabled ? 'bg-coregreen' : 'bg-gray-300'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                              formData.scheduler_enabled ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {formData.scheduler_enabled && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                          <div>
+                            <label className="block text-xs font-bold text-navy mb-1 uppercase tracking-wide">
+                              Horário de execução
+                            </label>
+                            <input
+                              type="time"
+                              value={formData.scheduler_time || "09:00"}
+                              onChange={(e) => handleFieldChange('scheduler_time', e.target.value)}
+                              className="w-full px-3 py-2.5 text-sm border-2 border-line text-navy font-medium rounded-xl focus:outline-none focus:border-coreblue focus:ring-2 focus:ring-blue-100 bg-paper focus:bg-white transition-all"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-navy mb-1 uppercase tracking-wide flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              Quantidade de Leads
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="500"
+                              placeholder="Ex: 25"
+                              value={formData.scheduler_leads_qty || ""}
+                              onChange={(e) => handleFieldChange('scheduler_leads_qty', e.target.value)}
+                              className="w-full px-3 py-2.5 text-sm border-2 border-line text-navy font-medium rounded-xl focus:outline-none focus:border-coreblue focus:ring-2 focus:ring-blue-100 bg-paper focus:bg-white transition-all"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
 
                   {/* Lidia Prospecção — Links de Agendamento + Pagamento */}

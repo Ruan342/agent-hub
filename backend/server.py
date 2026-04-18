@@ -4214,15 +4214,27 @@ async def save_kb(request: Request, current_user: dict = Depends(get_current_use
     user_id = current_user["user_id"]
     payload = await request.json()
     agent_name = payload.get("agent")
-    
+
     if not agent_name:
         raise HTTPException(status_code=400, detail="Agent id/name is required in payload")
-        
+
     await db.knowledge_base.update_one(
         {"user_id": user_id, "agent": agent_name},
         {"$set": payload},
         upsert=True
     )
+
+    # If this is the SDR agent, (re)register the scheduled lead-extraction job
+    try:
+        if _is_sdr_agent_name(agent_name):
+            _register_or_update_sdr_job(
+                user_id=user_id,
+                enabled=bool(payload.get("scheduler_enabled", False)),
+                time_str=payload.get("scheduler_time"),
+            )
+    except Exception as e:
+        logger.warning(f"[SDR scheduler] could not update job on KB save: {e}")
+
     return {"status": "success"}
 
 @api_router.get("/knowledge-base")
@@ -4503,6 +4515,292 @@ async def get_client_sessions_history(subscription_id: str, current_user: dict =
         })
 
     return results
+
+# ==================== SDR SCHEDULER + NOTIFICATIONS ====================
+# Lead-extraction scheduler: at the user-configured time we call the SDR n8n
+# webhook asking for N leads, and store the webhook response as a notification
+# that the floating chat renders (with a red unread badge).
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+
+SDR_WEBHOOK_URL = "https://corefy.app.n8n.cloud/webhook/vendedor_outbound"
+SDR_SCHED_TZ = os.environ.get("SDR_SCHEDULER_TZ", "America/Sao_Paulo")
+
+sdr_scheduler = AsyncIOScheduler(timezone=SDR_SCHED_TZ)
+
+
+def _is_sdr_agent_name(name: str) -> bool:
+    if not name:
+        return False
+    lower = name.lower()
+    return ("sdr" in lower) or ("bruno" in lower)
+
+
+async def _find_user_sdr_subscription(user_id: str) -> Optional[dict]:
+    """Return the user's active SDR subscription (by agent name/segment) or None."""
+    subs = await db.subscriptions.find(
+        {"user_id": user_id, "status": "active"}
+    ).to_list(length=100)
+    for sub in subs:
+        agent = await db.agents.find_one({"id": sub.get("agent_id")})
+        if not agent:
+            continue
+        seg = (agent.get("segment") or "").lower()
+        name = agent.get("name") or ""
+        if seg == "sdr" or _is_sdr_agent_name(name):
+            sub["_agent"] = agent
+            return sub
+    return None
+
+
+async def _insert_sdr_notification(user_id: str, sub: Optional[dict], qty: int, content: str,
+                                    metadata: Optional[Dict] = None, status_code: Optional[int] = None,
+                                    ntype: str = "lead_extraction"):
+    await db.sdr_notifications.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "subscription_id": (sub or {}).get("id"),
+        "agent_id": (sub or {}).get("agent_id"),
+        "type": ntype,
+        "content": content,
+        "metadata": metadata or {},
+        "requested_quantity": qty,
+        "webhook_status": status_code,
+        "read": False,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+
+async def _run_sdr_lead_extraction(user_id: str, force: bool = False, qty_override: Optional[int] = None):
+    """Trigger the SDR webhook and persist the response as a notification.
+
+    - force=False (APScheduler cron): obeys scheduler_enabled + scheduler_leads_qty from KB.
+    - force=True ("Testar agora"): always runs. Uses qty_override, then KB qty, else 10 as default.
+    Any failure is surfaced as an error notification so the user sees it in the floating chat.
+    """
+    try:
+        kb = await db.knowledge_base.find_one({"user_id": user_id, "agent": {"$regex": "sdr|bruno", "$options": "i"}})
+
+        # Scheduled runs: still require the toggle to be ON
+        if not force and (not kb or not kb.get("scheduler_enabled")):
+            return
+
+        # Determine quantity: explicit override > KB config > default 10 (only when forced)
+        kb_qty = int(kb.get("scheduler_leads_qty") or 0) if kb else 0
+        qty = qty_override or kb_qty or (10 if force else 0)
+        if qty <= 0:
+            return
+
+        sub = await _find_user_sdr_subscription(user_id)
+        if not sub:
+            msg = "Não foi possível acionar o webhook: nenhuma assinatura ativa do SDR (Bruno) encontrada para este usuário."
+            logger.warning(f"[SDR trigger] {msg} (user={user_id})")
+            if force:
+                await _insert_sdr_notification(user_id, None, qty, msg, ntype="lead_extraction_error")
+            return
+
+        agent = sub.get("_agent") or {}
+        webhook_url = sub.get("config", {}).get("webhook_url") or agent.get("webhook_url") or SDR_WEBHOOK_URL
+
+        # Sanitize sub + agent (mirror of the chat payload so the n8n workflow
+        # can reuse the same expressions, e.g. {{ $json.status }} /
+        # {{ $json.user_context.subscription.status }}).
+        sanitized_sub = dict(sub)
+        sanitized_sub.pop("_agent", None)
+        if "_id" in sanitized_sub:
+            sanitized_sub["_id"] = str(sanitized_sub["_id"])
+        for _dtk in ("created_at", "updated_at"):
+            if isinstance(sanitized_sub.get(_dtk), datetime):
+                sanitized_sub[_dtk] = sanitized_sub[_dtk].isoformat()
+
+        sanitized_agent = dict(agent)
+        if "_id" in sanitized_agent:
+            sanitized_agent["_id"] = str(sanitized_agent["_id"])
+        for _dtk in ("created_at", "updated_at"):
+            if isinstance(sanitized_agent.get(_dtk), datetime):
+                sanitized_agent[_dtk] = sanitized_agent[_dtk].isoformat()
+
+        sub_status = sanitized_sub.get("status")
+
+        # Prompt enviado ao agente (o n8n lê via {{ $json.body.input_text }})
+        input_text = f"Olá, preciso de {qty} leads"
+
+        # n8n's Webhook node already nests the POST body under $json.body, so we
+        # keep input_text at the root here to access it as {{ $json.body.input_text }}.
+        payload = {
+            "trigger": "manual_test" if force else "scheduled_lead_extraction",
+            "status": sub_status,  # top-level for {{ $json.body.status }}
+            "input_text": input_text,  # => {{ $json.body.input_text }}
+            "user_id": user_id,
+            "subscription_id": sub.get("id"),
+            "agent_id": sub.get("agent_id"),
+            "quantity": qty,
+            "knowledge_base": {k: v for k, v in (kb or {}).items() if k != "_id"},
+            "scheduled_at": datetime.now(timezone.utc).isoformat(),
+            "user_context": {
+                "subscription": sanitized_sub,
+                "agent": sanitized_agent,
+            },
+        }
+
+        label = "Teste manual" if force else "Execução agendada"
+        content_text = f"{label} disparado: {qty} lead(s) solicitados."
+        metadata: Dict = {}
+        status_code = None
+
+        async with httpx.AsyncClient(timeout=120.0) as cli:
+            try:
+                resp = await cli.post(webhook_url, json=payload)
+                status_code = resp.status_code
+                if resp.status_code == 200:
+                    try:
+                        data = resp.json()
+                        if isinstance(data, list) and data:
+                            data = data[0]
+                        if isinstance(data, dict):
+                            content_text = data.get(
+                                "output_text",
+                                data.get("response_text", data.get("message", content_text))
+                            )
+                            metadata = data.get("metadata", {}) or {}
+                    except Exception:
+                        content_text = resp.text[:2000] or content_text
+                else:
+                    content_text = f"Webhook retornou status {resp.status_code}. Resposta: {resp.text[:500]}"
+            except Exception as e:
+                content_text = f"Falha ao acionar webhook SDR: {e}"
+                logger.error(f"[SDR trigger] webhook call failed: {e}")
+
+        await _insert_sdr_notification(
+            user_id=user_id, sub=sub, qty=qty,
+            content=content_text, metadata=metadata, status_code=status_code,
+        )
+    except Exception as e:
+        logger.exception(f"[SDR trigger] unexpected error for user {user_id}: {e}")
+
+
+def _sdr_job_id(user_id: str) -> str:
+    return f"sdr_lead_{user_id}"
+
+
+def _register_or_update_sdr_job(user_id: str, enabled: bool, time_str: Optional[str]):
+    job_id = _sdr_job_id(user_id)
+    existing = sdr_scheduler.get_job(job_id)
+
+    if not enabled or not time_str:
+        if existing:
+            sdr_scheduler.remove_job(job_id)
+        return
+
+    try:
+        hour, minute = time_str.split(":")[:2]
+        hour = int(hour)
+        minute = int(minute)
+    except Exception:
+        logger.warning(f"[SDR scheduler] invalid time '{time_str}' for user {user_id}")
+        return
+
+    trigger = CronTrigger(hour=hour, minute=minute, timezone=SDR_SCHED_TZ)
+    if existing:
+        sdr_scheduler.reschedule_job(job_id, trigger=trigger)
+    else:
+        sdr_scheduler.add_job(
+            _run_sdr_lead_extraction,
+            trigger=trigger,
+            id=job_id,
+            args=[user_id],
+            replace_existing=True,
+            misfire_grace_time=3600,
+            coalesce=True,
+        )
+
+
+@app.on_event("startup")
+async def _sdr_scheduler_startup():
+    try:
+        sdr_scheduler.start()
+        # Reload any persisted enabled schedules
+        cursor = db.knowledge_base.find({"scheduler_enabled": True})
+        async for kb in cursor:
+            if not _is_sdr_agent_name(kb.get("agent", "")):
+                continue
+            _register_or_update_sdr_job(
+                kb.get("user_id"),
+                True,
+                kb.get("scheduler_time"),
+            )
+        logger.info(f"[SDR scheduler] started with {len(sdr_scheduler.get_jobs())} job(s)")
+    except Exception as e:
+        logger.exception(f"[SDR scheduler] startup error: {e}")
+
+
+@app.on_event("shutdown")
+async def _sdr_scheduler_shutdown():
+    try:
+        if sdr_scheduler.running:
+            sdr_scheduler.shutdown(wait=False)
+    except Exception:
+        pass
+
+
+@api_router.get("/sdr/has-subscription")
+async def sdr_has_subscription(current_user: dict = Depends(get_current_user)):
+    sub = await _find_user_sdr_subscription(current_user["user_id"])
+    return {"has_sdr": bool(sub)}
+
+
+@api_router.get("/sdr/notifications")
+async def list_sdr_notifications(
+    current_user: dict = Depends(get_current_user),
+    limit: int = 50,
+):
+    user_id = current_user["user_id"]
+    cursor = db.sdr_notifications.find({"user_id": user_id}).sort("created_at", -1).limit(limit)
+    items = []
+    async for n in cursor:
+        n.pop("_id", None)
+        items.append(n)
+    unread = await db.sdr_notifications.count_documents({"user_id": user_id, "read": False})
+    return {"items": items, "unread": unread}
+
+
+@api_router.get("/sdr/unread-count")
+async def sdr_unread_count(current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+    unread = await db.sdr_notifications.count_documents({"user_id": user_id, "read": False})
+    return {"unread": unread}
+
+
+@api_router.post("/sdr/notifications/mark-read")
+async def mark_sdr_notifications_read(current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+    res = await db.sdr_notifications.update_many(
+        {"user_id": user_id, "read": False},
+        {"$set": {"read": True}},
+    )
+    return {"updated": res.modified_count}
+
+
+@api_router.post("/sdr/trigger-now")
+async def sdr_trigger_now(request: Request, current_user: dict = Depends(get_current_user)):
+    """Manual trigger: fires the SDR webhook now, even if the scheduler is off.
+
+    Optional JSON body: {"quantity": <int>} to override the configured lead count.
+    """
+    qty_override: Optional[int] = None
+    try:
+        body = await request.json()
+        if isinstance(body, dict) and body.get("quantity"):
+            qty_override = int(body["quantity"])
+    except Exception:
+        pass
+
+    asyncio.create_task(_run_sdr_lead_extraction(
+        current_user["user_id"], force=True, qty_override=qty_override
+    ))
+    return {"status": "queued"}
+
 
 app.include_router(api_router)
 
