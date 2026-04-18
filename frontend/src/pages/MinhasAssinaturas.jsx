@@ -68,33 +68,33 @@ export default function MinhasAssinaturas() {
     const name = agentName || "";
     if (name.includes("Clara") || name.includes("Pós vendas") || name.includes("Pós-vendas") || name.toLowerCase().includes("vendas")) {
       return [
-        { id: 'orientacoes_pos_vendas', label: 'Orientações Pós vendas', placeholder: 'Descreva aqui as orientações pós vendas do agente' }
+        { id: 'orientacoes_pos_vendas', type: 'textarea', label: 'Orientações Pós vendas', placeholder: 'Descreva aqui as orientações pós vendas do agente' }
       ];
     }
     if (name.includes("Max") || name.includes("Suporte") || name.toLowerCase().includes("suporte")) {
       return [
-        { id: 'base_conhecimento_suporte', label: 'Base de conhecimento do suporte', placeholder: 'Descreva aqui as orientações que o suporte deve passar para seus clientes' }
+        { id: 'base_conhecimento_suporte', type: 'textarea', label: 'Base de conhecimento do suporte', placeholder: 'Descreva aqui as orientações que o suporte deve passar para seus clientes' }
       ];
     }
     if (name.includes("Bruno") || name.includes("SDR") || name.toLowerCase().includes("sdr")) {
       return [
-        { id: 'orientacoes_prospeccao', label: 'Orientações para prospecção', placeholder: 'Informe aqui as instruções de como o agente deve seguir com a prospecção dos seus clientes.' },
-        { id: 'informacoes_necessarias_prospeccao', label: 'Informações necessárias para prospecção', placeholder: 'Quais informações são necessárias para que um lead seja considerado qualificado (quente)?' }
+        { id: 'apify_platform', type: 'multiselect', label: 'Plataformas para Buscar Novos Leads', options: ['Instagram', 'TikTok', 'Google Maps', 'LinkedIn'] },
+        { id: 'apify_search_query', type: 'input', label: 'Parâmetros / Keywords de Busca', placeholder: 'Ex: "Clínicas de estética em São Paulo"' }
       ];
     }
     if (name.includes("Lidia") || name.includes("Lídia") || name.toLowerCase().includes("lidia prospec")) {
       return [
-        { id: 'orientacoes_prospeccao', label: 'Orientações de Prospecção', placeholder: 'Descreva como a Lidia deve abordar e prospectar clientes. Tom, estratégia, objeções comuns, etc.' },
-        { id: 'produtos', label: 'Produtos / Serviços', placeholder: 'Descreva os produtos ou serviços que a Lidia deve apresentar e vender. Inclua preços, diferenciais e benefícios.' },
+        { id: 'orientacoes_prospeccao', type: 'textarea', label: 'Orientações de Prospecção', placeholder: 'Descreva como a Lidia deve abordar e prospectar clientes. Tom, estratégia, objeções comuns, etc.' },
+        { id: 'produtos', type: 'textarea', label: 'Produtos / Serviços', placeholder: 'Descreva os produtos ou serviços que a Lidia deve apresentar e vender. Inclua preços, diferenciais e benefícios.' },
       ];
     }
     
     // Default (e.g. Lucy E-commerce)
     return [
-      { id: 'duvidas_frequentes', label: 'Dúvidas Frequentes', placeholder: 'Ex: Cadastre as dúvidas comuns sobre seus produtos, prazos de envio, trocas...' },
-      { id: 'recomendacoes', label: 'Recomendações', placeholder: 'Ex: Produtos recomendados com base no perfil do cliente...' },
-      { id: 'combos_de_produtos', label: 'Combos de Produtos', placeholder: 'Ex: Descreva os combos disponíveis, descontos em quantidade...' },
-      { id: 'controle_de_estoque', label: 'Controle de Estoque', placeholder: 'Ex: Produtos e suas quantidades disponíveis no momento...' },
+      { id: 'duvidas_frequentes', type: 'textarea', label: 'Dúvidas Frequentes', placeholder: 'Ex: Cadastre as dúvidas comuns sobre seus produtos, prazos de envio, trocas...' },
+      { id: 'recomendacoes', type: 'textarea', label: 'Recomendações', placeholder: 'Ex: Produtos recomendados com base no perfil do cliente...' },
+      { id: 'combos_de_produtos', type: 'textarea', label: 'Combos de Produtos', placeholder: 'Ex: Descreva os combos disponíveis, descontos em quantidade...' },
+      { id: 'controle_de_estoque', type: 'textarea', label: 'Controle de Estoque', placeholder: 'Ex: Produtos e suas quantidades disponíveis no momento...' },
     ];
   };
 
@@ -243,65 +243,66 @@ export default function MinhasAssinaturas() {
                       <label className="block text-[15px] font-bold text-navy mb-2">
                         {field.label}
                       </label>
-                      <textarea
-                        className="w-full h-32 p-4 text-sm border-2 border-line rounded-xl resize-none focus:outline-none focus:border-coreblue focus:ring-4 focus:ring-blue-100 transition-all font-medium text-navy bg-paper focus:bg-white"
-                        value={formData[field.id] || ""}
-                        onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                        placeholder={field.placeholder}
-                      />
+                      {(!field.type || field.type === 'textarea') && (
+                        <textarea
+                          className="w-full h-32 p-4 text-sm border-2 border-line rounded-xl resize-none focus:outline-none focus:border-coreblue focus:ring-4 focus:ring-blue-100 transition-all font-medium text-navy bg-paper focus:bg-white"
+                          value={formData[field.id] || ""}
+                          onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                          placeholder={field.placeholder}
+                        />
+                      )}
+                      {field.type === 'input' && (
+                        <input
+                          type="text"
+                          className="w-full p-4 text-sm border-2 border-line rounded-xl focus:outline-none focus:border-coreblue focus:ring-4 focus:ring-blue-100 transition-all font-medium text-navy bg-paper focus:bg-white"
+                          value={formData[field.id] || ""}
+                          onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                          placeholder={field.placeholder}
+                        />
+                      )}
+                      {field.type === 'select' && (
+                        <select
+                          className="w-full p-4 text-sm border-2 border-line rounded-xl focus:outline-none focus:border-coreblue focus:ring-4 focus:ring-blue-100 transition-all font-medium text-navy bg-paper focus:bg-white cursor-pointer"
+                          value={formData[field.id] || "Nenhuma"}
+                          onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                        >
+                          {field.options.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      )}
+                      {field.type === 'multiselect' && (
+                        <div className="flex flex-wrap gap-3 mt-1">
+                          {field.options.map(opt => {
+                            const selected = Array.isArray(formData[field.id]) ? formData[field.id] : [];
+                            const isChecked = selected.includes(opt);
+                            return (
+                              <button
+                                key={opt}
+                                type="button"
+                                onClick={() => {
+                                  const current = Array.isArray(formData[field.id]) ? formData[field.id] : [];
+                                  const updated = isChecked
+                                    ? current.filter(v => v !== opt)
+                                    : [...current, opt];
+                                  handleFieldChange(field.id, updated);
+                                }}
+                                className={`px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-all duration-200 ${
+                                  isChecked
+                                    ? 'bg-coreblue text-white border-coreblue shadow-sm'
+                                    : 'bg-paper text-navy border-line hover:border-coreblue hover:text-coreblue'
+                                }`}
+                              >
+                                {isChecked && <span className="mr-1">✓</span>}{opt}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   ))}
 
-                  {/* Payment Links — Bruno SDR only */}
-                  {(currentSub.agent?.name?.includes("Bruno") || currentSub.agent?.name?.toLowerCase().includes("sdr")) && (
-                    <div className="bg-white p-5 rounded-2xl border border-line shadow-sm border-l-4 border-l-coregreen">
-                      <p className="text-[15px] font-bold text-navy mb-3">Links de Pagamento</p>
-                      {paymentLinks.length > 0 && (
-                        <div className="space-y-2 mb-3">
-                          {paymentLinks.map((lnk, idx) => (
-                            <div key={idx} className="flex gap-2 items-center">
-                              <input
-                                type="text"
-                                placeholder="Plano/Produto"
-                                value={lnk.plano}
-                                onChange={(e) => {
-                                  const updated = [...paymentLinks];
-                                  updated[idx] = { ...updated[idx], plano: e.target.value };
-                                  setPaymentLinks(updated);
-                                }}
-                                className="flex-1 px-3 py-2.5 text-sm border-2 border-line text-navy font-medium rounded-xl focus:outline-none focus:border-coreblue focus:ring-2 focus:ring-blue-100 bg-paper focus:bg-white transition-all"
-                              />
-                              <input
-                                type="text"
-                                placeholder="Link"
-                                value={lnk.link}
-                                onChange={(e) => {
-                                  const updated = [...paymentLinks];
-                                  updated[idx] = { ...updated[idx], link: e.target.value };
-                                  setPaymentLinks(updated);
-                                }}
-                                className="flex-1 px-3 py-2.5 text-sm border-2 border-line text-navy font-medium rounded-xl focus:outline-none focus:border-coreblue focus:ring-2 focus:ring-blue-100 bg-paper focus:bg-white transition-all"
-                              />
-                              <button
-                                onClick={() => setPaymentLinks(prev => prev.filter((_, i) => i !== idx))}
-                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                title="Remover"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <button
-                        onClick={() => setPaymentLinks(prev => [...prev, { plano: "", link: "" }])}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-coreblue bg-coreblue/5 hover:bg-coreblue/10 border-2 border-dashed border-coreblue/20 rounded-xl transition-colors"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Inserir Link de Pagamento
-                      </button>
-                    </div>
-                  )}
+
 
                   {/* Lidia Prospecção — Links de Agendamento + Pagamento */}
                   {(currentSub.agent?.name?.includes("Lidia") || currentSub.agent?.name?.includes("Lídia") || currentSub.agent?.name?.toLowerCase().includes("lidia prospec")) && (
