@@ -4144,7 +4144,7 @@ async def process_chat(request: ChatWebhookRequest, current_user: dict = Depends
 
     async with httpx.AsyncClient() as client:
         # Load N8N_AUTH_KEY from env - defaults to empty string if not configured yet
-        n8n_auth_key = os.environ.get("N8N_AUTH_KEY", "n8n_saas_auth_db5f3a9e2c1b8d6f")
+        n8n_auth_key = os.environ.get("N8N_AUTH_KEY")
         headers = {}
         if n8n_auth_key:
             headers["X-N8N-API-Key"] = n8n_auth_key
@@ -4447,7 +4447,7 @@ async def process_client_chat(request: ClientChatWebhookRequest):
     
     async with httpx.AsyncClient() as client:
         # Load N8N_AUTH_KEY from env - defaults to empty string if not configured yet
-        n8n_auth_key = os.environ.get("N8N_AUTH_KEY", "n8n_saas_auth_db5f3a9e2c1b8d6f")
+        n8n_auth_key = os.environ.get("N8N_AUTH_KEY")
         headers = {}
         if n8n_auth_key:
             headers["X-N8N-API-Key"] = n8n_auth_key
