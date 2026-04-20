@@ -1,7 +1,14 @@
+import os
 from pymongo import MongoClient
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Use the production atlas connection string
-MONGO_URI = ""
+MONGO_URI = os.getenv("MONGO_URL", "")
+if not MONGO_URI:
+    print("Warning: MONGO_URL not defined in env")
+
 client = MongoClient(MONGO_URI)
 db = client["agenthub"]
 

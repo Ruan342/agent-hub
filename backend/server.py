@@ -1169,7 +1169,7 @@ async def update_webhook(subscription_id: str, update: SubscriptionUpdate, curre
 # ==================== KNOWLEDGE BASE ====================
 
 async def validate_api_token(request: Request) -> bool:
-    """Validate request against API tokens stored in the DB or the env fallback."""
+    """Validate request against API tokens stored in the DB only."""
     auth_header = request.headers.get("Authorization", "")
     api_key_header = request.headers.get("x-api-key", "")
 
@@ -1183,14 +1183,14 @@ async def validate_api_token(request: Request) -> bool:
     if not raw_token:
         return False
 
-    # 1. Check against DB api_tokens collection
+    # Check against DB api_tokens collection
     db_token = await db.api_tokens.find_one({"token": raw_token, "active": True})
     if db_token:
-        return True
+        import secrets
+        # Verify using constant time comparison if token is passed securely to db
+        return secrets.compare_digest(raw_token, db_token["token"])
 
-    # 2. Fallback: env variable token
-    env_token = os.environ.get("API_HISTORY_TOKEN", "agent-hub-secret-token")
-    return raw_token == env_token
+    return False
 
 
 @api_router.get("/knowledge-base/context")

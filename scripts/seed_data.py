@@ -34,7 +34,11 @@ async def seed_database():
 
     # Criar usuário admin
     admin_email = os.environ.get("SEED_ADMIN_EMAIL", "admin@voiceai.com")
-    admin_password = os.environ.get("SEED_ADMIN_PASSWORD", "admin123")
+    admin_password = os.environ.get("SEED_ADMIN_PASSWORD")
+    
+    if not admin_password:
+        print("❌ SEED_ADMIN_PASSWORD não definido no .env. Configure para continuar.")
+        sys.exit(1)
 
     admin_exists = await db.users.find_one({"email": admin_email})
     if not admin_exists:
@@ -156,7 +160,7 @@ async def seed_database():
 
     client.close()
     print("\n✅ Banco de dados populado com sucesso!")
-    print(f"\n📋 Credenciais admin: {admin_email} (senha definida via SEED_ADMIN_PASSWORD ou default)")
+    print(f"\n📋 Credenciais admin: {admin_email} (senha definida via SEED_ADMIN_PASSWORD)")
 
 
 if __name__ == "__main__":
