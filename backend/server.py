@@ -4143,9 +4143,15 @@ async def process_chat(request: ChatWebhookRequest, current_user: dict = Depends
     audio_b64 = None
 
     async with httpx.AsyncClient() as client:
+        # Load N8N_AUTH_KEY from env - defaults to empty string if not configured yet
+        n8n_auth_key = os.environ.get("N8N_AUTH_KEY", "n8n_saas_auth_db5f3a9e2c1b8d6f")
+        headers = {}
+        if n8n_auth_key:
+            headers["X-N8N-API-Key"] = n8n_auth_key
+            
         for attempt in range(3):
             try:
-                resp = await client.post(webhook_url, json=payload, timeout=60.0)
+                resp = await client.post(webhook_url, json=payload, headers=headers, timeout=60.0)
                 if resp.status_code == 200:
                     try:
                         n8n_data = resp.json()
@@ -4440,9 +4446,15 @@ async def process_client_chat(request: ClientChatWebhookRequest):
     metadata = {}
     
     async with httpx.AsyncClient() as client:
+        # Load N8N_AUTH_KEY from env - defaults to empty string if not configured yet
+        n8n_auth_key = os.environ.get("N8N_AUTH_KEY", "n8n_saas_auth_db5f3a9e2c1b8d6f")
+        headers = {}
+        if n8n_auth_key:
+            headers["X-N8N-API-Key"] = n8n_auth_key
+            
         for attempt in range(3):
             try:
-                resp = await client.post(webhook_url, json=payload, timeout=60.0)
+                resp = await client.post(webhook_url, json=payload, headers=headers, timeout=60.0)
                 if resp.status_code == 200:
                     try:
                         n8n_data = resp.json()
