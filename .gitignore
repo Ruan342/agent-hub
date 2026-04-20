@@ -26,12 +26,25 @@ test_*.py
 dist/
 dist
 
-# Environment variables (Critical)
+# Environment variables (Critical — NUNCA commitar segredos)
 .env
 .env.*
 !.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
 *token.json*
 *credentials.json*
+service-account*.json
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+temp-repo/
 
 # Logs and debug files
 npm-debug.log*

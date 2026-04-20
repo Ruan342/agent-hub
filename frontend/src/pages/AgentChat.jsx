@@ -190,7 +190,13 @@ export default function AgentChat() {
       setCurrentSessionId(sessionId);
       // Load messages for this session
       const msgsRes = await axios.get(`${API}/chat/session/${sessionId}/history`, {
-        headers: { 'x-api-key': 'd7403fdca51be19fd2bf84c541d881856d307ae6f7cc8b67df928cebbfa30318' }
+        headers: {
+          // Token do endpoint público de histórico — configurado via .env
+          // (REACT_APP_API_HISTORY_TOKEN). Mantemos Authorization para quando
+          // o endpoint privado estiver disponível.
+          'x-api-key': process.env.REACT_APP_API_HISTORY_TOKEN || '',
+          Authorization: `Bearer ${token}`
+        }
       });
       if (msgsRes.data && msgsRes.data.messages) {
         setMessages(msgsRes.data.messages.map(m => ({

@@ -10,10 +10,20 @@ import os
 import sys
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
+
+from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 
-# URL base do Vercel — ajuste se necessário
-VERCEL_BASE_URL = os.getenv("BACKEND_URL", "https://agent-hub-p46s.vercel.app")
+ROOT_DIR = Path(__file__).resolve().parent
+load_dotenv(ROOT_DIR / ".env")
+
+# URL base do Vercel — ajuste via .env (BACKEND_URL / BASE_URL)
+VERCEL_BASE_URL = os.getenv("BACKEND_URL") or os.getenv("BASE_URL", "http://localhost:8000")
+LIDIA_WEBHOOK_URL = os.getenv(
+    "N8N_WEBHOOK_LIDIA_PROSPEC",
+    f"{os.getenv('N8N_WEBHOOK_BASE', 'https://corefy.app.n8n.cloud/webhook').rstrip('/')}/lidia-prospec",
+)
 
 lidia_agent = {
     "id": str(uuid.uuid4()),
@@ -37,14 +47,17 @@ lidia_agent = {
     "llm_provider": "openai",
     "llm_model": "gpt-4o",
     "status": "active",
-    "webhook_url": "https://corefy.app.n8n.cloud/webhook/lidia-prospec",
+    "webhook_url": LIDIA_WEBHOOK_URL,
     "created_at": datetime.now(timezone.utc),
 }
 
 async def main():
-    # Pega MONGO_URL do argumento ou variável de ambiente
-    mongo_url = sys.argv[1] if len(sys.argv) > 1 else os.getenv("MONGO_URL", "mongodb://localhost:27017")
-    
+    # Pega MONGO_URL do argumento ou variável de ambiente (sem default inseguro).
+    mongo_url = sys.argv[1] if len(sys.argv) > 1 else os.getenv("MONGO_URL")
+    if not mongo_url:
+        print("❌ MONGO_URL não definido. Preencha backend/.env ou passe a URL como argumento.")
+        sys.exit(1)
+
     print(f"🔌 Conectando em: {mongo_url[:40]}...")
     client = AsyncIOMotorClient(mongo_url)
     

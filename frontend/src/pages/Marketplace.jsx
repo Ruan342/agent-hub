@@ -286,7 +286,8 @@ export default function Marketplace() {
                     crossOrigin="anonymous"
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      e.target.src = "https://via.placeholder.com/400x192?text=AI";
+                      e.target.onerror = null;
+                      e.target.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='192' viewBox='0 0 400 192'><rect width='400' height='192' fill='%23f3f4f6'/><text x='200' y='105' font-family='sans-serif' font-size='32' text-anchor='middle' fill='%239ca3af'>AI Agent</text></svg>";
                     }}
                   />
                 </div>

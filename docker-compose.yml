@@ -15,17 +15,21 @@ services:
 
   # 2. FastAPI Backend
   api:
-    build: 
+    build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: agenthub_backend
     restart: always
     ports:
       - "8001:8001"
+    # Toda a configuração vem de backend/.env (não versionado).
+    # Use backend/.env.example como referência e NUNCA commite segredos aqui.
+    env_file:
+      - ./backend/.env
     environment:
-      - MONGO_URL=mongodb://mongo:27017
-      - DB_NAME=agenthub
-      - JWT_SECRET=agenthub_secret_local
+      # Sobrescreve MONGO_URL quando o container sobe junto com o serviço mongo
+      # local — pode ser removido se você estiver apontando para MongoDB Atlas.
+      - MONGO_URL=${MONGO_URL:-mongodb://mongo:27017}
     volumes:
       - ./backend/uploads:/app/uploads
     depends_on:

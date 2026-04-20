@@ -275,7 +275,8 @@ export default function AgentDetails() {
             crossOrigin="anonymous"
             className="w-full h-full object-cover"
             onError={(e) => {
-              e.target.src = agent.mascot_image_url || "https://via.placeholder.com/1920x709?text=AI+Agent";
+              e.target.onerror = null;
+              e.target.src = agent.mascot_image_url || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1920' height='709' viewBox='0 0 1920 709'><rect width='1920' height='709' fill='%23ede9fe'/><text x='960' y='365' font-family='sans-serif' font-size='72' text-anchor='middle' fill='%236d28d9'>AI Agent</text></svg>";
             }}
           />
           {/* Gradient Overlay for better text readability */}
@@ -453,7 +454,8 @@ export default function AgentDetails() {
                       crossOrigin="anonymous"
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.target.src = agent.mascot_image_url || "https://via.placeholder.com/320?text=AI+Agent";
+                        e.target.onerror = null;
+                        e.target.src = agent.mascot_image_url || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320' viewBox='0 0 320 320'><rect width='320' height='320' fill='%23ede9fe'/><text x='160' y='165' font-family='sans-serif' font-size='28' text-anchor='middle' fill='%236d28d9'>AI Agent</text></svg>";
                       }}
                     />
                   </div>
@@ -597,7 +599,8 @@ export default function AgentDetails() {
                         crossOrigin="anonymous"
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          e.target.src = agent.mascot_image_url || "https://via.placeholder.com/320?text=AI+Agent";
+                          e.target.onerror = null;
+                          e.target.src = agent.mascot_image_url || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320' viewBox='0 0 320 320'><rect width='320' height='320' fill='%23ede9fe'/><text x='160' y='165' font-family='sans-serif' font-size='28' text-anchor='middle' fill='%236d28d9'>AI Agent</text></svg>";
                         }}
                       />
                     </div>

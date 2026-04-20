@@ -170,7 +170,7 @@ export default function Dashboard() {
                             src={agent.mascot_image_url}
                             alt={agent.name}
                             className="w-10 h-10 object-contain"
-                            onError={(e) => (e.target.src = "https://via.placeholder.com/40/f9fafb/9ca3af?text=AI")}
+                            onError={(e) => { e.target.onerror = null; e.target.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><rect width='40' height='40' fill='%23f9fafb'/><text x='20' y='25' font-family='sans-serif' font-size='12' text-anchor='middle' fill='%239ca3af'>AI</text></svg>"; }}
                           />
                         </div>
                         <div>

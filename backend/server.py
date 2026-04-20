@@ -61,17 +61,46 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 (UPLOAD_DIR / "agents").mkdir(parents=True, exist_ok=True)
 (UPLOAD_DIR / "audio").mkdir(parents=True, exist_ok=True)
 
-# JWT Secret
-JWT_SECRET = os.environ.get('JWT_SECRET', 'your-secret-key-change-in-production')
-JWT_ALGORITHM = 'HS256'
-JWT_EXPIRATION_DAYS = 30
+# ================== JWT ==================
+JWT_SECRET = os.environ.get('JWT_SECRET')
+if not JWT_SECRET:
+    raise RuntimeError(
+        "❌ JWT_SECRET não definido no .env. "
+        "Defina um secret forte (ex.: openssl rand -hex 32) antes de iniciar o servidor."
+    )
+JWT_ALGORITHM = os.environ.get('JWT_ALGORITHM', 'HS256')
+try:
+    JWT_EXPIRATION_DAYS = int(os.environ.get('JWT_EXPIRATION_DAYS', '30'))
+except ValueError:
+    JWT_EXPIRATION_DAYS = 30
 
-# Stripe
-STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY', 'sk_test_emergent')
+# ================== STRIPE ==================
+# Never ship a fallback test/live key — missing key must be a config error.
+STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY') or os.environ.get('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
+if not STRIPE_API_KEY:
+    logging.warning("⚠️  STRIPE_API_KEY não definido no .env — endpoints de pagamento ficarão inoperantes.")
 
-# ElevenLabs
+# ================== ELEVENLABS ==================
 ELEVENLABS_API_KEY = os.environ.get('ELEVENLABS_API_KEY')
 eleven_client = ElevenLabs(api_key=ELEVENLABS_API_KEY) if ELEVENLABS_API_KEY else None
+
+# ================== N8N WEBHOOKS ==================
+# Centralized map of outbound n8n webhook URLs keyed by agent segment.
+# Every URL can be overridden by an env var so nothing is hardcoded in source.
+N8N_WEBHOOK_BASE = os.environ.get(
+    "N8N_WEBHOOK_BASE",
+    "https://corefy.app.n8n.cloud/webhook"
+).rstrip("/")
+
+N8N_WEBHOOKS: Dict[str, str] = {
+    "ecommerce":     os.environ.get("N8N_WEBHOOK_ECOMMERCE",     f"{N8N_WEBHOOK_BASE}/e_commerce_manager"),
+    "sdr":           os.environ.get("N8N_WEBHOOK_SDR",           f"{N8N_WEBHOOK_BASE}/vendedor_outbound"),
+    "suporte":       os.environ.get("N8N_WEBHOOK_SUPORTE",       f"{N8N_WEBHOOK_BASE}/suporte+knowledge"),
+    "pos_vendas":    os.environ.get("N8N_WEBHOOK_POS_VENDAS",    f"{N8N_WEBHOOK_BASE}/pos_venda_retenção"),
+    "lidia_prospec": os.environ.get("N8N_WEBHOOK_LIDIA_PROSPEC", f"{N8N_WEBHOOK_BASE}/lidia-prospec"),
+}
+N8N_TITLE_WEBHOOK = os.environ.get("N8N_WEBHOOK_TITLE", f"{N8N_WEBHOOK_BASE}/titulo_chat")
 
 security = HTTPBearer(auto_error=False)
 
@@ -1280,8 +1309,12 @@ async def get_chat_sessions(subscription_id: str, current_user: dict = Depends(g
     if not sub:
         raise HTTPException(status_code=404, detail="Subscription not found")
 
-    # Purge expired sessions for this subscription before returning
-    await purge_expired_sessions(subscription_id=subscription_id)
+    # Purge expired sessions for this subscription before returning.
+    # Wrap in try/except so a purge failure never blocks the sidebar.
+    try:
+        await purge_expired_sessions(subscription_id=subscription_id)
+    except Exception as e:
+        logger.exception(f"Non-fatal: purge failed for sub {subscription_id}: {e}")
 
     sessions = await db.chat_sessions.find(
         {"subscription_id": subscription_id, "user_id": current_user['user_id']},
@@ -3993,7 +4026,7 @@ async def trigger_n8n_title_webhook_task(session_id: str):
         context_msg = f"Mensagem 1: {user_msgs[0].get('content', '')}\nMensagem 2: {user_msgs[1].get('content', '')}"
         
         async with httpx.AsyncClient() as client:
-            webhook_url = "https://corefy.app.n8n.cloud/webhook/titulo_chat"
+            webhook_url = N8N_TITLE_WEBHOOK
             payload = {
                 "message": context_msg,
                 "session_id": session_id,
@@ -4073,18 +4106,11 @@ async def process_chat(request: ChatWebhookRequest, current_user: dict = Depends
     segment = agent.get("segment", "")
     webhook_url = sub.get("config", {}).get("webhook_url") or agent.get("webhook_url")
     if not webhook_url:
-        webhook_map = {
-            "ecommerce": "https://corefy.app.n8n.cloud/webhook/e_commerce_manager",
-            "sdr": "https://corefy.app.n8n.cloud/webhook/vendedor_outbound",
-            "suporte": "https://corefy.app.n8n.cloud/webhook/suporte+knowledge",
-            "pos_vendas": "https://corefy.app.n8n.cloud/webhook/pos_venda_retenção",
-            "lidia_prospec": "https://corefy.app.n8n.cloud/webhook/lidia-prospec"
-        }
-        webhook_url = webhook_map.get(segment)
-        
+        webhook_url = N8N_WEBHOOKS.get((segment or "").lower())
+
     if not webhook_url:
         return {"response_text": "Error: Webhook endpoint not mapped for this agent segment.", "session_id": session_id}
-        
+
     sanitized_sub = dict(sub)
     if "_id" in sanitized_sub: sanitized_sub["_id"] = str(sanitized_sub["_id"])
     if "created_at" in sanitized_sub and isinstance(sanitized_sub["created_at"], datetime):
@@ -4111,10 +4137,11 @@ async def process_chat(request: ChatWebhookRequest, current_user: dict = Depends
         }
     }
     
-    agent_response_text = "Desculpe, sistema indisponível no momento."
+    FALLBACK_TEXT = "Desculpe, sistema indisponível no momento."
+    agent_response_text = FALLBACK_TEXT
     metadata = {}
     audio_b64 = None
-    
+
     async with httpx.AsyncClient() as client:
         for attempt in range(3):
             try:
@@ -4125,18 +4152,50 @@ async def process_chat(request: ChatWebhookRequest, current_user: dict = Depends
                         if isinstance(n8n_data, list) and len(n8n_data) > 0:
                             n8n_data = n8n_data[0]
                         if isinstance(n8n_data, dict):
-                            # Mapped to match user's n8n 'output_text' key or fallbacks
-                            agent_response_text = n8n_data.get(
-                                "output_text", 
-                                n8n_data.get("response_text", n8n_data.get("output", n8n_data.get("resposta", agent_response_text)))
+                            # Accept any of these keys from the n8n workflow.
+                            extracted = (
+                                n8n_data.get("output_text")
+                                or n8n_data.get("response_text")
+                                or n8n_data.get("output")
+                                or n8n_data.get("resposta")
+                                or n8n_data.get("message")
+                                or n8n_data.get("text")
                             )
+                            if extracted:
+                                agent_response_text = extracted
+                            else:
+                                # Nothing usable in the JSON — log the shape so we can debug
+                                logging.warning(
+                                    f"Webhook 200 but no known text key. "
+                                    f"webhook={webhook_url} keys={list(n8n_data.keys())} preview={str(n8n_data)[:500]}"
+                                )
+                                # Fall back to raw body if it looks like plain text
+                                raw = (resp.text or "").strip()
+                                if raw and raw not in ("{}", "[]"):
+                                    agent_response_text = raw
                             audio_b64 = n8n_data.get("audio_base64", n8n_data.get("input_audio_base64"))
                             metadata = n8n_data.get("metadata", {})
-                    except:
-                        agent_response_text = resp.text
+                        else:
+                            # Response was JSON but not a dict/list — treat as plain text
+                            raw = (resp.text or "").strip()
+                            if raw:
+                                agent_response_text = raw
+                    except Exception as parse_err:
+                        logging.warning(f"Webhook 200 JSON parse failed: {parse_err}; using raw body")
+                        raw = (resp.text or "").strip()
+                        if raw:
+                            agent_response_text = raw
+                    break
+                else:
+                    # Non-200: log and stop retrying immediately — n8n is
+                    # telling us something is wrong, retrying won't help.
+                    logging.error(
+                        f"Webhook non-200 (attempt {attempt+1}): status={resp.status_code} "
+                        f"url={webhook_url} body={resp.text[:500] if resp.text else '<empty>'}"
+                    )
                     break
             except Exception as e:
-                logging.error(f"Webhook Attempt {attempt+1} Failed: {repr(e)}")
+                logging.error(f"Webhook attempt {attempt+1} failed: {repr(e)}")
                 if attempt == 2:
                     break
                     
@@ -4347,15 +4406,8 @@ async def process_client_chat(request: ClientChatWebhookRequest):
     segment = agent.get("segment", "")
     webhook_url = sub.get("config", {}).get("webhook_url") or agent.get("webhook_url")
     if not webhook_url:
-        webhook_map = {
-            "ecommerce": "https://corefy.app.n8n.cloud/webhook/e_commerce_manager",
-            "sdr": "https://corefy.app.n8n.cloud/webhook/vendedor_outbound",
-            "suporte": "https://corefy.app.n8n.cloud/webhook/suporte+knowledge",
-            "pos_vendas": "https://corefy.app.n8n.cloud/webhook/pos_venda_retenção",
-            "lidia_prospec": "https://corefy.app.n8n.cloud/webhook/lidia-prospec"
-        }
-        webhook_url = webhook_map.get(segment.lower())
-        
+        webhook_url = N8N_WEBHOOKS.get((segment or "").lower())
+
     if not webhook_url:
         return {"response_text": "Error: Webhook endpoint not mapped for this agent segment.", "session_id": request.session_id}
 
@@ -4454,10 +4506,34 @@ async def get_client_chat_session(session_id: str):
         "messages": msgs_safe
     }
 
+def _coerce_to_utc_datetime(value):
+    """Accept datetime OR ISO-8601 string and return a timezone-aware UTC datetime.
+    Returns None if the value can't be parsed.
+
+    The chat_sessions collection has historically been written in two different
+    ways (Pydantic model_dump keeps datetime objects, manual dicts stored
+    `.isoformat()` strings), so any code that compares these timestamps must
+    handle both shapes or it will raise TypeError and break the endpoint.
+    """
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+    if isinstance(value, str):
+        try:
+            # `fromisoformat` in Python 3.11+ handles the "Z" suffix, older
+            # versions need it swapped for "+00:00".
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        except Exception:
+            return None
+    return None
+
+
 async def purge_expired_sessions(subscription_id: str = None, user_id: str = None):
     """Delete sessions expired >30 days based on last interaction or closed_at. Purge messages too."""
     THIRTY_DAYS = timedelta(days=30)
-    cutoff = (datetime.now(timezone.utc) - THIRTY_DAYS).isoformat()
+    cutoff_dt = datetime.now(timezone.utc) - THIRTY_DAYS
 
     query = {}
     if subscription_id:
@@ -4469,15 +4545,24 @@ async def purge_expired_sessions(subscription_id: str = None, user_id: str = Non
     # - closed: closed_at < cutoff
     # - active: last_interaction (or created_at) < cutoff
     expired_ids = []
-    async for sess in db.chat_sessions.find(query, {"id": 1, "status": 1, "closed_at": 1, "last_interaction": 1, "created_at": 1}):
-        ref = sess.get("closed_at") or sess.get("last_interaction") or sess.get("created_at")
-        if ref and ref < cutoff:
-            expired_ids.append(sess["id"])
+    try:
+        async for sess in db.chat_sessions.find(query, {"id": 1, "status": 1, "closed_at": 1, "last_interaction": 1, "created_at": 1}):
+            raw_ref = sess.get("closed_at") or sess.get("last_interaction") or sess.get("created_at")
+            ref_dt = _coerce_to_utc_datetime(raw_ref)
+            if ref_dt and ref_dt < cutoff_dt:
+                expired_ids.append(sess["id"])
+    except Exception as e:
+        # Never let a purge failure bubble up into the listing endpoints.
+        logger.exception(f"purge_expired_sessions scan failed: {e}")
+        return
 
     if expired_ids:
-        await db.messages.delete_many({"session_id": {"$in": expired_ids}})
-        await db.chat_sessions.delete_many({"id": {"$in": expired_ids}})
-        logger.info(f"Purged {len(expired_ids)} expired sessions")
+        try:
+            await db.messages.delete_many({"session_id": {"$in": expired_ids}})
+            await db.chat_sessions.delete_many({"id": {"$in": expired_ids}})
+            logger.info(f"Purged {len(expired_ids)} expired sessions")
+        except Exception as e:
+            logger.exception(f"purge_expired_sessions delete failed: {e}")
 
 @api_router.get("/subscriptions/{subscription_id}/client-sessions")
 async def get_client_sessions_history(subscription_id: str, current_user: dict = Depends(get_current_user)):
@@ -4486,8 +4571,11 @@ async def get_client_sessions_history(subscription_id: str, current_user: dict =
     if not sub:
         raise HTTPException(status_code=403, detail="Subscription not found")
 
-    # Purge expired client sessions
-    await purge_expired_sessions(subscription_id=subscription_id)
+    # Purge expired client sessions (non-fatal)
+    try:
+        await purge_expired_sessions(subscription_id=subscription_id)
+    except Exception as e:
+        logger.exception(f"Non-fatal: purge (client sessions) failed for sub {subscription_id}: {e}")
 
     sessions = await db.chat_sessions.find({
         "subscription_id": subscription_id,
@@ -4524,7 +4612,7 @@ async def get_client_sessions_history(subscription_id: str, current_user: dict =
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-SDR_WEBHOOK_URL = "https://corefy.app.n8n.cloud/webhook/vendedor_outbound"
+SDR_WEBHOOK_URL = N8N_WEBHOOKS["sdr"]
 SDR_SCHED_TZ = os.environ.get("SDR_SCHEDULER_TZ", "America/Sao_Paulo")
 
 sdr_scheduler = AsyncIOScheduler(timezone=SDR_SCHED_TZ)
@@ -4863,14 +4951,29 @@ async def serve_agent_audio(filename: str):
         }
     )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
-)
+_cors_raw = os.environ.get('CORS_ORIGINS', '*').strip()
+_cors_origins = [o.strip() for o in _cors_raw.split(',') if o.strip()]
+# Per the CORS spec (and Starlette), allow_credentials=True is incompatible
+# with allow_origins=['*']. If the deployer passes '*', we must disable
+# credentials; otherwise we honor their explicit origin list with credentials on.
+if _cors_origins == ['*']:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=False,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origins=_cors_origins,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
 
 logging.basicConfig(
     level=logging.INFO,
